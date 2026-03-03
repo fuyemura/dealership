@@ -181,6 +181,12 @@ CREATE TABLE "dealership"."dominio"
 	"nome_dominio" VARCHAR(255) NOT NULL,
 	"criado_em" TIMESTAMP(0) WITH TIME zone NOT NULL DEFAULT NOW()
 );
+<<<<<<< HEAD
+=======
+COMMENT
+ON TABLE
+    "dealership"."dominio" IS 'Cadastro de domínios.';
+>>>>>>> dce767c (Script de criação do modelo de dados)
 ALTER TABLE
     "dealership"."dominio" ADD PRIMARY KEY("id");
 COMMENT
