@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Uyemura Tech — Landing Page
 
-## Getting Started
+## Stack
+- Next.js 15 (App Router)
+- TypeScript (strict)
+- Tailwind CSS
+- Shadcn/ui
+- Fontes: Syne (display/títulos) + DM Sans (corpo)
 
-First, run the development server:
+---
+
+## Setup Rápido
+
+### 1. Instalar dependências
+
+```bash
+npm install
+```
+
+### 2. Instalar componentes Shadcn usados
+
+```bash
+npx shadcn@latest init
+npx shadcn@latest add button
+```
+
+### 3. Adicionar as imagens
+
+Coloque as seguintes imagens em `public/images/`:
+
+| Arquivo | Uso | Recomendação |
+|---|---|---|
+| `hero-dealership.jpg` | Background do Hero | 1920×1080px, concessionária com carros |
+| `feature-fleet.jpg` | Seção "Digitalização" | 800×600px, frota colorida |
+| `feature-sports-car.jpg` | Seção "Inventário" | 800×600px, carro esportivo em showroom |
+| `cta-supercar.jpg` | Background CTA | 1920×1080px, supercarros |
+
+> **Dica:** Use imagens do [Unsplash](https://unsplash.com/s/photos/car-dealership) — busque "car dealership showroom".
+
+### 4. Rodar em desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estrutura de Arquivos da Landing Page
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── page.tsx                    # Página raiz (home)
+│   ├── layout.tsx                  # Root layout com fontes
+│   └── globals.css                 # Tailwind + CSS variables + animações
+│
+└── components/
+    └── features/
+        └── landing/
+            ├── navbar.tsx           # Navbar fixa (Server Component)
+            ├── navbar-mobile.tsx    # Menu mobile (Client Component)
+            ├── hero-section.tsx     # Seção hero com imagem de fundo
+            ├── features-section.tsx # Seções alternadas de features
+            ├── why-choose-section.tsx # 3 cards de diferenciais
+            ├── cta-section.tsx      # Call-to-action com imagem de fundo
+            └── footer.tsx           # Rodapé com links e redes sociais
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Decisões de Arquitetura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Server Components por padrão**: todos os componentes da landing são Server Components, exceto `navbar-mobile.tsx` que usa `useState` para o menu toggle.
+- **Fontes via `next/font/google`**: carregadas no layout raiz, sem FOUT (flash de texto sem fonte).
+- **`next/image`**: todas as imagens usam o componente `Image` do Next.js para otimização automática (WebP, lazy loading, sizes).
+- **Sem estado global**: a landing page não requer gerenciamento de estado — tudo é estático.
+- **Acessibilidade**: `aria-label` nos botões de ícone, `alt` em todas as imagens, semântica HTML correta.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Paleta de Cores
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Token | Valor | Uso |
+|---|---|---|
+| `brand-black` | `#0a0a0a` | Navbar, footer, textos |
+| `brand-accent` | `#e8f015` | Detalhes de destaque (amarelo elétrico) |
+| `brand-gray-soft` | `#f5f5f3` | Background de seções alternadas |
+| `brand-gray-text` | `#6b6b66` | Textos secundários |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Próximos Passos
+
+Depois da landing, os próximos módulos a desenvolver conforme o guia:
+
+1. `(auth)/login` — tela de login com Supabase Auth
+2. `(auth)/cadastro` — onboarding de nova empresa
+3. `(dashboard)/veiculos` — listagem e cadastro de veículos
+4. `(dashboard)/usuarios` — gestão de usuários
