@@ -12,32 +12,32 @@ export function HeroSection() {
       {/* Imagem de fundo */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/hero-dealership.jpg"
+          src="/images/showroom-veiculos.webp"
           alt="Concessionária de veículos de luxo"
           fill
           priority
           className="object-cover object-center"
           sizes="100vw"
         />
-        {/* Overlay gradiente — escurece mais à esquerda para legibilidade */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {/* Overlay gradiente — ajustado para menos escuro */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
       </div>
 
       {/* Conteúdo */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-24 pb-20">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-8 pt-32 sm:pt-40 lg:pt-48 pb-16 sm:pb-20 lg:pb-24">
         <div className="max-w-2xl">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-8 animate-fade-up">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#e8f015]" />
-            <span className="text-white/90 text-xs font-medium tracking-wide uppercase">
+          <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/15 rounded-full px-4 py-2 mb-6 sm:mb-8 animate-fade-up hover:bg-white/10 transition-colors duration-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#e8f015] animate-pulse" />
+            <span className="text-white/80 text-xs font-medium tracking-widest uppercase">
               Plataforma para concessionárias
             </span>
           </div>
 
           {/* Headline */}
           <h1
-            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.05] tracking-tight mb-6 animate-fade-up"
+            className="font-display text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-[1.05] tracking-tight mb-4 sm:mb-6 animate-fade-up"
             style={{ animationDelay: "0.1s", opacity: 0, animationFillMode: "forwards" }}
           >
             Junte-se à{" "}
@@ -58,7 +58,7 @@ export function HeroSection() {
 
           {/* Subtítulo */}
           <p
-            className="text-white/70 text-lg sm:text-xl font-light leading-relaxed mb-10 max-w-xl animate-fade-up"
+            className="text-white/70 text-base sm:text-lg lg:text-xl font-light leading-relaxed mb-8 sm:mb-10 max-w-xl animate-fade-up"
             style={{ animationDelay: "0.2s", opacity: 0, animationFillMode: "forwards" }}
           >
             Você está pronto para revolucionar a experiência da sua loja de veículos?
@@ -66,19 +66,19 @@ export function HeroSection() {
 
           {/* CTAs */}
           <div
-            className="flex flex-col sm:flex-row gap-3 animate-fade-up"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-fade-up"
             style={{ animationDelay: "0.3s", opacity: 0, animationFillMode: "forwards" }}
           >
             <Button
               asChild
               size="lg"
-              className="bg-white text-[#0a0a0a] hover:bg-white/90 font-semibold rounded-full px-8 text-base h-12 transition-all duration-200 hover:scale-[1.02] group"
+              className="bg-white text-[#0a0a0a] font-semibold rounded-full px-6 sm:px-8 text-sm sm:text-base h-11 sm:h-12 transition-all duration-300 hover:bg-white/95 hover:shadow-lg hover:shadow-white/20 group"
             >
               <Link href="/cadastro">
                 Criar conta grátis
                 <ArrowRight
                   size={16}
-                  className="ml-2 group-hover:translate-x-1 transition-transform"
+                  className="ml-2 group-hover:translate-x-1 transition-transform duration-300"
                 />
               </Link>
             </Button>
@@ -86,7 +86,7 @@ export function HeroSection() {
               asChild
               variant="ghost"
               size="lg"
-              className="text-white hover:text-white hover:bg-white/10 border border-white/30 rounded-full px-8 text-base h-12 font-medium"
+              className="text-white hover:text-white hover:bg-white/15 border border-white/25 rounded-full px-6 sm:px-8 text-sm sm:text-base h-11 sm:h-12 font-medium transition-all duration-300"
             >
               <Link href="#como-funciona">Ver como funciona</Link>
             </Button>
@@ -94,7 +94,7 @@ export function HeroSection() {
 
           {/* Social proof */}
           <div
-            className="mt-14 flex items-center gap-6 animate-fade-up"
+            className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 animate-fade-up"
             style={{ animationDelay: "0.4s", opacity: 0, animationFillMode: "forwards" }}
           >
             <div className="h-px flex-1 max-w-16 bg-white/20" />

@@ -23,15 +23,15 @@ const SOCIAL_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#0a0a0a] text-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
+    <footer className="bg-[#0a0a0a] text-white border-t border-white/5">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 lg:gap-16">
           {/* Marca */}
           <div className="flex flex-col gap-5">
             {/* Logo */}
             <Link
               href="/"
-              className="flex items-center gap-2 font-display font-semibold text-lg w-fit"
+              className="flex items-center gap-2 font-display font-semibold text-base sm:text-lg w-fit"
             >
               <span className="flex items-center gap-0.5" aria-hidden="true">
                 <span className="flex flex-col gap-0.5">
@@ -46,7 +46,7 @@ export function Footer() {
               Uyemura Tech.
             </Link>
 
-            <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+            <p className="text-white/50 text-xs sm:text-sm leading-relaxed max-w-xs">
               Transformando Operações de concessionárias com tecnologia acessível e inovadora.
             </p>
 

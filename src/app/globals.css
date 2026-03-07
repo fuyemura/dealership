@@ -13,6 +13,7 @@
     --brand-gray-soft: #f5f5f3;
     --brand-gray-mid: #d4d4d0;
     --brand-gray-text: #6b6b66;
+    --brand-gray-dark: #4a4a42;
   }
 
   html {
@@ -23,6 +24,8 @@
     font-family: var(--font-dm-sans), sans-serif;
     color: var(--brand-black);
     background: var(--brand-white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {

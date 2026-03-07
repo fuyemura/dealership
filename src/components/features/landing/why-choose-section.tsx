@@ -30,20 +30,20 @@ const BENEFITS: Benefit[] = [
 
 export function WhyChooseSection() {
   return (
-    <section id="quem-somos" className="py-24 lg:py-32 bg-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <section id="quem-somos" className="py-16 sm:py-24 lg:py-32 bg-white">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16 lg:mb-20">
+        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
           <span className="text-xs font-semibold uppercase tracking-widest text-[#6b6b66] mb-3 block">
             Diferenciais
           </span>
-          <h2 className="font-display text-4xl lg:text-5xl font-bold text-[#0a0a0a] leading-tight">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0a0a0a] leading-tight">
             Por que escolher a Uyemura Tech?
           </h2>
         </div>
 
         {/* Cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {BENEFITS.map((benefit, index) => (
             <BenefitCard key={benefit.title} benefit={benefit} index={index} />
           ))}
@@ -68,7 +68,7 @@ function BenefitCard({
   return (
     <div
       className={`
-        relative group rounded-2xl p-8 flex flex-col gap-6 transition-all duration-300
+        relative group rounded-2xl p-6 sm:p-8 flex flex-col gap-5 sm:gap-6 transition-all duration-300
         ${
           isHighlighted
             ? "bg-[#0a0a0a] text-white shadow-2xl shadow-black/20 scale-[1.02]"
@@ -102,7 +102,7 @@ function BenefitCard({
       <div className="flex flex-col gap-3">
         <h3
           className={`
-          font-display text-xl font-bold leading-snug
+          font-display text-lg sm:text-xl font-bold leading-snug
           ${isHighlighted ? "text-white" : "text-[#0a0a0a] group-hover:text-white"}
         `}
         >
@@ -110,7 +110,7 @@ function BenefitCard({
         </h3>
         <p
           className={`
-          text-sm leading-relaxed
+          text-xs sm:text-sm leading-relaxed
           ${
             isHighlighted
               ? "text-white/65"
@@ -125,7 +125,7 @@ function BenefitCard({
       {/* Número decorativo */}
       <span
         className={`
-        absolute top-6 right-8 font-display text-7xl font-bold select-none pointer-events-none transition-colors duration-300
+        absolute top-6 right-6 sm:right-8 font-display text-6xl sm:text-7xl font-bold select-none pointer-events-none transition-colors duration-300
         ${
           isHighlighted
             ? "text-white/5"
