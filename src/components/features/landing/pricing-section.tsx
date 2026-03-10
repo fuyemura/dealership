@@ -13,9 +13,9 @@ interface PricingPlan {
 const PRICING_PLANS: PricingPlan[] = [
   {
     name: "Básico",
-    price: "R$ 99",
+    price: "R$ 149,99",
     period: "/mês",
-    description: "Perfeito para pequenas concessionárias",
+    description: "Perfeito para pequenas revendas de veículos.",
     features: [
       "Até 50 veículos",
       "QR Codes básicos",
@@ -23,36 +23,6 @@ const PRICING_PLANS: PricingPlan[] = [
       "Suporte por email",
     ],
     cta: "Começar grátis",
-  },
-  {
-    name: "Profissional",
-    price: "R$ 299",
-    period: "/mês",
-    description: "Para concessionárias em crescimento",
-    features: [
-      "Até 200 veículos",
-      "QR Codes avançados",
-      "Analytics completo",
-      "Suporte prioritário",
-      "Integração com CRM",
-    ],
-    popular: true,
-    cta: "Começar teste grátis",
-  },
-  {
-    name: "Enterprise",
-    price: "R$ 599",
-    period: "/mês",
-    description: "Para grandes redes de concessionárias",
-    features: [
-      "Veículos ilimitados",
-      "QR Codes premium",
-      "Analytics avançado",
-      "Suporte 24/7",
-      "API completa",
-      "Consultoria dedicada",
-    ],
-    cta: "Falar com vendas",
   },
 ];
 
@@ -63,18 +33,18 @@ export function PricingSection() {
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
           <span className="text-xs font-semibold uppercase tracking-widest text-[#6b6b66] mb-3 block">
-            Planos
+            Plano
           </span>
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0a0a0a] leading-tight">
-            Escolha o plano ideal para seu negócio
+            Básico por R$ 149,99/mês
           </h2>
           <p className="text-[#6b6b66] text-base sm:text-lg mt-4 max-w-2xl mx-auto">
-            Comece pequeno e cresça conforme seu negócio. Todos os planos incluem 14 dias grátis.
+            Ideal para começar – 30 dias grátis inclusos.
           </p>
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 lg:gap-8 max-w-5xl mx-auto justify-items-center">
           {PRICING_PLANS.map((plan, index) => (
             <PricingCard key={plan.name} plan={plan} index={index} />
           ))}

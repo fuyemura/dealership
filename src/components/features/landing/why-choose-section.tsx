@@ -1,5 +1,8 @@
+"use client";
+
 import { GitBranch, Lightbulb, QrCode } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useState } from "react";
 
 interface Benefit {
   icon: LucideIcon;
@@ -29,6 +32,8 @@ const BENEFITS: Benefit[] = [
 ];
 
 export function WhyChooseSection() {
+  const [hoveredIndex, setHoveredIndex] = useState<number>(1); // start highlighted on second card
+
   return (
     <section id="quem-somos" className="py-16 sm:py-24 lg:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8">
@@ -45,7 +50,14 @@ export function WhyChooseSection() {
         {/* Cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {BENEFITS.map((benefit, index) => (
-            <BenefitCard key={benefit.title} benefit={benefit} index={index} />
+            <BenefitCard
+              key={benefit.title}
+              benefit={benefit}
+              index={index}
+              isActive={hoveredIndex === index}
+              onHover={() => setHoveredIndex(index)}
+              onLeave={() => setHoveredIndex(1)}
+            />
           ))}
         </div>
       </div>
@@ -53,26 +65,36 @@ export function WhyChooseSection() {
   );
 }
 
+interface BenefitCardProps {
+  benefit: Benefit;
+  index: number;
+  isActive: boolean;
+  onHover: () => void;
+  onLeave: () => void;
+}
+
 function BenefitCard({
   benefit,
   index,
-}: {
-  benefit: Benefit;
-  index: number;
-}) {
+  isActive,
+  onHover,
+  onLeave,
+}: BenefitCardProps) {
   const Icon = benefit.icon;
 
-  // Card do meio tem destaque visual diferenciado
-  const isHighlighted = index === 1;
+  // highlight only if this card is active (hovered)
+  const isHighlighted = isActive;
 
   return (
     <div
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
       className={`
-        relative group rounded-2xl p-6 sm:p-8 flex flex-col gap-5 sm:gap-6 transition-all duration-300
+        relative rounded-2xl p-6 sm:p-8 flex flex-col gap-5 sm:gap-6 transition-all duration-300
         ${
           isHighlighted
             ? "bg-[#0a0a0a] text-white shadow-2xl shadow-black/20 scale-[1.02]"
-            : "bg-[#f5f5f3] text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-1"
+            : "bg-[#f5f5f3] text-[#0a0a0a]"
         }
       `}
     >
@@ -83,7 +105,7 @@ function BenefitCard({
           ${
             isHighlighted
               ? "bg-[#e8f015]"
-              : "bg-[#0a0a0a]/8 group-hover:bg-[#e8f015]"
+              : "bg-[#0a0a0a]/8"
           }
         `}
       >
@@ -92,7 +114,7 @@ function BenefitCard({
           className={
             isHighlighted
               ? "text-[#0a0a0a]"
-              : "text-[#0a0a0a] group-hover:text-[#0a0a0a]"
+              : "text-[#0a0a0a]"
           }
           strokeWidth={1.75}
         />
@@ -103,7 +125,7 @@ function BenefitCard({
         <h3
           className={`
           font-display text-lg sm:text-xl font-bold leading-snug
-          ${isHighlighted ? "text-white" : "text-[#0a0a0a] group-hover:text-white"}
+          ${isHighlighted ? "text-white" : "text-[#0a0a0a]"}
         `}
         >
           {benefit.title}
@@ -114,7 +136,7 @@ function BenefitCard({
           ${
             isHighlighted
               ? "text-white/65"
-              : "text-[#6b6b66] group-hover:text-white/65"
+              : "text-[#6b6b66]"
           }
         `}
         >
@@ -129,7 +151,7 @@ function BenefitCard({
         ${
           isHighlighted
             ? "text-white/5"
-            : "text-[#0a0a0a]/5 group-hover:text-white/5"
+            : "text-[#0a0a0a]/5"
         }
       `}
         aria-hidden="true"

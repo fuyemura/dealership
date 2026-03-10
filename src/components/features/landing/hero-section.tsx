@@ -112,7 +112,7 @@ export function HeroSection() {
       {/* Seta de scroll */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 animate-bounce">
         <span className="text-white/30 text-xs tracking-widest uppercase font-medium">
-          scroll
+          deslizar para baixo
         </span>
         <span className="w-px h-10 bg-gradient-to-b from-white/30 to-transparent" />
       </div>

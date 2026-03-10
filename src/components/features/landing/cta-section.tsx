@@ -9,7 +9,7 @@ export function CtaSection() {
       {/* Imagem de fundo */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/cta-supercar.svg"
+          src="/images/showroom-veiculos-luxo.webp"
           alt="Supercarros em showroom de luxo"
           fill
           className="object-cover object-center"
@@ -41,7 +41,7 @@ export function CtaSection() {
         </h2>
 
         <p className="text-white/60 text-base sm:text-lg mb-8 sm:mb-10 max-w-xl mx-auto leading-relaxed">
-          Junte-se a centenas de concessionárias que já transformaram sua operação com a Uyemura Tech.
+          Junte-se a centenas de revendas de veículos que já transformaram sua operação com a Uyemura Tech.
         </p>
 
         <Button
