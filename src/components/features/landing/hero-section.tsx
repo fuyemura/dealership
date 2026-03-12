@@ -19,17 +19,16 @@ export function HeroSection() {
           className="object-cover object-center"
           sizes="100vw"
         />
-        {/* Overlay gradiente — ajustado para menos escuro */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/10" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
       </div>
 
       {/* Conteúdo */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-8 pt-32 sm:pt-40 lg:pt-48 pb-16 sm:pb-20 lg:pb-24">
+      <div className="relative z-10 page-container pt-32 sm:pt-40 lg:pt-48 pb-16 sm:pb-20 lg:pb-24">
         <div className="max-w-2xl">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/15 rounded-full px-4 py-2 mb-6 sm:mb-8 animate-fade-up hover:bg-white/10 transition-colors duration-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#e8f015] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
             <span className="text-white/80 text-xs font-medium tracking-widest uppercase">
               Plataforma para revenda de veículos
             </span>
@@ -44,7 +43,7 @@ export function HeroSection() {
             <span className="relative inline-block">
               Uyemura Tech
               <span
-                className="absolute -bottom-1 left-0 h-1 bg-[#e8f015] rounded-full animate-fade-up"
+                className="absolute -bottom-1 left-0 h-1 bg-brand-accent rounded-full animate-fade-up"
                 style={{
                   width: "100%",
                   animationDelay: "0.5s",
@@ -72,7 +71,7 @@ export function HeroSection() {
             <Button
               asChild
               size="lg"
-              className="bg-white text-[#0a0a0a] font-semibold rounded-full px-6 sm:px-8 text-sm sm:text-base h-11 sm:h-12 transition-all duration-300 hover:bg-white/95 hover:shadow-lg hover:shadow-white/20 group"
+              className="bg-white text-brand-black hover:bg-white/95 hover:shadow-lg hover:shadow-white/20 font-semibold rounded-full px-6 sm:px-8 text-sm sm:text-base h-11 sm:h-12 group"
             >
               <Link href="/cadastro">
                 Criar conta grátis
@@ -84,9 +83,9 @@ export function HeroSection() {
             </Button>
             <Button
               asChild
-              variant="ghost"
+              variant="outline"
               size="lg"
-              className="text-white hover:text-white hover:bg-white/15 border border-white/25 rounded-full px-6 sm:px-8 text-sm sm:text-base h-11 sm:h-12 font-medium transition-all duration-300"
+              className="text-white border-white/25 hover:bg-white/15 hover:text-white rounded-full px-6 sm:px-8 text-sm sm:text-base h-11 sm:h-12"
             >
               <Link href="#como-funciona">Ver como funciona</Link>
             </Button>
@@ -109,7 +108,7 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Seta de scroll */}
+      {/* Indicador de scroll */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 animate-bounce">
         <span className="text-white/30 text-xs tracking-widest uppercase font-medium">
           deslizar para baixo

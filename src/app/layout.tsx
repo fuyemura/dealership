@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans } from "next/font/google";
+import { Poppins, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const syne = Syne({
+const poppins = Poppins({
   subsets: ["latin"],
   variable: "--font-syne",
   weight: ["400", "500", "600", "700", "800"],
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${syne.variable} ${dmSans.variable}`}>
+    <html lang="pt-BR" className={`${poppins.variable} ${dmSans.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

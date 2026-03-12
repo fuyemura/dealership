@@ -1,88 +1,38 @@
+import Link from "next/link";
 import { Check } from "lucide-react";
-
-interface PricingPlan {
-  name: string;
-  price: string;
-  period: string;
-  description: string;
-  features: string[];
-  popular?: boolean;
-  cta: string;
-}
-
-const PRICING_PLANS: PricingPlan[] = [
-  {
-    name: "Básico",
-    price: "R$ 49,99",
-    period: "/mês",
-    description: "Perfeito para pequenas revendas de veículos.",
-    features: [
-      "Até 50 veículos",
-      "QR Codes básicos",
-      "Dashboard simples",
-      "Suporte padrão por Whatsapp",
-    ],
-    cta: "Começar grátis",
-  },
-  {
-    name: "Premium",
-    price: "R$ 99,99",
-    period: "/mês",
-    description: "Perfeito para pequenas revendas de veículos.",
-    features: [
-      "Até 100 veículos",
-      "QR Codes básicos",
-      "Dashboard simples",
-      "Suporte padrão por Whatsapp",
-    ],
-    cta: "Começar grátis",
-  },
-  {
-    name: "Empresarial",
-    price: "R$ 199,99",
-    period: "/mês",
-    description: "Perfeito para pequenas revendas de veículos.",
-    features: [
-      "Veículos ilimitados",
-      "QR Codes básicos",
-      "Dashboard simples",
-      "Suporte padrão por Whatsapp",
-    ],
-    cta: "Começar grátis",
-  },
-];
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { PRICING_PLANS, type PricingPlan } from "@/content/landing";
 
 export function PricingSection() {
   return (
-    <section id="precos" className="py-16 sm:py-24 lg:py-32 bg-[#f5f5f3]">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
-          <span className="text-xs font-semibold uppercase tracking-widest text-[#6b6b66] mb-3 block">
-            Plano
-          </span>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0a0a0a] leading-tight">
-            Básico por R$ 149,99/mês
+    <section id="precos" className="py-16 sm:py-24 lg:py-32 bg-brand-gray-soft">
+      <div className="page-container">
+        <header className="text-center mb-12 sm:mb-16 lg:mb-20">
+          <span className="section-label">Planos</span>
+          <h2 className="section-title">
+            Simples e transparente.
           </h2>
-          <p className="text-[#6b6b66] text-base sm:text-lg mt-4 max-w-2xl mx-auto">
-            Ideal para começar – 30 dias grátis inclusos.
+          <p className="text-brand-gray-text text-base sm:text-lg mt-4 max-w-2xl mx-auto">
+            Ideal para começar — 30 dias grátis inclusos em todos os planos.
           </p>
-        </div>
+        </header>
 
-        {/* Pricing Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
-          {PRICING_PLANS.map((plan, index) => (
-            <PricingCard key={plan.name} plan={plan} index={index} />
+          {PRICING_PLANS.map((plan) => (
+            <PricingCard key={plan.id} plan={plan} />
           ))}
         </div>
 
-        {/* FAQ Link */}
         <div className="text-center mt-12">
-          <p className="text-[#6b6b66] text-sm">
+          <p className="text-brand-gray-text text-sm">
             Dúvidas sobre os planos?{" "}
-            <a href="#contato" className="text-[#0a0a0a] hover:text-[#e8f015] font-medium transition-colors">
+            <Link
+              href="#contato"
+              className="text-brand-black hover:text-brand-accent font-medium transition-colors"
+            >
               Entre em contato
-            </a>
+            </Link>
           </p>
         </div>
       </div>
@@ -90,69 +40,63 @@ export function PricingSection() {
   );
 }
 
-function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
+function PricingCard({ plan }: { plan: PricingPlan }) {
   return (
     <div
-      className={`
-        relative rounded-2xl p-6 sm:p-8 bg-white border-2 transition-all duration-300 hover:shadow-xl hover:shadow-black/5
-        ${
-          plan.popular
-            ? "border-[#e8f015] shadow-lg shadow-[#e8f015]/10 scale-[1.02]"
-            : "border-[#e8e8e8] hover:border-[#0a0a0a]/20"
-        }
-      `}
+      className={cn(
+        "relative rounded-2xl p-6 sm:p-8 bg-white border-2 transition-all duration-300 hover:shadow-xl hover:shadow-black/5",
+        plan.popular
+          ? "border-brand-accent shadow-lg shadow-brand-accent/10 scale-[1.02]"
+          : "border-brand-gray-mid/60 hover:border-brand-black/20"
+      )}
     >
-      {/* Popular Badge */}
       {plan.popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-[#e8f015] text-[#0a0a0a] text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wide">
+          <span className="bg-brand-accent text-brand-black text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wide">
             Mais Popular
           </span>
         </div>
       )}
 
-      {/* Header */}
       <div className="text-center mb-6">
-        <h3 className="font-display text-xl sm:text-2xl font-bold text-[#0a0a0a] mb-2">
+        <h3 className="font-display text-xl sm:text-2xl font-bold text-brand-black mb-2">
           {plan.name}
         </h3>
-        <p className="text-[#6b6b66] text-sm mb-4">{plan.description}</p>
+        <p className="text-brand-gray-text text-sm mb-4">{plan.description}</p>
 
         <div className="flex items-baseline justify-center gap-1">
-          <span className="font-display text-3xl sm:text-4xl font-bold text-[#0a0a0a]">
+          <span className="font-display text-3xl sm:text-4xl font-bold text-brand-black">
             {plan.price}
           </span>
-          <span className="text-[#6b6b66] text-sm font-medium">{plan.period}</span>
+          <span className="text-brand-gray-text text-sm font-medium">{plan.period}</span>
         </div>
       </div>
 
-      {/* Features */}
       <ul className="space-y-3 mb-8">
-        {plan.features.map((feature, featureIndex) => (
-          <li key={featureIndex} className="flex items-start gap-3">
+        {plan.features.map((feature) => (
+          <li key={feature} className="flex items-start gap-3">
             <Check
               size={16}
-              className="text-[#e8f015] mt-0.5 flex-shrink-0"
+              className="text-brand-accent mt-0.5 flex-shrink-0"
               strokeWidth={2.5}
             />
-            <span className="text-[#6b6b66] text-sm leading-relaxed">{feature}</span>
+            <span className="text-brand-gray-text text-sm leading-relaxed">{feature}</span>
           </li>
         ))}
       </ul>
 
-      {/* CTA Button */}
-      <button
-        className={`
-          w-full py-3 px-6 rounded-full font-semibold text-sm transition-all duration-300
-          ${
-            plan.popular
-              ? "bg-[#0a0a0a] text-white hover:bg-[#0a0a0a]/90 hover:shadow-lg hover:shadow-black/20"
-              : "bg-white text-[#0a0a0a] border-2 border-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white"
-          }
-        `}
+      <Button
+        asChild
+        className={cn(
+          "w-full rounded-full font-semibold",
+          plan.popular
+            ? ""
+            : "bg-white text-brand-black border-2 border-brand-black hover:bg-brand-black hover:text-white"
+        )}
+        variant={plan.popular ? "default" : "outline"}
       >
-        {plan.cta}
-      </button>
+        <Link href="/cadastro">{plan.cta}</Link>
+      </Button>
     </div>
   );
 }

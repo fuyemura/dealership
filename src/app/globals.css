@@ -28,14 +28,31 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Sem !important — line-height e overflow gerenciados pelo Tailwind por componente */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-syne), sans-serif;
-    line-height: 1.3 !important;
-    overflow: visible !important;
-    padding-bottom: 0.2em;
   }
 }
 
+/* ─── Padrões reutilizáveis de UI ─────────────────────────────────────────── */
+@layer components {
+  /* Label de seção (ex: "Funcionalidades", "Diferenciais") */
+  .section-label {
+    @apply block mb-3 text-xs font-semibold uppercase tracking-widest text-brand-gray-text;
+  }
+
+  /* Título principal de seção */
+  .section-title {
+    @apply font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-brand-black;
+  }
+
+  /* Container padrão de página */
+  .page-container {
+    @apply max-w-7xl mx-auto px-6 lg:px-8;
+  }
+}
+
+/* ─── Utilitários de animação e efeitos ──────────────────────────────────── */
 @layer utilities {
   .animate-fade-up {
     animation: fadeUp 0.7s ease forwards;
@@ -52,6 +69,7 @@
     }
   }
 
+  /* Link de navegação com underline animado */
   .nav-link {
     position: relative;
   }
@@ -71,6 +89,7 @@
     width: 100%;
   }
 
+  /* Textura de grain sobre seções com imagem de fundo */
   .grain-overlay::before {
     content: '';
     position: absolute;

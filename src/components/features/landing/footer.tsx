@@ -2,33 +2,32 @@ import Link from "next/link";
 import { Facebook, Twitter, Linkedin } from "lucide-react";
 
 const FOOTER_NAV = [
-  { href: "#inicio", label: "Início" },
-  { href: "#quem-somos", label: "Sobre" },
+  { href: "#inicio",        label: "Início" },
+  { href: "#quem-somos",    label: "Sobre" },
   { href: "#como-funciona", label: "Como Funciona" },
-  { href: "#precos", label: "Preços" },
-  { href: "/contato", label: "Entre em Contato" },
+  { href: "#precos",        label: "Preços" },
+  { href: "/contato",       label: "Entre em Contato" },
 ] as const;
 
 const FOOTER_LEGAL = [
   { href: "/privacidade", label: "Política de Privacidade" },
-  { href: "/termos", label: "Termos de Serviço" },
-  { href: "/direitos", label: "Informações de Direitos" },
+  { href: "/termos",      label: "Termos de Serviço" },
+  { href: "/direitos",    label: "Informações de Direitos" },
 ] as const;
 
 const SOCIAL_LINKS = [
   { href: "https://facebook.com", label: "Facebook", icon: Facebook },
-  { href: "https://twitter.com", label: "Twitter", icon: Twitter },
+  { href: "https://twitter.com",  label: "Twitter",  icon: Twitter },
   { href: "https://linkedin.com", label: "LinkedIn", icon: Linkedin },
 ] as const;
 
 export function Footer() {
   return (
-    <footer className="bg-[#0a0a0a] text-white border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8 py-12 sm:py-16 lg:py-20">
+    <footer className="bg-brand-black text-white border-t border-white/5">
+      <div className="page-container py-12 sm:py-16 lg:py-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 lg:gap-16">
           {/* Marca */}
           <div className="flex flex-col gap-5">
-            {/* Logo */}
             <Link
               href="/"
               className="flex items-center gap-2 font-display font-semibold text-base sm:text-lg w-fit"
@@ -47,10 +46,9 @@ export function Footer() {
             </Link>
 
             <p className="text-white/50 text-xs sm:text-sm leading-relaxed max-w-xs">
-              Transformando Operações de concessionárias com tecnologia acessível e inovadora.
+              Transformando operações de revendas com tecnologia acessível e inovadora.
             </p>
 
-            {/* Redes sociais */}
             <div className="flex items-center gap-3 mt-1">
               {SOCIAL_LINKS.map(({ href, label, icon: Icon }) => (
                 <a
@@ -68,7 +66,7 @@ export function Footer() {
           </div>
 
           {/* Navegação */}
-          <div>
+          <nav aria-label="Links de navegação do rodapé">
             <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-5">
               Navegação
             </p>
@@ -84,10 +82,10 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
           {/* Legal */}
-          <div>
+          <nav aria-label="Links legais do rodapé">
             <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-5">
               Legal
             </p>
@@ -103,17 +101,14 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
         </div>
 
-        {/* Linha de rodapé */}
         <div className="mt-14 pt-6 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/25 text-xs">
             © {new Date().getFullYear()} Uyemura Tech. Todos os direitos reservados.
           </p>
-          <p className="text-white/25 text-xs">
-            Feito com ♥ no Brasil
-          </p>
+          <p className="text-white/25 text-xs">Feito com ♥ no Brasil</p>
         </div>
       </div>
     </footer>
