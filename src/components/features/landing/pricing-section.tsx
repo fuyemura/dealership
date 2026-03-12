@@ -13,14 +13,40 @@ interface PricingPlan {
 const PRICING_PLANS: PricingPlan[] = [
   {
     name: "Básico",
-    price: "R$ 149,99",
+    price: "R$ 49,99",
     period: "/mês",
     description: "Perfeito para pequenas revendas de veículos.",
     features: [
       "Até 50 veículos",
       "QR Codes básicos",
       "Dashboard simples",
-      "Suporte por email",
+      "Suporte padrão por Whatsapp",
+    ],
+    cta: "Começar grátis",
+  },
+  {
+    name: "Premium",
+    price: "R$ 99,99",
+    period: "/mês",
+    description: "Perfeito para pequenas revendas de veículos.",
+    features: [
+      "Até 100 veículos",
+      "QR Codes básicos",
+      "Dashboard simples",
+      "Suporte padrão por Whatsapp",
+    ],
+    cta: "Começar grátis",
+  },
+  {
+    name: "Empresarial",
+    price: "R$ 199,99",
+    period: "/mês",
+    description: "Perfeito para pequenas revendas de veículos.",
+    features: [
+      "Veículos ilimitados",
+      "QR Codes básicos",
+      "Dashboard simples",
+      "Suporte padrão por Whatsapp",
     ],
     cta: "Começar grátis",
   },
@@ -44,7 +70,7 @@ export function PricingSection() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 lg:gap-8 max-w-5xl mx-auto justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {PRICING_PLANS.map((plan, index) => (
             <PricingCard key={plan.name} plan={plan} index={index} />
           ))}

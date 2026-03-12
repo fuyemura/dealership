@@ -9,7 +9,7 @@
 
     --brand-black: #0a0a0a;
     --brand-white: #fafafa;
-    --brand-accent: #e8f015;   /* amarelo elétrico — acento de destaque */
+    --brand-accent: #e8f015;
     --brand-gray-soft: #f5f5f3;
     --brand-gray-mid: #d4d4d0;
     --brand-gray-text: #6b6b66;
@@ -30,19 +30,13 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-syne), sans-serif;
+    line-height: 1.3 !important;
+    overflow: visible !important;
+    padding-bottom: 0.2em;
   }
 }
 
 @layer utilities {
-  .font-display {
-    font-family: var(--font-syne), sans-serif;
-  }
-
-  .font-sans {
-    font-family: var(--font-dm-sans), sans-serif;
-  }
-
-  /* Animação de fade-up para seções */
   .animate-fade-up {
     animation: fadeUp 0.7s ease forwards;
   }
@@ -58,7 +52,6 @@
     }
   }
 
-  /* Underline animado para links de nav */
   .nav-link {
     position: relative;
   }
@@ -78,7 +71,6 @@
     width: 100%;
   }
 
-  /* Grain overlay para as seções com imagem de fundo */
   .grain-overlay::before {
     content: '';
     position: absolute;

@@ -46,9 +46,9 @@ export function FeaturesSection() {
           <span className="text-xs font-semibold uppercase tracking-widest text-[#6b6b66] mb-3 block">
             Funcionalidades
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0a0a0a] leading-tight">
-            Tudo que você precisa, num só lugar.
-          </h2>
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0a0a0a] mb-2">
+              Tudo que você precisa, num só lugar.
+            </h2>
         </div>
 
         {/* Feature items */}
@@ -77,7 +77,7 @@ function FeatureItem({ feature }: { feature: Feature }) {
           {feature.tag}
         </span>
 
-        <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0a0a0a] leading-snug">
+        <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0a0a0a] leading-tight [padding-bottom:0.3em]">
           {feature.title}
         </h3>
 

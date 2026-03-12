@@ -13,7 +13,7 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/showroom-veiculos.webp"
-          alt="Concessionária de veículos de luxo"
+          alt="Revenda de veículos de luxo"
           fill
           priority
           className="object-cover object-center"
@@ -31,7 +31,7 @@ export function HeroSection() {
           <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/15 rounded-full px-4 py-2 mb-6 sm:mb-8 animate-fade-up hover:bg-white/10 transition-colors duration-300">
             <span className="w-1.5 h-1.5 rounded-full bg-[#e8f015] animate-pulse" />
             <span className="text-white/80 text-xs font-medium tracking-widest uppercase">
-              Plataforma para concessionárias
+              Plataforma para revenda de veículos
             </span>
           </div>
 
@@ -61,7 +61,7 @@ export function HeroSection() {
             className="text-white/70 text-base sm:text-lg lg:text-xl font-light leading-relaxed mb-8 sm:mb-10 max-w-xl animate-fade-up"
             style={{ animationDelay: "0.2s", opacity: 0, animationFillMode: "forwards" }}
           >
-            Você está pronto para revolucionar a experiência da sua loja de veículos?
+            Você está pronto para revolucionar a experiência da sua revenda de veículos?
           </p>
 
           {/* CTAs */}
