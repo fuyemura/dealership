@@ -2,17 +2,17 @@ import Link from "next/link";
 import { Facebook, Twitter, Linkedin } from "lucide-react";
 
 const FOOTER_NAV = [
-  { href: "#inicio",        label: "Início" },
-  { href: "#quem-somos",    label: "Sobre" },
-  { href: "#como-funciona", label: "Como Funciona" },
-  { href: "#precos",        label: "Preços" },
+  { href: "/#inicio",        label: "Início" },
+  { href: "/#quem-somos",    label: "Sobre" },
+  { href: "/#como-funciona", label: "Como Funciona" },
+  { href: "/#precos",        label: "Preços" },
   { href: "/contato",       label: "Entre em Contato" },
 ] as const;
 
 const FOOTER_LEGAL = [
-  { href: "/privacidade", label: "Política de Privacidade" },
-  { href: "/termos",      label: "Termos de Serviço" },
-  { href: "/direitos",    label: "Informações de Direitos" },
+  { href: "/politica-de-privacidade", label: "Política de Privacidade" },
+  { href: "/termos-de-servico",       label: "Termos de Serviço" },
+  { href: "/informacoes-de-direitos", label: "Informações de Direitos" },
 ] as const;
 
 const SOCIAL_LINKS = [
@@ -46,7 +46,7 @@ export function Footer() {
             </Link>
 
             <p className="text-white/50 text-xs sm:text-sm leading-relaxed max-w-xs">
-              Transformando operações de revendas com tecnologia acessível e inovadora.
+              Transformando operações de revendas de veículos com tecnologia acessível e inovadora.
             </p>
 
             <div className="flex items-center gap-3 mt-1">

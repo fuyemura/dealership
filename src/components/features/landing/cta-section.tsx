@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
-const TRUST_ITEMS = ["Sem cartão de crédito", "Setup em minutos", "Suporte dedicado"] as const;
+const TRUST_ITEMS = ["Com cartão de crédito", "Setup em minutos", "Suporte dedicado"] as const;
 
 export function CtaSection() {
   return (
@@ -41,7 +41,7 @@ export function CtaSection() {
         </h2>
 
         <p className="text-white/60 text-base sm:text-lg mb-8 sm:mb-10 max-w-xl mx-auto leading-relaxed">
-          Junte-se a centenas de revendas que já transformaram sua operação com a Uyemura Tech.
+          Junte-se a centenas de revendas de veículos já transformaram sua operação com a Uyemura Tech.
         </p>
 
         <Button

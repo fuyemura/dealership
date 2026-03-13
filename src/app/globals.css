@@ -43,7 +43,7 @@
 
   /* Título principal de seção */
   .section-title {
-    @apply font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-brand-black;
+    @apply font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-black;
   }
 
   /* Container padrão de página */
