@@ -6,7 +6,7 @@ const FOOTER_NAV = [
   { href: "/#quem-somos",    label: "Sobre" },
   { href: "/#como-funciona", label: "Como Funciona" },
   { href: "/#precos",        label: "Preços" },
-  { href: "/contato",       label: "Entre em Contato" },
+  { href: "/contato",        label: "Entre em Contato" },
 ] as const;
 
 const FOOTER_LEGAL = [

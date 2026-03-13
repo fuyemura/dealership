@@ -117,6 +117,6 @@ export const PRICING_PLANS: PricingPlan[] = [
       "Dashboard completo com métricas",
       "Suporte dedicado",
     ],
-    cta: "Falar com vendas",
+    cta: "Começar grátis",
   },
 ];
