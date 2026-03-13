@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { NavbarMobile } from "./navbar-mobile";
 
 const NAV_LINKS = [
-  { href: "#inicio", label: "Início" },
-  { href: "#quem-somos", label: "Quem Somos" },
-  { href: "#como-funciona", label: "Como Funciona" },
-  { href: "#precos", label: "Preços" },
+  { href: "/#inicio", label: "Início" },
+  { href: "/#quem-somos", label: "Quem Somos" },
+  { href: "/#como-funciona", label: "Como Funciona" },
+  { href: "/#precos", label: "Preços" },
 ] as const;
 
 export function Navbar() {
