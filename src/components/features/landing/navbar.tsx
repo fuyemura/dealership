@@ -53,7 +53,7 @@ export function Navbar() {
             size="sm"
             className="text-brand-black hover:text-brand-black hover:bg-brand-black/5 text-xs sm:text-sm"
           >
-            <Link href="/entrar">Entrar</Link>
+            <Link href="/login">Entrar</Link>
           </Button>
           <Button
             asChild
