@@ -1,523 +1,553 @@
--- ============================================================
--- DADOS DE TESTE — Uyemura Tech SaaS Automotivo
--- Gerado para o schema: dealership
--- Ordem: localizacao → empresa → dominio → usuario → veiculo → veiculo_foto → qr_code
--- ============================================================
+-- =============================================================================
+-- Uyemura Tech — Massa de Dados para Teste
+-- Schema: dealership
+-- 3 empresas | 3 usuários por empresa (9 total) | 60 veículos distribuídos
+-- =============================================================================
 
-BEGIN;
+-- =============================================================================
+-- 1. LOCALIZAÇÕES
+-- =============================================================================
 
--- ─────────────────────────────────────────────────────────────
--- 1. LOCALIZACAO
--- ─────────────────────────────────────────────────────────────
-INSERT INTO dealership.localizacao (id, codigo_ibge, logradouro, numero_logradouro, complemento_logradouro, bairro, cidade, estado)
-VALUES
-  ('a1000000-0000-0000-0000-000000000001', 3550308, 'Avenida Paulista',        1578, 'Conjunto 42',  'Bela Vista',    'São Paulo',       'SP'),
-  ('a1000000-0000-0000-0000-000000000002', 3304557, 'Rua da Assembleia',        10,  'Sala 201',     'Centro',        'Rio de Janeiro',  'RJ'),
-  ('a1000000-0000-0000-0000-000000000003', 4106902, 'Rua XV de Novembro',       980, NULL,           'Centro',        'Curitiba',        'PR');
+INSERT INTO dealership.localizacao (id, codigo_ibge, logradouro, numero_logradouro, complemento_logradouro, bairro, cidade, estado, criado_em, atualizado_em) VALUES
+('11111111-0000-0000-0000-000000000001', 3550308, 'Avenida Paulista',         1578, 'Conjunto 42',  'Bela Vista',     'São Paulo',       'SP', NOW(), NOW()),
+('11111111-0000-0000-0000-000000000002', 3304557, 'Rua da Assembleia',         10, '12º Andar',     'Centro',         'Rio de Janeiro',  'RJ', NOW(), NOW()),
+('11111111-0000-0000-0000-000000000003', 4106902, 'Avenida Sete de Setembro', 4214, 'Sala 301',     'Batel',          'Curitiba',        'PR', NOW(), NOW());
 
 
--- ─────────────────────────────────────────────────────────────
--- 2. EMPRESA
--- ─────────────────────────────────────────────────────────────
-INSERT INTO dealership.empresa (
-  id, cnpj, inscricao_municipal, inscricao_estadual,
-  nome_legal_empresa, nome_fantasia_empresa,
-  localizacao_id, telefone_principal, telefone_secundario,
-  email_empresa, nome_representante, cpf_representante,
-  cargo_representante, telefone_representante
-)
-VALUES
-  (
-    'b1000000-0000-0000-0000-000000000001',
-    '12345678000191', 'CCM-0012345', '111.222.333.004-57',
-    'Auto Premium Ltda', 'Auto Premium',
-    'a1000000-0000-0000-0000-000000000001',
-    '11987650001', '1132540001',
-    'contato@autopremium.com.br',
-    'Douglas Cardoso Uyemura', '12345678901', 'Diretor Geral', '11987650001'
-  ),
-  (
-    'b1000000-0000-0000-0000-000000000002',
-    '98765432000155', 'CCM-0098765', '222.333.444.005-12',
-    'Garage Carioca Veículos S/A', 'Garage Carioca',
-    'a1000000-0000-0000-0000-000000000002',
-    '21987650002', '2132540002',
-    'vendas@garagecarioca.com.br',
-    'Yasmin Gazal', '98765432100', 'Sócia Administradora', '21987650002'
-  ),
-  (
-    'b1000000-0000-0000-0000-000000000003',
-    '11223344000177', 'CCM-0011223', '333.444.555.006-89',
-    'Sul Motors Comércio de Veículos Ltda', 'Sul Motors',
-    'a1000000-0000-0000-0000-000000000003',
-    '41987650003', NULL,
-    'atendimento@sulmotors.com.br',
-    'Flávio Cavalcante Uyemura', '11223344500', 'CEO', '41987650003'
-  );
+-- =============================================================================
+-- 2. DOMÍNIOS (enum store)
+-- =============================================================================
 
-
--- ─────────────────────────────────────────────────────────────
--- 3. DOMINIO (marca, modelo, combustivel, cambio, situacao, papel)
--- ─────────────────────────────────────────────────────────────
-
--- Papel (roles de usuário)
+-- grupo: marca
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-  ('d0000000-0000-0000-0001-000000000001', 'papel', 'administrador'),
-  ('d0000000-0000-0000-0001-000000000002', 'papel', 'gerente'),
-  ('d0000000-0000-0000-0001-000000000003', 'papel', 'usuario');
+('aaaaaaaa-0001-0000-0000-000000000001', 'marca', 'Toyota'),
+('aaaaaaaa-0001-0000-0000-000000000002', 'marca', 'Honda'),
+('aaaaaaaa-0001-0000-0000-000000000003', 'marca', 'Volkswagen'),
+('aaaaaaaa-0001-0000-0000-000000000004', 'marca', 'Chevrolet'),
+('aaaaaaaa-0001-0000-0000-000000000005', 'marca', 'Hyundai'),
+('aaaaaaaa-0001-0000-0000-000000000006', 'marca', 'Fiat'),
+('aaaaaaaa-0001-0000-0000-000000000007', 'marca', 'Ford'),
+('aaaaaaaa-0001-0000-0000-000000000008', 'marca', 'Nissan');
 
--- Marca
+-- grupo: modelo
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-  ('d0000000-0000-0000-0002-000000000001', 'marca', 'Toyota'),
-  ('d0000000-0000-0000-0002-000000000002', 'marca', 'Honda'),
-  ('d0000000-0000-0000-0002-000000000003', 'marca', 'Volkswagen'),
-  ('d0000000-0000-0000-0002-000000000004', 'marca', 'Chevrolet'),
-  ('d0000000-0000-0000-0002-000000000005', 'marca', 'Ford'),
-  ('d0000000-0000-0000-0002-000000000006', 'marca', 'Hyundai'),
-  ('d0000000-0000-0000-0002-000000000007', 'marca', 'Jeep'),
-  ('d0000000-0000-0000-0002-000000000008', 'marca', 'BMW'),
-  ('d0000000-0000-0000-0002-000000000009', 'marca', 'Mercedes-Benz'),
-  ('d0000000-0000-0000-0002-000000000010', 'marca', 'Fiat');
+('aaaaaaaa-0002-0000-0000-000000000001', 'modelo', 'Corolla'),
+('aaaaaaaa-0002-0000-0000-000000000002', 'modelo', 'Civic'),
+('aaaaaaaa-0002-0000-0000-000000000003', 'modelo', 'Gol'),
+('aaaaaaaa-0002-0000-0000-000000000004', 'modelo', 'Onix'),
+('aaaaaaaa-0002-0000-0000-000000000005', 'modelo', 'HB20'),
+('aaaaaaaa-0002-0000-0000-000000000006', 'modelo', 'Argo'),
+('aaaaaaaa-0002-0000-0000-000000000007', 'modelo', 'Ka'),
+('aaaaaaaa-0002-0000-0000-000000000008', 'modelo', 'Kicks'),
+('aaaaaaaa-0002-0000-0000-000000000009', 'modelo', 'Polo'),
+('aaaaaaaa-0002-0000-0000-000000000010', 'modelo', 'Hilux');
 
--- Modelo
+-- grupo: combustivel
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-  ('d0000000-0000-0000-0003-000000000001', 'modelo', 'Corolla'),
-  ('d0000000-0000-0000-0003-000000000002', 'modelo', 'Civic'),
-  ('d0000000-0000-0000-0003-000000000003', 'modelo', 'Jetta'),
-  ('d0000000-0000-0000-0003-000000000004', 'modelo', 'Onix'),
-  ('d0000000-0000-0000-0003-000000000005', 'modelo', 'Ka'),
-  ('d0000000-0000-0000-0003-000000000006', 'modelo', 'HB20'),
-  ('d0000000-0000-0000-0003-000000000007', 'modelo', 'Compass'),
-  ('d0000000-0000-0000-0003-000000000008', 'modelo', 'Serie 3'),
-  ('d0000000-0000-0000-0003-000000000009', 'modelo', 'Classe C'),
-  ('d0000000-0000-0000-0003-000000000010', 'modelo', 'Argo'),
-  ('d0000000-0000-0000-0003-000000000011', 'modelo', 'Hilux'),
-  ('d0000000-0000-0000-0003-000000000012', 'modelo', 'HR-V'),
-  ('d0000000-0000-0000-0003-000000000013', 'modelo', 'Polo'),
-  ('d0000000-0000-0000-0003-000000000014', 'modelo', 'Tracker'),
-  ('d0000000-0000-0000-0003-000000000015', 'modelo', 'Bronco Sport');
+('aaaaaaaa-0003-0000-0000-000000000001', 'combustivel', 'Gasolina'),
+('aaaaaaaa-0003-0000-0000-000000000002', 'combustivel', 'Flex'),
+('aaaaaaaa-0003-0000-0000-000000000003', 'combustivel', 'Etanol'),
+('aaaaaaaa-0003-0000-0000-000000000004', 'combustivel', 'Diesel'),
+('aaaaaaaa-0003-0000-0000-000000000005', 'combustivel', 'Elétrico'),
+('aaaaaaaa-0003-0000-0000-000000000006', 'combustivel', 'Híbrido');
 
--- Combustível
+-- grupo: cambio
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-  ('d0000000-0000-0000-0004-000000000001', 'combustivel', 'Gasolina'),
-  ('d0000000-0000-0000-0004-000000000002', 'combustivel', 'Etanol'),
-  ('d0000000-0000-0000-0004-000000000003', 'combustivel', 'Flex'),
-  ('d0000000-0000-0000-0004-000000000004', 'combustivel', 'Diesel'),
-  ('d0000000-0000-0000-0004-000000000005', 'combustivel', 'Elétrico'),
-  ('d0000000-0000-0000-0004-000000000006', 'combustivel', 'Híbrido');
+('aaaaaaaa-0004-0000-0000-000000000001', 'cambio', 'Manual'),
+('aaaaaaaa-0004-0000-0000-000000000002', 'cambio', 'Automático'),
+('aaaaaaaa-0004-0000-0000-000000000003', 'cambio', 'CVT'),
+('aaaaaaaa-0004-0000-0000-000000000004', 'cambio', 'Automatizado');
 
--- Câmbio
+-- grupo: tipo_direcao
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-  ('d0000000-0000-0000-0005-000000000001', 'cambio', 'Manual'),
-  ('d0000000-0000-0000-0005-000000000002', 'cambio', 'Automático'),
-  ('d0000000-0000-0000-0005-000000000003', 'cambio', 'CVT'),
-  ('d0000000-0000-0000-0005-000000000004', 'cambio', 'Automatizado');
+('aaaaaaaa-0005-0000-0000-000000000001', 'tipo_direcao', 'Hidráulica'),
+('aaaaaaaa-0005-0000-0000-000000000002', 'tipo_direcao', 'Elétrica'),
+('aaaaaaaa-0005-0000-0000-000000000003', 'tipo_direcao', 'Manual');
 
--- Situação
+-- grupo: situacao_veiculo
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-  ('d0000000-0000-0000-0006-000000000001', 'situacao', 'Disponível'),
-  ('d0000000-0000-0000-0006-000000000002', 'situacao', 'Em Negociação'),
-  ('d0000000-0000-0000-0006-000000000003', 'situacao', 'Vendido'),
-  ('d0000000-0000-0000-0006-000000000004', 'situacao', 'Reservado');
+('aaaaaaaa-0006-0000-0000-000000000001', 'situacao_veiculo', 'Disponível'),
+('aaaaaaaa-0006-0000-0000-000000000002', 'situacao_veiculo', 'Reservado'),
+('aaaaaaaa-0006-0000-0000-000000000003', 'situacao_veiculo', 'Vendido'),
+('aaaaaaaa-0006-0000-0000-000000000004', 'situacao_veiculo', 'Em Manutenção');
+
+-- grupo: papel_usuario
+INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
+('aaaaaaaa-0007-0000-0000-000000000001', 'papel_usuario', 'administrador'),
+('aaaaaaaa-0007-0000-0000-000000000002', 'papel_usuario', 'gerente'),
+('aaaaaaaa-0007-0000-0000-000000000003', 'papel_usuario', 'usuario');
+
+-- grupo: tipo_arquivo_veiculo
+INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
+('aaaaaaaa-0008-0000-0000-000000000001', 'tipo_arquivo_veiculo', 'foto'),
+('aaaaaaaa-0008-0000-0000-000000000002', 'tipo_arquivo_veiculo', 'laudo');
+
+-- grupo: situacao_assinatura
+INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
+('aaaaaaaa-0009-0000-0000-000000000001', 'situacao_assinatura', 'ativa'),
+('aaaaaaaa-0009-0000-0000-000000000002', 'situacao_assinatura', 'trial'),
+('aaaaaaaa-0009-0000-0000-000000000003', 'situacao_assinatura', 'inadimplente'),
+('aaaaaaaa-0009-0000-0000-000000000004', 'situacao_assinatura', 'cancelada'),
+('aaaaaaaa-0009-0000-0000-000000000005', 'situacao_assinatura', 'expirada');
+
+-- grupo: ciclo_cobranca
+INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
+('aaaaaaaa-0010-0000-0000-000000000001', 'ciclo_cobranca', 'mensal'),
+('aaaaaaaa-0010-0000-0000-000000000002', 'ciclo_cobranca', 'anual');
+
+-- grupo: situacao_fatura
+INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
+('aaaaaaaa-0011-0000-0000-000000000001', 'situacao_fatura', 'pendente'),
+('aaaaaaaa-0011-0000-0000-000000000002', 'situacao_fatura', 'paga'),
+('aaaaaaaa-0011-0000-0000-000000000003', 'situacao_fatura', 'atrasada'),
+('aaaaaaaa-0011-0000-0000-000000000004', 'situacao_fatura', 'cancelada'),
+('aaaaaaaa-0011-0000-0000-000000000005', 'situacao_fatura', 'estornada');
+
+-- grupo: metodo_pagamento
+INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
+('aaaaaaaa-0012-0000-0000-000000000001', 'metodo_pagamento', 'cartao_credito'),
+('aaaaaaaa-0012-0000-0000-000000000002', 'metodo_pagamento', 'boleto'),
+('aaaaaaaa-0012-0000-0000-000000000003', 'metodo_pagamento', 'pix');
+
+-- grupo: situacao_manutencao
+INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
+('aaaaaaaa-0013-0000-0000-000000000001', 'situacao_manutencao', 'pendente'),
+('aaaaaaaa-0013-0000-0000-000000000002', 'situacao_manutencao', 'em_andamento'),
+('aaaaaaaa-0013-0000-0000-000000000003', 'situacao_manutencao', 'concluida');
 
 
--- ─────────────────────────────────────────────────────────────
--- 4. USUARIO
--- ─────────────────────────────────────────────────────────────
-INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nome_usuario, papel_id)
-VALUES
-  -- Auto Premium (empresa 1)
-  (
-    'c1000000-0000-0000-0000-000000000001',
-    '745dab3b-405d-4b6a-bf3e-cb9a375a5a73',
-    'f1000000-aaaa-bbbb-cccc-000000000001',
-    'doduyemura@gmail.com', '12345678901',
-    'Douglas Cardoso Uyemura',
-    'd0000000-0000-0000-0001-000000000001'   -- administrador
-  ),
-  (
-    'c1000000-0000-0000-0000-000000000002',
-    'b1000000-0000-0000-0000-000000000001',
-    'f1000000-aaaa-bbbb-cccc-000000000002',
-    'ana@autopremium.com.br', '23456789012',
-    'Ana Paula Mendes',
-    'd0000000-0000-0000-0001-000000000002'   -- gerente
-  ),
-  -- Garage Carioca (empresa 2)
-  (
-    'c1000000-0000-0000-0000-000000000003',
-    '81fe3553-d170-42e1-b07a-c298fc5feba3',
-    'f1000000-aaaa-bbbb-cccc-000000000003',
-    'Yasmin Gazal@ggmail.com', '98765432100',
-    'Yasmin Gazal',
-    'd0000000-0000-0000-0001-000000000001'   -- administrador
-  ),
-  -- Sul Motors (empresa 3)
-  (
-    'c1000000-0000-0000-0000-000000000004',
-    '666fcae2-6ac1-4cf9-8c5c-5589fd04b831',
-    'f1000000-aaaa-bbbb-cccc-000000000004',
-    'fuyemura@gmail.com', '11223344500',
-    'flávio Cavalcante Uyemura',
-    'd0000000-0000-0000-0001-000000000001'   -- administrador
-  ),
-  (
-    'c1000000-0000-0000-0000-000000000005',
-    'b1000000-0000-0000-0000-000000000003',
-    'f1000000-aaaa-bbbb-cccc-000000000005',
-    'julia@sulmotors.com.br', '33445566700',
-    'Júlia Martins Rocha',
-    'd0000000-0000-0000-0001-000000000003'   -- usuario
-  );
+-- =============================================================================
+-- 3. EMPRESAS
+-- =============================================================================
 
-
--- ─────────────────────────────────────────────────────────────
--- 5. VEICULO
--- empresa 1 = Auto Premium (SP) — 6 veículos
--- empresa 2 = Garage Carioca (RJ) — 5 veículos
--- empresa 3 = Sul Motors (PR)    — 4 veículos
--- ─────────────────────────────────────────────────────────────
-INSERT INTO dealership.veiculo (
-  id, empresa_id, placa, renavam,
-  marca_veiculo_id, modelo_veiculo_id, combustivel_veiculo_id,
-  numero_chassi, ano_modelo, ano_fabricacao, cor_veiculo,
-  quilometragem, cambio_veiculo_id,
-  preco_venda_veiculo, descricao,
-  situacao_veiculo_id, vendido_em,
-  criado_por, atualizado_por
-)
-VALUES
-
--- ── Auto Premium ──────────────────────────────────────────────
-
+INSERT INTO dealership.empresa (id, cnpj, inscricao_municipal, inscricao_estadual, nome_legal_empresa, nome_fantasia_empresa, localizacao_id, telefone_principal, telefone_secundario, email_empresa, nome_representante, cargo_representante, telefone_representante, criado_em, atualizado_em) VALUES
 (
-  'e1000000-0000-0000-0000-000000000001',
-  'b1000000-0000-0000-0000-000000000001',
-  'ABC1D23', '12345678901',
-  'd0000000-0000-0000-0002-000000000001', -- Toyota
-  'd0000000-0000-0000-0003-000000000001', -- Corolla
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9BWZZZ377VT004251', 2022, 2021, 'Prata',
-  28000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  119900.00,
-  'Toyota Corolla XEi 2.0 Flex. Único dono, revisões em dia na concessionária. IPVA 2025 pago. Couro, multimídia Toyota Connect, câmera de ré.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
+  'bbbbbbbb-0001-0000-0000-000000000001',
+  '12345678000101',
+  'IM-SP-001234',
+  'IE-SP-001234567',
+  'AutoElite Comércio de Veículos Ltda',
+  'AutoElite',
+  '11111111-0000-0000-0000-000000000001',
+  '(11) 3456-7890',
+  '(11) 3456-7891',
+  'contato@autoelite.com.br',
+  'Ricardo Mendes',
+  'Diretor Geral',
+  '(11) 99123-4567',
+  NOW(), NOW()
+),
+(
+  'bbbbbbbb-0001-0000-0000-000000000002',
+  '23456789000102',
+  'IM-RJ-005678',
+  'IE-RJ-005678901',
+  'Carioca Motors Veículos S/A',
+  'Carioca Motors',
+  '11111111-0000-0000-0000-000000000002',
+  '(21) 2567-8901',
+  '(21) 2567-8902',
+  'atendimento@cariocamotors.com.br',
+  'Fernanda Oliveira',
+  'Sócia Administradora',
+  '(21) 98765-4321',
+  NOW(), NOW()
+),
+(
+  'bbbbbbbb-0001-0000-0000-000000000003',
+  '34567890000103',
+  'IM-PR-009012',
+  'IE-PR-009012345',
+  'Sul Premium Automóveis Eireli',
+  'Sul Premium',
+  '11111111-0000-0000-0000-000000000003',
+  '(41) 3321-6789',
   NULL,
-  'c1000000-0000-0000-0000-000000000001',
-  'c1000000-0000-0000-0000-000000000001'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000002',
-  'b1000000-0000-0000-0000-000000000001',
-  'BCD2E34', '23456789012',
-  'd0000000-0000-0000-0002-000000000008', -- BMW
-  'd0000000-0000-0000-0003-000000000008', -- Serie 3
-  'd0000000-0000-0000-0004-000000000001', -- Gasolina
-  'WBA5A5C55GG123456', 2023, 2023, 'Preto',
-  12500,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  289900.00,
-  'BMW 320i Sport 2.0 Turbo. Teto solar panorâmico, bancos em couro Dakota, head-up display, sensor de estacionamento 360°. Garantia de fábrica até 2026.',
-  'd0000000-0000-0000-0006-000000000002', -- Em Negociação
-  NULL,
-  'c1000000-0000-0000-0000-000000000002',
-  'c1000000-0000-0000-0000-000000000002'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000003',
-  'b1000000-0000-0000-0000-000000000001',
-  'CDE3F45', '34567890123',
-  'd0000000-0000-0000-0002-000000000007', -- Jeep
-  'd0000000-0000-0000-0003-000000000007', -- Compass
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9CF3B53E9KG456789', 2024, 2023, 'Branco',
-  8700,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  199900.00,
-  'Jeep Compass Limited 1.3 Turbo Flex. Configuração topo de linha, AWD, couro, multimídia 10", 4x4 select terrain. Único dono, sem dívidas.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000002',
-  'c1000000-0000-0000-0000-000000000002'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000004',
-  'b1000000-0000-0000-0000-000000000001',
-  'DEF4G56', '45678901234',
-  'd0000000-0000-0000-0002-000000000003', -- Volkswagen
-  'd0000000-0000-0000-0003-000000000003', -- Jetta
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9BWZZZ1JZ3T123001', 2020, 2020, 'Cinza',
-  54000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  98500.00,
-  'VW Jetta Comfortline 250 TSI. Bancos em couro, multimídia com CarPlay/Android Auto, freio a disco nas quatro rodas, alarme de fábrica. Revisões feitas na VW.',
-  'd0000000-0000-0000-0006-000000000003', -- Vendido
-  '2025-01-15 14:30:00+00',
-  'c1000000-0000-0000-0000-000000000001',
-  'c1000000-0000-0000-0000-000000000001'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000005',
-  'b1000000-0000-0000-0000-000000000001',
-  'EFG5H67', '56789012345',
-  'd0000000-0000-0000-0002-000000000009', -- Mercedes-Benz
-  'd0000000-0000-0000-0003-000000000009', -- Classe C
-  'd0000000-0000-0000-0004-000000000006', -- Híbrido
-  'WDD2050022R987654', 2024, 2024, 'Azul Metálico',
-  3200,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  419900.00,
-  'Mercedes-Benz C 300e Híbrido Plug-in. Bancos em couro Nappa, MBUX, teto panorâmico, Night Package. Veículo novo de showroom com 3.200 km.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000001',
-  'c1000000-0000-0000-0000-000000000001'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000006',
-  'b1000000-0000-0000-0000-000000000001',
-  'FGH6I78', '67890123456',
-  'd0000000-0000-0000-0002-000000000001', -- Toyota
-  'd0000000-0000-0000-0003-000000000011', -- Hilux
-  'd0000000-0000-0000-0004-000000000004', -- Diesel
-  '8AFAAAHM9HJ654321', 2023, 2022, 'Branco',
-  41000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  269900.00,
-  'Toyota Hilux SRX 2.8 Diesel 4x4 AT. Couro, multimídia JBL, câmera 360°, controle de descida, suspensão reforçada. Revisões feitas na Toyota. Excelente estado.',
-  'd0000000-0000-0000-0006-000000000004', -- Reservado
-  NULL,
-  'c1000000-0000-0000-0000-000000000002',
-  'c1000000-0000-0000-0000-000000000002'
-),
-
--- ── Garage Carioca ────────────────────────────────────────────
-
-(
-  'e1000000-0000-0000-0000-000000000007',
-  'b1000000-0000-0000-0000-000000000002',
-  'GHI7J89', '78901234567',
-  'd0000000-0000-0000-0002-000000000002', -- Honda
-  'd0000000-0000-0000-0003-000000000002', -- Civic
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '2HGFC2F66MH567890', 2022, 2022, 'Vermelho',
-  31000,
-  'd0000000-0000-0000-0005-000000000003', -- CVT
-  129900.00,
-  'Honda Civic EXL 1.5 Turbo CVT. Teto solar, bancos em couro, Honda Sensing completo, CarPlay/Android Auto. Impecável, sem leilão.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000003',
-  'c1000000-0000-0000-0000-000000000003'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000008',
-  'b1000000-0000-0000-0000-000000000002',
-  'HIJ8K90', '89012345678',
-  'd0000000-0000-0000-0002-000000000002', -- Honda
-  'd0000000-0000-0000-0003-000000000012', -- HR-V
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '3CZRU6H50NM234567', 2023, 2022, 'Champagne',
-  22000,
-  'd0000000-0000-0000-0005-000000000003', -- CVT
-  149900.00,
-  'Honda HR-V EXL 1.5 Turbo CVT. Teto solar elétrico, couro, Honda Sensing, 7 airbags, câmera de ré. Perfeito estado, IPVA 2025 quitado.',
-  'd0000000-0000-0000-0006-000000000002', -- Em Negociação
-  NULL,
-  'c1000000-0000-0000-0000-000000000003',
-  'c1000000-0000-0000-0000-000000000003'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000009',
-  'b1000000-0000-0000-0000-000000000002',
-  'IJK9L01', '90123456789',
-  'd0000000-0000-0000-0002-000000000004', -- Chevrolet
-  'd0000000-0000-0000-0003-000000000004', -- Onix
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9BGTT69B0RG345678', 2021, 2021, 'Preto',
-  67000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  72900.00,
-  'Chevrolet Onix Plus LTZ 1.0 Turbo AT. Multimídia MyLink 8", câmera de ré, sensores de estacionamento, couro, ar digital. Revisões feitas na concessionária.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000003',
-  'c1000000-0000-0000-0000-000000000003'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000010',
-  'b1000000-0000-0000-0000-000000000002',
-  'JKL0M12', '01234567890',
-  'd0000000-0000-0000-0002-000000000006', -- Hyundai
-  'd0000000-0000-0000-0003-000000000006', -- HB20
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9BFHA5BB4RB456789', 2020, 2019, 'Azul',
-  89000,
-  'd0000000-0000-0000-0005-000000000001', -- Manual
-  48500.00,
-  'Hyundai HB20 1.0 Comfort Plus Manual. Direção elétrica, ar-condicionado, multimídia, vidros e travas elétricas. Econômico e bem conservado.',
-  'd0000000-0000-0000-0006-000000000003', -- Vendido
-  '2025-02-20 10:00:00+00',
-  'c1000000-0000-0000-0000-000000000003',
-  'c1000000-0000-0000-0000-000000000003'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000011',
-  'b1000000-0000-0000-0000-000000000002',
-  'KLM1N23', '11234567891',
-  'd0000000-0000-0000-0002-000000000003', -- Volkswagen
-  'd0000000-0000-0000-0003-000000000013', -- Polo
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9BWCA45U0NT567890', 2024, 2023, 'Branco',
-  14000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  109900.00,
-  'VW Polo Highline 200 TSI AT. Teto solar, couro, CarPlay, sensores e câmera 360°, frenagem autônoma. Seminovo com garantia Volkswagen até 2026.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000003',
-  'c1000000-0000-0000-0000-000000000003'
-),
-
--- ── Sul Motors ────────────────────────────────────────────────
-
-(
-  'e1000000-0000-0000-0000-000000000012',
-  'b1000000-0000-0000-0000-000000000003',
-  'LMN2O34', '22345678902',
-  'd0000000-0000-0000-0002-000000000004', -- Chevrolet
-  'd0000000-0000-0000-0003-000000000014', -- Tracker
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9BGRS9EC0NG234567', 2023, 2022, 'Cinza',
-  35000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  139900.00,
-  'Chevrolet Tracker Premier 1.2 Turbo AT. Teto solar panorâmico, couro, Wi-Fi embarcado, câmera e sensores. Revisado, sem dívidas, IPVA pago.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000004',
-  'c1000000-0000-0000-0000-000000000004'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000013',
-  'b1000000-0000-0000-0000-000000000003',
-  'MNO3P45', '33456789013',
-  'd0000000-0000-0000-0002-000000000005', -- Ford
-  'd0000000-0000-0000-0003-000000000015', -- Bronco Sport
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '1FMEE5DH2NLA12345', 2023, 2022, 'Verde Cacto',
-  28000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  189900.00,
-  'Ford Bronco Sport Wildtrack 2.0 EcoBoost 4x4 AT. G.O.A.T. modes, teto panorâmico, Bang & Olufsen, bancos em couro. Raro na cor Verde Cacto.',
-  'd0000000-0000-0000-0006-000000000002', -- Em Negociação
-  NULL,
-  'c1000000-0000-0000-0000-000000000004',
-  'c1000000-0000-0000-0000-000000000005'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000014',
-  'b1000000-0000-0000-0000-000000000003',
-  'NOP4Q56', '44567890124',
-  'd0000000-0000-0000-0002-000000000010', -- Fiat
-  'd0000000-0000-0000-0003-000000000010', -- Argo
-  'd0000000-0000-0000-0004-000000000003', -- Flex
-  '9BF1BAFNE8R678901', 2021, 2020, 'Vermelho',
-  72000,
-  'd0000000-0000-0000-0005-000000000001', -- Manual
-  59900.00,
-  'Fiat Argo Drive 1.3 GSR Manual. Ar-condicionado digital, central multimídia, direção elétrica. Ideal para cidade, baixo custo de manutenção.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000005',
-  'c1000000-0000-0000-0000-000000000005'
-),
-
-(
-  'e1000000-0000-0000-0000-000000000015',
-  'b1000000-0000-0000-0000-000000000003',
-  'OPQ5R67', '55678901235',
-  'd0000000-0000-0000-0002-000000000006', -- Hyundai
-  'd0000000-0000-0000-0003-000000000006', -- HB20
-  'd0000000-0000-0000-0004-000000000005', -- Elétrico
-  '9BFHA5BBXRB789012', 2024, 2024, 'Azul Safira',
-  5000,
-  'd0000000-0000-0000-0005-000000000002', -- Automático
-  179900.00,
-  'Hyundai HB20 Elétrico 100% bateria. Autonomia de 350 km, carregamento rápido DC, assistente de faixas, frenagem regenerativa. Novo com 5.000 km rodados.',
-  'd0000000-0000-0000-0006-000000000001', -- Disponível
-  NULL,
-  'c1000000-0000-0000-0000-000000000004',
-  'c1000000-0000-0000-0000-000000000004'
+  'vendas@sulpremium.com.br',
+  'Alexandre Souza',
+  'Proprietário',
+  '(41) 99876-5432',
+  NOW(), NOW()
 );
 
 
--- ─────────────────────────────────────────────────────────────
--- 6. VEICULO_FOTO (foto principal para cada veículo)
--- ─────────────────────────────────────────────────────────────
-INSERT INTO dealership.veiculo_foto (id, veiculo_id, url_foto, caminho_storage, tamanho_arquivo, foto_principal, ordem_exibicao)
-VALUES
-  ('f1000000-0000-0000-0000-000000000001', 'e1000000-0000-0000-0000-000000000001', 'https://storage.uyemuratech.com/fotos/abc1d23-01.jpg', 'fotos/empresa-1/abc1d23-01.jpg', 2048000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000002', 'e1000000-0000-0000-0000-000000000001', 'https://storage.uyemuratech.com/fotos/abc1d23-02.jpg', 'fotos/empresa-1/abc1d23-02.jpg', 1920000, FALSE, 2),
-  ('f1000000-0000-0000-0000-000000000003', 'e1000000-0000-0000-0000-000000000002', 'https://storage.uyemuratech.com/fotos/bcd2e34-01.jpg', 'fotos/empresa-1/bcd2e34-01.jpg', 3100000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000004', 'e1000000-0000-0000-0000-000000000003', 'https://storage.uyemuratech.com/fotos/cde3f45-01.jpg', 'fotos/empresa-1/cde3f45-01.jpg', 2560000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000005', 'e1000000-0000-0000-0000-000000000004', 'https://storage.uyemuratech.com/fotos/def4g56-01.jpg', 'fotos/empresa-1/def4g56-01.jpg', 1800000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000006', 'e1000000-0000-0000-0000-000000000005', 'https://storage.uyemuratech.com/fotos/efg5h67-01.jpg', 'fotos/empresa-1/efg5h67-01.jpg', 3400000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000007', 'e1000000-0000-0000-0000-000000000006', 'https://storage.uyemuratech.com/fotos/fgh6i78-01.jpg', 'fotos/empresa-1/fgh6i78-01.jpg', 2900000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000008', 'e1000000-0000-0000-0000-000000000007', 'https://storage.uyemuratech.com/fotos/ghi7j89-01.jpg', 'fotos/empresa-2/ghi7j89-01.jpg', 2100000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000009', 'e1000000-0000-0000-0000-000000000008', 'https://storage.uyemuratech.com/fotos/hij8k90-01.jpg', 'fotos/empresa-2/hij8k90-01.jpg', 2300000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000010', 'e1000000-0000-0000-0000-000000000009', 'https://storage.uyemuratech.com/fotos/ijk9l01-01.jpg', 'fotos/empresa-2/ijk9l01-01.jpg', 1650000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000011', 'e1000000-0000-0000-0000-000000000010', 'https://storage.uyemuratech.com/fotos/jkl0m12-01.jpg', 'fotos/empresa-2/jkl0m12-01.jpg', 1500000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000012', 'e1000000-0000-0000-0000-000000000011', 'https://storage.uyemuratech.com/fotos/klm1n23-01.jpg', 'fotos/empresa-2/klm1n23-01.jpg', 2750000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000013', 'e1000000-0000-0000-0000-000000000012', 'https://storage.uyemuratech.com/fotos/lmn2o34-01.jpg', 'fotos/empresa-3/lmn2o34-01.jpg', 2200000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000014', 'e1000000-0000-0000-0000-000000000013', 'https://storage.uyemuratech.com/fotos/mno3p45-01.jpg', 'fotos/empresa-3/mno3p45-01.jpg', 3050000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000015', 'e1000000-0000-0000-0000-000000000014', 'https://storage.uyemuratech.com/fotos/nop4q56-01.jpg', 'fotos/empresa-3/nop4q56-01.jpg', 1400000, TRUE,  1),
-  ('f1000000-0000-0000-0000-000000000016', 'e1000000-0000-0000-0000-000000000015', 'https://storage.uyemuratech.com/fotos/opq5r67-01.jpg', 'fotos/empresa-3/opq5r67-01.jpg', 2650000, TRUE,  1);
+-- =============================================================================
+-- 4. USUÁRIOS (3 por empresa = 9 total)
+-- Nota: auth_id seria gerado pelo Supabase Auth. Usamos UUIDs fictícios.
+-- =============================================================================
+
+-- AutoElite (bbbbbbbb-0001-0000-0000-000000000001)
+INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nome_usuario, papel_usuario_id, ultimo_login_em, criado_em, atualizado_em) VALUES
+(
+  'cccccccc-0001-0000-0000-000000000001',
+  'bbbbbbbb-0001-0000-0000-000000000001',
+  'aaaa0001-0000-0000-0000-000000000001',
+  'fuyemura@hotmail.com',
+  '11122233344',
+  'Flávio Cavalcante Uyemura',
+  'aaaaaaaa-0007-0000-0000-000000000001', -- administrador
+  NOW() - INTERVAL '1 hour',
+  NOW(), NOW()
+),
+(
+  'cccccccc-0001-0000-0000-000000000002',
+  'bbbbbbbb-0001-0000-0000-000000000001',
+  'aaaa0001-0000-0000-0000-000000000002',
+  'carlos.silva@autoelite.com.br',
+  '22233344455',
+  'Carlos Silva',
+  'aaaaaaaa-0007-0000-0000-000000000002', -- gerente
+  NOW() - INTERVAL '2 hours',
+  NOW(), NOW()
+),
+(
+  'cccccccc-0001-0000-0000-000000000003',
+  'bbbbbbbb-0001-0000-0000-000000000001',
+  'aaaa0001-0000-0000-0000-000000000003',
+  'ana.costa@autoelite.com.br',
+  '33344455566',
+  'Ana Costa',
+  'aaaaaaaa-0007-0000-0000-000000000003', -- usuario
+  NOW() - INTERVAL '3 days',
+  NOW(), NOW()
+);
+
+-- Carioca Motors (bbbbbbbb-0001-0000-0000-000000000002)
+INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nome_usuario, papel_usuario_id, ultimo_login_em, criado_em, atualizado_em) VALUES
+(
+  'cccccccc-0002-0000-0000-000000000001',
+  'bbbbbbbb-0001-0000-0000-000000000002',
+  'aaaa0002-0000-0000-0000-000000000001',
+  'yasmingazal@gmail.com',
+  '44455566677',
+  'Yasmin Gazal',
+  'aaaaaaaa-0007-0000-0000-000000000001', -- administrador
+  NOW() - INTERVAL '30 minutes',
+  NOW(), NOW()
+),
+(
+  'cccccccc-0002-0000-0000-000000000002',
+  'bbbbbbbb-0001-0000-0000-000000000002',
+  'aaaa0002-0000-0000-0000-000000000002',
+  'pedro.lima@cariocamotors.com.br',
+  '55566677788',
+  'Pedro Lima',
+  'aaaaaaaa-0007-0000-0000-000000000002', -- gerente
+  NOW() - INTERVAL '1 day',
+  NOW(), NOW()
+),
+(
+  'cccccccc-0002-0000-0000-000000000003',
+  'bbbbbbbb-0001-0000-0000-000000000002',
+  'aaaa0002-0000-0000-0000-000000000003',
+  'juliana.santos@cariocamotors.com.br',
+  '66677788899',
+  'Juliana Santos',
+  'aaaaaaaa-0007-0000-0000-000000000003', -- usuario
+  NOW() - INTERVAL '5 days',
+  NOW(), NOW()
+);
+
+-- Sul Premium (bbbbbbbb-0001-0000-0000-000000000003)
+INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nome_usuario, papel_usuario_id, ultimo_login_em, criado_em, atualizado_em) VALUES
+(
+  'cccccccc-0003-0000-0000-000000000001',
+  'bbbbbbbb-0001-0000-0000-000000000003',
+  'aaaa0003-0000-0000-0000-000000000001',
+  'doduyemura@gmail.com',
+  '77788899900',
+  'Douglas Cardoso Uyemura',
+  'aaaaaaaa-0007-0000-0000-000000000001', -- administrador
+  NOW() - INTERVAL '2 hours',
+  NOW(), NOW()
+),
+(
+  'cccccccc-0003-0000-0000-000000000002',
+  'bbbbbbbb-0001-0000-0000-000000000003',
+  'aaaa0003-0000-0000-0000-000000000002',
+  'patricia.rocha@sulpremium.com.br',
+  '88899900011',
+  'Patrícia Rocha',
+  'aaaaaaaa-0007-0000-0000-000000000002', -- gerente
+  NOW() - INTERVAL '4 hours',
+  NOW(), NOW()
+),
+(
+  'cccccccc-0003-0000-0000-000000000003',
+  'bbbbbbbb-0001-0000-0000-000000000003',
+  'aaaa0003-0000-0000-0000-000000000003',
+  'lucas.ferreira@sulpremium.com.br',
+  '99900011122',
+  'Lucas Ferreira',
+  'aaaaaaaa-0007-0000-0000-000000000003', -- usuario
+  NOW() - INTERVAL '2 days',
+  NOW(), NOW()
+);
 
 
--- ─────────────────────────────────────────────────────────────
--- 7. QR_CODE (um por veículo, exceto os vendidos)
--- ─────────────────────────────────────────────────────────────
-INSERT INTO dealership.qr_code (id, veiculo_id, url_publica, token_publica, total_visualizacoes)
-VALUES
-  ('q1000000-0000-0000-0000-000000000001', 'e1000000-0000-0000-0000-000000000001', 'https://uyemuratech.com/v/tk-a1b2c3d4e5f6', 'tk-a1b2c3d4e5f6', 142),
-  ('q1000000-0000-0000-0000-000000000002', 'e1000000-0000-0000-0000-000000000002', 'https://uyemuratech.com/v/tk-b2c3d4e5f6a1', 'tk-b2c3d4e5f6a1',  87),
-  ('q1000000-0000-0000-0000-000000000003', 'e1000000-0000-0000-0000-000000000003', 'https://uyemuratech.com/v/tk-c3d4e5f6a1b2', 'tk-c3d4e5f6a1b2',  63),
-  ('q1000000-0000-0000-0000-000000000005', 'e1000000-0000-0000-0000-000000000005', 'https://uyemuratech.com/v/tk-e5f6a1b2c3d4', 'tk-e5f6a1b2c3d4',  29),
-  ('q1000000-0000-0000-0000-000000000006', 'e1000000-0000-0000-0000-000000000006', 'https://uyemuratech.com/v/tk-f6a1b2c3d4e5', 'tk-f6a1b2c3d4e5', 211),
-  ('q1000000-0000-0000-0000-000000000007', 'e1000000-0000-0000-0000-000000000007', 'https://uyemuratech.com/v/tk-g7h8i9j0k1l2', 'tk-g7h8i9j0k1l2',  95),
-  ('q1000000-0000-0000-0000-000000000008', 'e1000000-0000-0000-0000-000000000008', 'https://uyemuratech.com/v/tk-h8i9j0k1l2m3', 'tk-h8i9j0k1l2m3',  78),
-  ('q1000000-0000-0000-0000-000000000009', 'e1000000-0000-0000-0000-000000000009', 'https://uyemuratech.com/v/tk-i9j0k1l2m3n4', 'tk-i9j0k1l2m3n4', 154),
-  ('q1000000-0000-0000-0000-000000000011', 'e1000000-0000-0000-0000-000000000011', 'https://uyemuratech.com/v/tk-k1l2m3n4o5p6', 'tk-k1l2m3n4o5p6',  43),
-  ('q1000000-0000-0000-0000-000000000012', 'e1000000-0000-0000-0000-000000000012', 'https://uyemuratech.com/v/tk-l2m3n4o5p6q7', 'tk-l2m3n4o5p6q7', 189),
-  ('q1000000-0000-0000-0000-000000000013', 'e1000000-0000-0000-0000-000000000013', 'https://uyemuratech.com/v/tk-m3n4o5p6q7r8', 'tk-m3n4o5p6q7r8',  67),
-  ('q1000000-0000-0000-0000-000000000014', 'e1000000-0000-0000-0000-000000000014', 'https://uyemuratech.com/v/tk-n4o5p6q7r8s9', 'tk-n4o5p6q7r8s9',  31),
-  ('q1000000-0000-0000-0000-000000000015', 'e1000000-0000-0000-0000-000000000015', 'https://uyemuratech.com/v/tk-o5p6q7r8s9t0', 'tk-o5p6q7r8s9t0', 112);
+-- =============================================================================
+-- 5. CLIENTES (para associar aos veículos vendidos)
+-- =============================================================================
+
+INSERT INTO dealership.cliente (id, empresa_id, cpf, nome_cliente, telefone_cliente, email_cliente, criado_por, criado_em, atualizado_em) VALUES
+-- AutoElite
+('dddddddd-0001-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000001', '10101010101', 'Marcos Pereira',   '(11) 98001-0101', 'marcos.pereira@email.com',    'cccccccc-0001-0000-0000-000000000002', NOW(), NOW()),
+('dddddddd-0001-0000-0000-000000000002', 'bbbbbbbb-0001-0000-0000-000000000001', '20202020202', 'Cláudia Ramos',    '(11) 97002-0202', 'claudia.ramos@email.com',     'cccccccc-0001-0000-0000-000000000002', NOW(), NOW()),
+-- Carioca Motors
+('dddddddd-0002-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000002', '30303030303', 'Bruno Alves',      '(21) 96003-0303', 'bruno.alves@email.com',       'cccccccc-0002-0000-0000-000000000002', NOW(), NOW()),
+('dddddddd-0002-0000-0000-000000000002', 'bbbbbbbb-0001-0000-0000-000000000002', '40404040404', 'Simone Torres',    '(21) 95004-0404', 'simone.torres@email.com',     'cccccccc-0002-0000-0000-000000000002', NOW(), NOW()),
+-- Sul Premium
+('dddddddd-0003-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000003', '50505050505', 'Rafael Nascimento','(41) 94005-0505', 'rafael.nascimento@email.com', 'cccccccc-0003-0000-0000-000000000002', NOW(), NOW()),
+('dddddddd-0003-0000-0000-000000000002', 'bbbbbbbb-0001-0000-0000-000000000003', '60606060606', 'Vanessa Cardoso',  '(41) 93006-0606', 'vanessa.cardoso@email.com',   'cccccccc-0003-0000-0000-000000000002', NOW(), NOW());
 
 
-COMMIT;
+-- =============================================================================
+-- 6. VEÍCULOS
+-- Distribuição: AutoElite 20 | Carioca Motors 20 | Sul Premium 20 = 60 total
+--
+-- Referências rápidas:
+--   marca:       Toyota=0001 | Honda=0002 | VW=0003 | Chevrolet=0004
+--                Hyundai=0005 | Fiat=0006 | Ford=0007 | Nissan=0008
+--   modelo:      Corolla=0001 | Civic=0002 | Gol=0003 | Onix=0004
+--                HB20=0005 | Argo=0006 | Ka=0007 | Kicks=0008 | Polo=0009 | Hilux=0010
+--   combustivel: Gasolina=0001 | Flex=0002 | Etanol=0003 | Diesel=0004 | Elétrico=0005 | Híbrido=0006
+--   cambio:      Manual=0001 | Automático=0002 | CVT=0003 | Automatizado=0004
+--   direcao:     Hidráulica=0001 | Elétrica=0002 | Manual=0003
+--   situacao:    Disponível=0001 | Reservado=0002 | Vendido=0003 | Em Manutenção=0004
+-- =============================================================================
 
--- ─────────────────────────────────────────────────────────────
--- RESUMO
--- ─────────────────────────────────────────────────────────────
--- localizacao : 3 registros
--- empresa     : 3 registros
--- dominio     : 36 registros (papel:3, marca:10, modelo:15, combustivel:6, cambio:4, situacao:4)
--- usuario     : 5 registros
--- veiculo     : 15 registros (6 + 5 + 4, cobrindo Disponível / Em Negociação / Vendido / Reservado)
--- veiculo_foto: 16 registros
--- qr_code     : 13 registros (sem QR para os veículos vendidos)
--- ─────────────────────────────────────────────────────────────
+-- ─── AutoElite — 20 veículos ─────────────────────────────────────────────────
+
+INSERT INTO dealership.veiculo (id, empresa_id, placa, renavam, marca_veiculo_id, modelo_veiculo_id, combustivel_veiculo_id, numero_chassi, ano_modelo, ano_fabricacao, cor_veiculo, direcao_veiculo_id, vidro_eletrico, cambio_veiculo_id, trava_eletrica, quantidade_portas, quilometragem, data_compra, preco_compra, descricao, situacao_veiculo_id, data_venda, preco_venda, data_entrega, laudo_aprovado, vendido_para, vendido_por, criado_por, atualizado_por, criado_em, atualizado_em) VALUES
+
+('eeeeeeee-0001-0000-0000-000000000001','bbbbbbbb-0001-0000-0000-000000000001','ABC1D23','12345678901','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000001','aaaaaaaa-0003-0000-0000-000000000006','9BWZZZ377VT004251',2022,2021,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,38000,'2024-01-15',82000.00,'Corolla Altis Hybrid Premium, único dono, revisões em dia.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000002','bbbbbbbb-0001-0000-0000-000000000001','BCD2E34','23456789012','aaaaaaaa-0001-0000-0000-000000000002','aaaaaaaa-0002-0000-0000-000000000002','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT004252',2023,2023,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,12000,'2024-02-10',105000.00,'Civic Touring com teto solar, garantia de fábrica vigente.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000003','bbbbbbbb-0001-0000-0000-000000000001','CDE3F45','34567890123','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000009','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004253',2021,2020,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,55000,'2024-03-05',68000.00,'Polo Highline TSI automático, kit multimídia.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000004','bbbbbbbb-0001-0000-0000-000000000001','DEF4G56','45678901234','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004254',2022,2022,'Vermelho','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,28000,'2024-01-20',68000.00,'Onix Plus Premier automático, mylink 2 com câmera.','aaaaaaaa-0006-0000-0000-000000000002',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000005','bbbbbbbb-0001-0000-0000-000000000001','EFG5H67','56789012345','aaaaaaaa-0001-0000-0000-000000000005','aaaaaaaa-0002-0000-0000-000000000005','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004255',2020,2019,'Cinza','aaaaaaaa-0005-0000-0000-000000000001',TRUE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,72000,'2023-11-10',42000.00,'HB20 Sense 1.0 flex, bom estado de conservação.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000003','cccccccc-0001-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000006','bbbbbbbb-0001-0000-0000-000000000001','FGH6I78','67890123456','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004256',2023,2023,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,5000,'2024-03-20',75000.00,'Fiat Argo Trekking automático, zero km praticamente.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000007','bbbbbbbb-0001-0000-0000-000000000001','GHI7J89','78901234567','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000010','aaaaaaaa-0003-0000-0000-000000000004','9BWZZZ377VT004257',2021,2021,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,45000,'2024-02-28',198000.00,'Hilux SRX 4x4 diesel automática, equipada.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000008','bbbbbbbb-0001-0000-0000-000000000001','HIJ8K90','89012345678','aaaaaaaa-0001-0000-0000-000000000008','aaaaaaaa-0002-0000-0000-000000000008','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT004258',2022,2022,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000003',TRUE,4,32000,'2024-01-08',92000.00,'Nissan Kicks Advance CVT, ADAS completo.','aaaaaaaa-0006-0000-0000-000000000003','2024-03-15',99000.00,'2024-03-18',TRUE,'dddddddd-0001-0000-0000-000000000001','cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000009','bbbbbbbb-0001-0000-0000-000000000001','IJK9L01','90123456789','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000003','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004259',2019,2018,'Cinza','aaaaaaaa-0005-0000-0000-000000000001',FALSE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,98000,'2023-09-01',28000.00,'Gol 1.0 flex, direção hidráulica, ótimo para trabalho.','aaaaaaaa-0006-0000-0000-000000000004',NULL,NULL,NULL,FALSE,NULL,NULL,'cccccccc-0001-0000-0000-000000000003','cccccccc-0001-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000010','bbbbbbbb-0001-0000-0000-000000000001','JKL0M12','01234567890','aaaaaaaa-0001-0000-0000-000000000007','aaaaaaaa-0002-0000-0000-000000000007','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004260',2020,2020,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,61000,'2023-12-15',45000.00,'Ford Ka Freestyle automático, 1.5 flex.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000011','bbbbbbbb-0001-0000-0000-000000000001','KLM1N23','11234567891','aaaaaaaa-0001-0000-0000-000000000002','aaaaaaaa-0002-0000-0000-000000000002','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT004261',2024,2024,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,3000,'2024-03-10',118000.00,'Civic EXL turbo 1.5, teto solar elétrico.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000012','bbbbbbbb-0001-0000-0000-000000000001','LMN2O34','12345678902','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004262',2021,2021,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,47000,'2024-02-01',62000.00,'Onix RS turbo automático, esportivo.','aaaaaaaa-0006-0000-0000-000000000003','2024-03-20',70000.00,'2024-03-22',TRUE,'dddddddd-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000013','bbbbbbbb-0001-0000-0000-000000000001','MNO3P45','23456789013','aaaaaaaa-0001-0000-0000-000000000005','aaaaaaaa-0002-0000-0000-000000000005','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004263',2023,2022,'Verde','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,22000,'2024-01-25',58000.00,'HB20S Diamond 1.0 turbo, sedã compacto.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000003','cccccccc-0001-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000014','bbbbbbbb-0001-0000-0000-000000000001','NOP4Q56','34567890124','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004264',2022,2021,'Laranja','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000001',TRUE,4,35000,'2023-10-10',55000.00,'Argo Drive 1.3 flex, cor exclusiva.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000015','bbbbbbbb-0001-0000-0000-000000000001','OPQ5R67','45678901235','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000001','aaaaaaaa-0003-0000-0000-000000000006','9BWZZZ377VT004265',2024,2023,'Cinza','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,8000,'2024-03-01',145000.00,'Corolla Cross Hybrid AWD-i topo de linha.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000016','bbbbbbbb-0001-0000-0000-000000000001','PQR6S78','56789012346','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000009','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT004266',2020,2020,'Vermelho','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,65000,'2023-08-15',52000.00,'Polo Comfortline 1.0 TSI, excelente conservação.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000003','cccccccc-0001-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000017','bbbbbbbb-0001-0000-0000-000000000001','QRS7T89','67890123457','aaaaaaaa-0001-0000-0000-000000000008','aaaaaaaa-0002-0000-0000-000000000008','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT004267',2023,2023,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000003',TRUE,4,9500,'2024-02-18',110000.00,'Nissan Kicks Exclusive E-Power, exclusivo motor elétrico.','aaaaaaaa-0006-0000-0000-000000000002',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000018','bbbbbbbb-0001-0000-0000-000000000001','RST8U90','78901234568','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004268',2019,2018,'Prata','aaaaaaaa-0005-0000-0000-000000000001',TRUE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,88000,'2023-07-01',35000.00,'Onix LT 1.0 flex, ideal para cidade.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000003','cccccccc-0001-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000019','bbbbbbbb-0001-0000-0000-000000000001','STU9V01','89012345679','aaaaaaaa-0001-0000-0000-000000000007','aaaaaaaa-0002-0000-0000-000000000007','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004269',2021,2021,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,40000,'2023-11-25',48000.00,'Ka Sedan SEL automático, completo.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0001-0000-0000-000000000020','bbbbbbbb-0001-0000-0000-000000000001','TUV0W12','90123456780','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT004270',2022,2022,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,18000,'2024-03-12',82000.00,'Argo Trekking 1.3 flex, barras de teto.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0001-0000-0000-000000000002','cccccccc-0001-0000-0000-000000000002',NOW(),NOW());
+
+
+-- ─── Carioca Motors — 20 veículos ────────────────────────────────────────────
+
+INSERT INTO dealership.veiculo (id, empresa_id, placa, renavam, marca_veiculo_id, modelo_veiculo_id, combustivel_veiculo_id, numero_chassi, ano_modelo, ano_fabricacao, cor_veiculo, direcao_veiculo_id, vidro_eletrico, cambio_veiculo_id, trava_eletrica, quantidade_portas, quilometragem, data_compra, preco_compra, descricao, situacao_veiculo_id, data_venda, preco_venda, data_entrega, laudo_aprovado, vendido_para, vendido_por, criado_por, atualizado_por, criado_em, atualizado_em) VALUES
+
+('eeeeeeee-0002-0000-0000-000000000001','bbbbbbbb-0001-0000-0000-000000000002','UVW1X23','11111100001','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000001','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT005001',2022,2021,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,41000,'2024-01-10',80000.00,'Corolla GLi automático, segundo dono.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000002','bbbbbbbb-0001-0000-0000-000000000002','VWX2Y34','22222200002','aaaaaaaa-0001-0000-0000-000000000002','aaaaaaaa-0002-0000-0000-000000000002','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT005002',2024,2024,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,4000,'2024-03-05',122000.00,'Civic Sport RS turbo, bancos esportivos.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000003','bbbbbbbb-0001-0000-0000-000000000002','WXY3Z45','33333300003','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000009','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT005003',2023,2022,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,25000,'2024-02-20',73000.00,'Polo Track 1.0, econômico e esportivo.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000004','bbbbbbbb-0001-0000-0000-000000000002','XYZ4A56','44444400004','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005004',2022,2022,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,30000,'2024-01-28',72000.00,'Onix Premier 2 turbo, tela central 9,2.','aaaaaaaa-0006-0000-0000-000000000002',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000003','cccccccc-0002-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000005','bbbbbbbb-0001-0000-0000-000000000002','YZA5B67','55555500005','aaaaaaaa-0001-0000-0000-000000000005','aaaaaaaa-0002-0000-0000-000000000005','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005005',2021,2021,'Cinza','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,48000,'2023-12-05',47000.00,'HB20X Trail 1.6, visual aventureiro.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000006','bbbbbbbb-0001-0000-0000-000000000002','ZAB6C78','66666600006','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005006',2023,2023,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,6000,'2024-03-15',78000.00,'Argo Precision AT6, câmbio 6 marchas automático.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000007','bbbbbbbb-0001-0000-0000-000000000002','ABC7D89','77777700007','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000010','aaaaaaaa-0003-0000-0000-000000000004','9BWZZZ377VT005007',2022,2022,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,38000,'2024-02-05',210000.00,'Hilux SW4 Diamond 7 lugares, diesel.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000008','bbbbbbbb-0001-0000-0000-000000000002','BCD8E90','88888800008','aaaaaaaa-0001-0000-0000-000000000008','aaaaaaaa-0002-0000-0000-000000000008','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT005008',2020,2020,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000003',TRUE,4,55000,'2023-10-18',78000.00,'Nissan Kicks SL teto panorâmico, câmera 360.','aaaaaaaa-0006-0000-0000-000000000003','2024-02-28',88000.00,'2024-03-02',TRUE,'dddddddd-0002-0000-0000-000000000001','cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000009','bbbbbbbb-0001-0000-0000-000000000002','CDE9F01','99999900009','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000003','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005009',2020,2019,'Cinza','aaaaaaaa-0005-0000-0000-000000000001',FALSE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,85000,'2023-06-20',26000.00,'Gol G7 1.6 flex, airbag e ABS.','aaaaaaaa-0006-0000-0000-000000000004',NULL,NULL,NULL,FALSE,NULL,NULL,'cccccccc-0002-0000-0000-000000000003','cccccccc-0002-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000010','bbbbbbbb-0001-0000-0000-000000000002','DEF0G12','10101010001','aaaaaaaa-0001-0000-0000-000000000007','aaaaaaaa-0002-0000-0000-000000000007','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005010',2021,2021,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,52000,'2023-11-30',46000.00,'Ford Ka SE 1.0, econômico, bem conservado.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000011','bbbbbbbb-0001-0000-0000-000000000002','EFG1H23','11111110002','aaaaaaaa-0001-0000-0000-000000000005','aaaaaaaa-0002-0000-0000-000000000005','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005011',2023,2023,'Vermelho','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,11000,'2024-02-25',62000.00,'HB20 Platinum Plus 1.0 turbo, teto solar.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000012','bbbbbbbb-0001-0000-0000-000000000002','FGH2I34','22222210003','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000001','aaaaaaaa-0003-0000-0000-000000000006','9BWZZZ377VT005012',2023,2023,'Cinza','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,15000,'2024-01-22',130000.00,'Corolla Hybrid XEi, sistema de segurança Toyota Sense.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000013','bbbbbbbb-0001-0000-0000-000000000002','GHI3J45','33333310004','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005013',2020,2019,'Azul','aaaaaaaa-0005-0000-0000-000000000001',TRUE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,79000,'2023-09-12',33000.00,'Onix LT 1.4 flex, ar condicionado, bom estado.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000003','cccccccc-0002-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000014','bbbbbbbb-0001-0000-0000-000000000002','HIJ4K56','44444410005','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005014',2022,2022,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,27000,'2024-01-05',72000.00,'Argo HGT AT6, versão mais esportiva.','aaaaaaaa-0006-0000-0000-000000000003','2024-03-10',80000.00,'2024-03-12',TRUE,'dddddddd-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000015','bbbbbbbb-0001-0000-0000-000000000002','IJK5L67','55555510006','aaaaaaaa-0001-0000-0000-000000000002','aaaaaaaa-0002-0000-0000-000000000002','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT005015',2022,2022,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,36000,'2023-12-20',95000.00,'Civic EXL 1.5 turbo, completo de série.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000016','bbbbbbbb-0001-0000-0000-000000000002','JKL6M78','66666610007','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000003','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005016',2022,2021,'Preto','aaaaaaaa-0005-0000-0000-000000000001',FALSE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,60000,'2023-08-08',30000.00,'Gol Comfortline 1.6 flex, central multimídia.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000003','cccccccc-0002-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000017','bbbbbbbb-0001-0000-0000-000000000002','KLM7N89','77777710008','aaaaaaaa-0001-0000-0000-000000000008','aaaaaaaa-0002-0000-0000-000000000008','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT005017',2024,2024,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000003',TRUE,4,1500,'2024-03-18',125000.00,'Kicks E-Power Exclusive, lançamento 2024.','aaaaaaaa-0006-0000-0000-000000000002',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000018','bbbbbbbb-0001-0000-0000-000000000002','LMN8O90','88888810009','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005018',2021,2020,'Verde','aaaaaaaa-0005-0000-0000-000000000001',TRUE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,70000,'2023-07-15',38000.00,'Onix Joy 1.0 flex, econômico, 1 dono.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000003','cccccccc-0002-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000019','bbbbbbbb-0001-0000-0000-000000000002','MNO9P01','99999910010','aaaaaaaa-0001-0000-0000-000000000007','aaaaaaaa-0002-0000-0000-000000000007','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005019',2022,2022,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,32000,'2024-01-18',52000.00,'Ka Hatch SE 1.5 automático, câmera de ré.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0002-0000-0000-000000000020','bbbbbbbb-0001-0000-0000-000000000002','NOP0Q12','10101011011','aaaaaaaa-0001-0000-0000-000000000005','aaaaaaaa-0002-0000-0000-000000000005','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT005020',2024,2024,'Cinza','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,2000,'2024-03-20',68000.00,'HB20 Evolution 1.0 turbo, nova geração.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0002-0000-0000-000000000002','cccccccc-0002-0000-0000-000000000002',NOW(),NOW());
+
+
+-- ─── Sul Premium — 20 veículos ───────────────────────────────────────────────
+
+INSERT INTO dealership.veiculo (id, empresa_id, placa, renavam, marca_veiculo_id, modelo_veiculo_id, combustivel_veiculo_id, numero_chassi, ano_modelo, ano_fabricacao, cor_veiculo, direcao_veiculo_id, vidro_eletrico, cambio_veiculo_id, trava_eletrica, quantidade_portas, quilometragem, data_compra, preco_compra, descricao, situacao_veiculo_id, data_venda, preco_venda, data_entrega, laudo_aprovado, vendido_para, vendido_por, criado_por, atualizado_por, criado_em, atualizado_em) VALUES
+
+('eeeeeeee-0003-0000-0000-000000000001','bbbbbbbb-0001-0000-0000-000000000003','OPQ1R23','10000000101','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000001','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT006001',2023,2022,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,28000,'2024-01-20',88000.00,'Corolla XEi automático, bancos de couro.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000002','bbbbbbbb-0001-0000-0000-000000000003','PQR2S34','20000000202','aaaaaaaa-0001-0000-0000-000000000002','aaaaaaaa-0002-0000-0000-000000000002','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT006002',2023,2023,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,8000,'2024-02-15',108000.00,'Civic EX 1.5 turbo, 2024 emplacado.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000003','bbbbbbbb-0001-0000-0000-000000000003','QRS3T45','30000000303','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000009','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT006003',2022,2022,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,34000,'2024-01-08',70000.00,'Polo Highline automático, único dono.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000004','bbbbbbbb-0001-0000-0000-000000000003','RST4U56','40000000404','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006004',2023,2022,'Cinza','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,19000,'2024-02-10',74000.00,'Onix Plus Premier automático, cortinas de air bag.','aaaaaaaa-0006-0000-0000-000000000002',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000003','cccccccc-0003-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000005','bbbbbbbb-0001-0000-0000-000000000003','STU5V67','50000000505','aaaaaaaa-0001-0000-0000-000000000005','aaaaaaaa-0002-0000-0000-000000000005','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006005',2022,2021,'Vermelho','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,44000,'2023-11-15',50000.00,'HB20S Comfort Plus 1.0, sedã compacto.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000006','bbbbbbbb-0001-0000-0000-000000000003','TUV6W78','60000000606','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006006',2024,2024,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,3000,'2024-03-08',85000.00,'Argo Trekking AT6, novo modelo, sem detalhes.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000007','bbbbbbbb-0001-0000-0000-000000000003','UVW7X89','70000000707','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000010','aaaaaaaa-0003-0000-0000-000000000004','9BWZZZ377VT006007',2023,2023,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,20000,'2024-01-30',225000.00,'Hilux SRX 4x4 diesel, versão top, blindada.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000008','bbbbbbbb-0001-0000-0000-000000000003','VWX8Y90','80000000808','aaaaaaaa-0001-0000-0000-000000000008','aaaaaaaa-0002-0000-0000-000000000008','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT006008',2021,2021,'Prata','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000003',TRUE,4,50000,'2023-10-05',82000.00,'Kicks SL top de linha 2021, teto panorâmico.','aaaaaaaa-0006-0000-0000-000000000003','2024-03-05',92000.00,'2024-03-08',TRUE,'dddddddd-0003-0000-0000-000000000001','cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000009','bbbbbbbb-0001-0000-0000-000000000003','WXY9Z01','90000000909','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000003','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006009',2019,2018,'Cinza','aaaaaaaa-0005-0000-0000-000000000001',FALSE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,95000,'2023-05-10',24000.00,'Gol G6 1.6 flex, basic, econômico.','aaaaaaaa-0006-0000-0000-000000000004',NULL,NULL,NULL,FALSE,NULL,NULL,'cccccccc-0003-0000-0000-000000000003','cccccccc-0003-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000010','bbbbbbbb-0001-0000-0000-000000000003','XYZ0A12','01000001010','aaaaaaaa-0001-0000-0000-000000000007','aaaaaaaa-0002-0000-0000-000000000007','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006010',2020,2020,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,63000,'2023-12-10',44000.00,'Ka Hatch SE 1.0 automático, parceiro urbano.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000011','bbbbbbbb-0001-0000-0000-000000000003','YZA1B23','11000001111','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006011',2024,2023,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,7000,'2024-03-01',80000.00,'Onix RS turbo AT, novo visual agressivo.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000012','bbbbbbbb-0001-0000-0000-000000000003','ZAB2C34','12000001212','aaaaaaaa-0001-0000-0000-000000000002','aaaaaaaa-0002-0000-0000-000000000002','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT006012',2022,2021,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,40000,'2024-01-12',98000.00,'Civic Touring turbo, máximo equipamento.','aaaaaaaa-0006-0000-0000-000000000003','2024-03-18',108000.00,'2024-03-20',TRUE,'dddddddd-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000013','bbbbbbbb-0001-0000-0000-000000000003','ABC3D45','13000001313','aaaaaaaa-0001-0000-0000-000000000005','aaaaaaaa-0002-0000-0000-000000000005','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006013',2021,2021,'Verde','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,46000,'2023-10-25',48000.00,'HB20 Comfort 1.0 turbo flex, baixo km.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000003','cccccccc-0003-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000014','bbbbbbbb-0001-0000-0000-000000000003','BCD4E56','14000001414','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006014',2022,2021,'Laranja','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000001',TRUE,4,37000,'2023-09-20',56000.00,'Argo Drive 1.3 flex, cor especial laranja.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000015','bbbbbbbb-0001-0000-0000-000000000003','CDE5F67','15000001515','aaaaaaaa-0001-0000-0000-000000000001','aaaaaaaa-0002-0000-0000-000000000001','aaaaaaaa-0003-0000-0000-000000000006','9BWZZZ377VT006015',2024,2024,'Cinza','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,5000,'2024-03-15',155000.00,'Corolla Cross Hybrid GR Sport, versão mais esportiva.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000016','bbbbbbbb-0001-0000-0000-000000000003','DEF6G78','16000001616','aaaaaaaa-0001-0000-0000-000000000003','aaaaaaaa-0002-0000-0000-000000000009','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT006016',2021,2020,'Vermelho','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,57000,'2023-08-28',55000.00,'Polo GTS turbo, versão esportiva 1.0.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000003','cccccccc-0003-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000017','bbbbbbbb-0001-0000-0000-000000000003','EFG7H89','17000001717','aaaaaaaa-0001-0000-0000-000000000008','aaaaaaaa-0002-0000-0000-000000000008','aaaaaaaa-0003-0000-0000-000000000001','9BWZZZ377VT006017',2022,2022,'Preto','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000003',TRUE,4,28000,'2024-02-08',98000.00,'Kicks Advance CVT, câmera 360, sensor dianteiro.','aaaaaaaa-0006-0000-0000-000000000002',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000018','bbbbbbbb-0001-0000-0000-000000000003','FGH8I90','18000001818','aaaaaaaa-0001-0000-0000-000000000004','aaaaaaaa-0002-0000-0000-000000000004','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006018',2020,2019,'Prata','aaaaaaaa-0005-0000-0000-000000000001',TRUE,'aaaaaaaa-0004-0000-0000-000000000001',FALSE,4,82000,'2023-06-05',36000.00,'Onix Joy 1.0 flex, básico, ótimo custo-benefício.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000003','cccccccc-0003-0000-0000-000000000003',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000019','bbbbbbbb-0001-0000-0000-000000000003','GHI9J01','19000001919','aaaaaaaa-0001-0000-0000-000000000007','aaaaaaaa-0002-0000-0000-000000000007','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006019',2021,2021,'Azul','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000004',TRUE,4,42000,'2023-11-05',49000.00,'Ka Sedan SEL Plus automático, pack conforto.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW()),
+
+('eeeeeeee-0003-0000-0000-000000000020','bbbbbbbb-0001-0000-0000-000000000003','HIJ0K12','20000002020','aaaaaaaa-0001-0000-0000-000000000006','aaaaaaaa-0002-0000-0000-000000000006','aaaaaaaa-0003-0000-0000-000000000002','9BWZZZ377VT006020',2023,2023,'Branco','aaaaaaaa-0005-0000-0000-000000000002',TRUE,'aaaaaaaa-0004-0000-0000-000000000002',TRUE,4,10000,'2024-03-18',88000.00,'Argo Trekking 1.3 CVT, novo câmbio CVT disponível.','aaaaaaaa-0006-0000-0000-000000000001',NULL,NULL,NULL,TRUE,NULL,NULL,'cccccccc-0003-0000-0000-000000000002','cccccccc-0003-0000-0000-000000000002',NOW(),NOW());
+
+
+-- =============================================================================
+-- 7. QR CODES (1 por veículo — amostra dos 60)
+-- =============================================================================
+
+INSERT INTO dealership.qr_code (id, veiculo_id, url_publica, token_publica, total_visualizacoes, criado_em) VALUES
+-- AutoElite
+('ffffffff-0001-0000-0000-000000000001','eeeeeeee-0001-0000-0000-000000000001','https://app.uyemura.tech/v/ae-001','TK-AE-001-abc123',42, NOW()),
+('ffffffff-0001-0000-0000-000000000002','eeeeeeee-0001-0000-0000-000000000002','https://app.uyemura.tech/v/ae-002','TK-AE-002-def456',18, NOW()),
+('ffffffff-0001-0000-0000-000000000003','eeeeeeee-0001-0000-0000-000000000003','https://app.uyemura.tech/v/ae-003','TK-AE-003-ghi789',31, NOW()),
+('ffffffff-0001-0000-0000-000000000004','eeeeeeee-0001-0000-0000-000000000004','https://app.uyemura.tech/v/ae-004','TK-AE-004-jkl012',7,  NOW()),
+('ffffffff-0001-0000-0000-000000000005','eeeeeeee-0001-0000-0000-000000000005','https://app.uyemura.tech/v/ae-005','TK-AE-005-mno345',55, NOW()),
+-- Carioca Motors
+('ffffffff-0002-0000-0000-000000000001','eeeeeeee-0002-0000-0000-000000000001','https://app.uyemura.tech/v/cm-001','TK-CM-001-pqr678',28, NOW()),
+('ffffffff-0002-0000-0000-000000000002','eeeeeeee-0002-0000-0000-000000000002','https://app.uyemura.tech/v/cm-002','TK-CM-002-stu901',63, NOW()),
+('ffffffff-0002-0000-0000-000000000003','eeeeeeee-0002-0000-0000-000000000003','https://app.uyemura.tech/v/cm-003','TK-CM-003-vwx234',12, NOW()),
+('ffffffff-0002-0000-0000-000000000004','eeeeeeee-0002-0000-0000-000000000004','https://app.uyemura.tech/v/cm-004','TK-CM-004-yza567',9,  NOW()),
+('ffffffff-0002-0000-0000-000000000005','eeeeeeee-0002-0000-0000-000000000005','https://app.uyemura.tech/v/cm-005','TK-CM-005-bcd890',37, NOW()),
+-- Sul Premium
+('ffffffff-0003-0000-0000-000000000001','eeeeeeee-0003-0000-0000-000000000001','https://app.uyemura.tech/v/sp-001','TK-SP-001-efg123',19, NOW()),
+('ffffffff-0003-0000-0000-000000000002','eeeeeeee-0003-0000-0000-000000000002','https://app.uyemura.tech/v/sp-002','TK-SP-002-hij456',44, NOW()),
+('ffffffff-0003-0000-0000-000000000003','eeeeeeee-0003-0000-0000-000000000003','https://app.uyemura.tech/v/sp-003','TK-SP-003-klm789',8,  NOW()),
+('ffffffff-0003-0000-0000-000000000004','eeeeeeee-0003-0000-0000-000000000004','https://app.uyemura.tech/v/sp-004','TK-SP-004-nop012',21, NOW()),
+('ffffffff-0003-0000-0000-000000000005','eeeeeeee-0003-0000-0000-000000000005','https://app.uyemura.tech/v/sp-005','TK-SP-005-qrs345',33, NOW());
+
+
+-- =============================================================================
+-- 8. PLANOS
+-- =============================================================================
+
+INSERT INTO dealership.plano (id, nome_plano, descricao_plano, preco_mensal, preco_anual, limite_veiculos, limite_usuarios, limite_fotos_veiculo, tem_qr_code, tem_relatorios, tem_suporte_prioritario, plano_ativo, criado_em, atualizado_em) VALUES
+(
+  'ffffffff-0001-0000-0000-000000000001',
+  'Starter',
+  'Ideal para concessionárias pequenas iniciando a digitalização.',
+  199.90, 1999.00, 50, 3, 5, TRUE, FALSE, FALSE, TRUE, NOW(), NOW()
+),
+(
+  'ffffffff-0001-0000-0000-000000000002',
+  'Pro',
+  'Para concessionárias em crescimento com necessidade de relatórios.',
+  399.90, 3999.00, 200, 10, 15, TRUE, TRUE, FALSE, TRUE, NOW(), NOW()
+),
+(
+  'ffffffff-0001-0000-0000-000000000003',
+  'Enterprise',
+  'Solução completa para grandes redes com suporte prioritário.',
+  799.90, 7999.00, -1, -1, 30, TRUE, TRUE, TRUE, TRUE, NOW(), NOW()
+);
+
+
+-- =============================================================================
+-- 9. ASSINATURAS
+-- =============================================================================
+
+INSERT INTO dealership.assinatura (id, empresa_id, plano_id, situacao_assinatura_id, ciclo_cobranca_id, data_inicio, data_fim, data_cancelamento, motivo_cancelamento, trial_ativo, data_fim_trial, gateway_cliente_id, gateway_assinatura_id, criado_em, atualizado_em) VALUES
+(
+  'faffffff-0001-0000-0000-000000000001',
+  'bbbbbbbb-0001-0000-0000-000000000001',
+  'ffffffff-0001-0000-0000-000000000002', -- Pro
+  'aaaaaaaa-0009-0000-0000-000000000001', -- ativa
+  'aaaaaaaa-0010-0000-0000-000000000001', -- mensal
+  '2024-01-01', NULL, NULL, NULL, FALSE, NULL,
+  'cus_stripe_autoelite_001', 'sub_stripe_autoelite_001',
+  NOW(), NOW()
+),
+(
+  'faffffff-0001-0000-0000-000000000002',
+  'bbbbbbbb-0001-0000-0000-000000000002',
+  'ffffffff-0001-0000-0000-000000000003', -- Enterprise
+  'aaaaaaaa-0009-0000-0000-000000000001', -- ativa
+  'aaaaaaaa-0010-0000-0000-000000000002', -- anual
+  '2024-01-15', NULL, NULL, NULL, FALSE, NULL,
+  'cus_stripe_carioca_001', 'sub_stripe_carioca_001',
+  NOW(), NOW()
+),
+(
+  'faffffff-0001-0000-0000-000000000003',
+  'bbbbbbbb-0001-0000-0000-000000000003',
+  'ffffffff-0001-0000-0000-000000000001', -- Starter
+  'aaaaaaaa-0009-0000-0000-000000000002', -- trial
+  'aaaaaaaa-0010-0000-0000-000000000001', -- mensal
+  '2024-03-01', NULL, NULL, NULL, TRUE, '2024-04-01',
+  NULL, NULL,
+  NOW(), NOW()
+);
+
+
+-- =============================================================================
+-- Resumo da massa de dados inserida:
+-- ─────────────────────────────────────────────────────
+--  localizacao     →   3 registros
+--  dominio         →  55 registros (todos os grupos)
+--  empresa         →   3 registros
+--  usuario         →   9 registros (3 por empresa)
+--  cliente         →   6 registros (2 por empresa)
+--  veiculo         →  60 registros (20 por empresa)
+--  qr_code         →  15 registros (5 por empresa — amostra)
+--  plano           →   3 registros
+--  assinatura      →   3 registros (1 por empresa)
+-- =============================================================================
