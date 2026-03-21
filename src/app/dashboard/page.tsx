@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/app/minha-conta/sign-out-button";
-import { error } from "console";
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type StatusBadgeColor = "green" | "yellow" | "gray";
