@@ -27,8 +27,6 @@ export default function LoginPage() {
         password: senha,
       });
 
-      console.log({ data, authError })
-
       if (authError || !data.user) {
         setErro("E-mail ou senha incorretos. Verifique seus dados e tente novamente.");
         return;
@@ -38,11 +36,9 @@ export default function LoginPage() {
       const { data: usuario, error: dbError } = await supabase
         .schema("dealership")
         .from("usuario")
-        .select("id, nome_usuario, papel_id")
+        .select("id, nome_usuario, papel_usuario_id")
         .eq("auth_id", data.user.id)
         .single();
-
-      console.log({ usuario, dbError }) // ← vai mostrar o erro real
 
       if (dbError || !usuario) {
         // Autenticou no Auth mas não tem cadastro na tabela usuario

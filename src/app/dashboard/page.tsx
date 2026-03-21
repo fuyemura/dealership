@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/app/minha-conta/sign-out-button";
+import { error } from "console";
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type StatusBadgeColor = "green" | "yellow" | "gray";
@@ -210,10 +211,10 @@ export default async function DashboardPage() {
           ano_modelo,
           criado_em,
           atualizado_em,
-          vendido_em,
-          marca:marca_veiculo_id(nome_dominio),
-          modelo:modelo_veiculo_id(nome_dominio),
-          situacao:situacao_veiculo_id(nome_dominio)
+          data_venda,
+          marca:dominio!marca_veiculo_id(nome_dominio),
+          modelo:dominio!modelo_veiculo_id(nome_dominio),
+          situacao:dominio!situacao_veiculo_id(nome_dominio)
         `)
         .eq("empresa_id", empresaId)
         .order("atualizado_em", { ascending: false });
@@ -234,8 +235,8 @@ export default async function DashboardPage() {
   const vendidos = lista.filter(
     (v) =>
       (v.situacao as unknown as { nome_dominio: string } | null)?.nome_dominio === "Vendido" &&
-      v.vendido_em !== null &&
-      new Date(v.vendido_em as string) >= inicioMes
+      v.data_venda !== null &&
+      new Date(v.data_venda as string) >= inicioMes
   ).length;
 
   const vehicleIds = lista.map((v) => v.id);
@@ -462,7 +463,7 @@ export default async function DashboardPage() {
                   const marcaNome = (v.marca as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
                   const modeloNome = (v.modelo as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
                   const s = statusConfig[situacaoNome] ?? { label: situacaoNome, color: "gray" as StatusBadgeColor };
-                  const acao = determinaAcao(v.vendido_em as string | null, v.criado_em as string, v.atualizado_em as string);
+                  const acao = determinaAcao(v.data_venda as string | null, v.criado_em as string, v.atualizado_em as string);
                   const tempo = tempoRelativo(v.atualizado_em as string);
                   return (
                     <tr key={v.placa} className="hover:bg-brand-gray-soft/50 transition-colors">
@@ -507,7 +508,7 @@ export default async function DashboardPage() {
               const marcaNome = (v.marca as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
               const modeloNome = (v.modelo as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
               const s = statusConfig[situacaoNome] ?? { label: situacaoNome, color: "gray" as StatusBadgeColor };
-              const acao = determinaAcao(v.vendido_em as string | null, v.criado_em as string, v.atualizado_em as string);
+              const acao = determinaAcao(v.data_venda as string | null, v.criado_em as string, v.atualizado_em as string);
               const tempo = tempoRelativo(v.atualizado_em as string);
               return (
                 <div key={v.placa} className="px-5 py-4 flex items-center justify-between gap-4">

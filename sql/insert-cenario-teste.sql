@@ -69,7 +69,8 @@ INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0006-0000-0000-000000000001', 'situacao_veiculo', 'Disponível'),
 ('aaaaaaaa-0006-0000-0000-000000000002', 'situacao_veiculo', 'Reservado'),
 ('aaaaaaaa-0006-0000-0000-000000000003', 'situacao_veiculo', 'Vendido'),
-('aaaaaaaa-0006-0000-0000-000000000004', 'situacao_veiculo', 'Em Manutenção');
+('aaaaaaaa-0006-0000-0000-000000000004', 'situacao_veiculo', 'Em Negociação')
+('aaaaaaaa-0006-0000-0000-000000000005', 'situacao_veiculo', 'Em Manutenção');
 
 -- grupo: papel_usuario
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
