@@ -33,14 +33,18 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    try {
+      const supabase = await createClient();
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error) {
-      const redirectUrl = new URL(safeNextPath, origin);
-      return NextResponse.redirect(redirectUrl);
+      if (!error) {
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+
+      console.error("[auth/callback] exchangeCodeForSession error:", error.message);
+    } catch (err) {
+      console.error("[auth/callback] Supabase client or exchangeCodeForSession threw:", err);
     }
-
-    console.error("[auth/callback] exchangeCodeForSession error:", error.message);
   }
 
   // Falha → redireciona para redefinir-senha com flag de erro
