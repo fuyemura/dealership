@@ -14,23 +14,40 @@ export async function GET(request: NextRequest) {
 
   const code = searchParams.get("code");
 
-  // Sanitiza `next`: aceita apenas caminhos relativos começando com "/"
-  // e rejeita URLs relativas de protocolo ("//evil.com") para evitar open redirect.
+  // Sanitiza `next` em duas camadas para evitar open redirect:
+  //   1ª — regex: aceita somente caminhos começando com "/" mas não "//"
+  //        (URLs relativas de protocolo como "//evil.com" são rejeitadas).
+  //   2ª — parsing: constrói a URL candidate com new URL(rawNext, origin) e
+  //        compara candidate.origin === origin, garantindo que qualquer
+  //        sequência malformada (ex.: next=@evil.com, next=/%0aevil.com) que
+  //        escape a regex ainda seja bloqueada pelo parser nativo.
   const rawNext = searchParams.get("next") ?? "/redefinir-senha";
-  const safePath = /^\/(?!\/)/.test(rawNext) ? rawNext : "/redefinir-senha";
+  const fallback = new URL("/redefinir-senha", origin);
+
+  let safeRedirectUrl: URL;
+  if (/^\/(?!\/)/.test(rawNext)) {
+    const candidate = new URL(rawNext, origin);
+    safeRedirectUrl = candidate.origin === origin ? candidate : fallback;
+  } else {
+    safeRedirectUrl = fallback;
+  }
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      const redirectUrl = new URL(safePath, origin);
-      return NextResponse.redirect(redirectUrl.toString());
+      // Sinaliza explicitamente que a sessão foi estabelecida via password-reset.
+      // A página /redefinir-senha usa esse param para distinguir o fluxo de
+      // recovery de uma sessão normal, sem depender do evento PASSWORD_RECOVERY
+      // (que não é disparado no fluxo PKCE server-side).
+      safeRedirectUrl.searchParams.set("type", "recovery");
+      return NextResponse.redirect(safeRedirectUrl.toString());
     }
 
     console.error("[auth/callback] exchangeCodeForSession error:", error.message);
   }
 
   // Falha → redireciona para redefinir-senha com flag de erro
-  return NextResponse.redirect(`${origin}/redefinir-senha?erro=link_invalido`);
+  return NextResponse.redirect(new URL("/redefinir-senha?erro=link_invalido", origin).toString());
 }

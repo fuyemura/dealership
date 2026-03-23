@@ -29,11 +29,17 @@ function RedefinirSenhaContent() {
   useEffect(() => () => { if (redirectTimer.current) clearTimeout(redirectTimer.current); }, []);
 
   /*
-   * O Route Handler /auth/callback já trocou o code por uma sessão via cookies.
-   * Importante: não basta verificar se existe sessão (getSession retorna qualquer
-   * sessão ativa, incluindo logins normais). É necessário confirmar o evento
-   * PASSWORD_RECOVERY, que o Supabase dispara exclusivamente quando a sessão
-   * foi estabelecida a partir de um link de redefinição de senha.
+   * Estratégia de validação do fluxo de recovery:
+   *
+   * No fluxo PKCE server-side, /auth/callback chama exchangeCodeForSession()
+   * no servidor e estabelece a sessão via cookies ANTES de redirecionar aqui.
+   * Por isso, o Supabase SDK dispara INITIAL_SESSION (não PASSWORD_RECOVERY)
+   * quando a página carrega — depender de PASSWORD_RECOVERY causaria falsos
+   * negativos em todos os links válidos.
+   *
+   * Solução: /auth/callback injeta ?type=recovery na URL somente após uma
+   * troca de código bem-sucedida. Aqui verificamos esse sinal explícito do
+   * servidor e em seguida confirmamos que existe uma sessão ativa.
    */
   useEffect(() => {
     const erroParam = searchParams.get("erro");
@@ -43,36 +49,50 @@ function RedefinirSenhaContent() {
       return;
     }
 
-    const supabase = createClient();
+    // Sinal explícito definido pelo servidor após exchangeCodeForSession.
+    // Sem ele o usuário não veio pelo fluxo de reset de senha.
+    const type = searchParams.get("type");
+    if (type !== "recovery") {
+      setView("linkInvalido");
+      return;
+    }
 
-    // Fallback de segurança: se PASSWORD_RECOVERY não chegar em 4s, o link é
-    // inválido ou o usuário não veio do fluxo de recovery.
-    const safetyTimeout = setTimeout(() => setView("linkInvalido"), 4000);
+    let subscription: { unsubscribe: () => void } | null = null;
 
-    // Apenas PASSWORD_RECOVERY confirma que o usuário chegou via link de
-    // redefinição. Um usuário já autenticado (sessão normal) dispara
-    // INITIAL_SESSION, não PASSWORD_RECOVERY — esse caso é tratado como
-    // link inválido para impedir troca de senha sem reautenticação.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "PASSWORD_RECOVERY") {
-          clearTimeout(safetyTimeout);
-          setView("form");
-        } else if (event === "INITIAL_SESSION" && !session) {
-          // Sem sessão nenhuma → link expirado ou inválido
-          clearTimeout(safetyTimeout);
+    let supabase: ReturnType<typeof createClient>;
+    try {
+      supabase = createClient();
+    } catch {
+      setView("linkInvalido");
+      return;
+    }
+
+    // Confirma que a sessão estabelecida pelo callback ainda é válida.
+    supabase.auth
+      .getSession()
+      .then(({ data: { session }, error }) => {
+        if (error || !session) {
           setView("linkInvalido");
-        } else if (event === "SIGNED_OUT") {
-          clearTimeout(safetyTimeout);
-          setView("linkInvalido");
+          return;
         }
-        // INITIAL_SESSION com sessão normal → aguarda safetyTimeout (não é recovery)
-      }
-    );
+
+        setView("form");
+
+        // Listener residual: encerra o formulário se a sessão for revogada
+        // enquanto o usuário ainda está na tela.
+        try {
+          const { data } = supabase.auth.onAuthStateChange((event) => {
+            if (event === "SIGNED_OUT") setView("linkInvalido");
+          });
+          subscription = data.subscription;
+        } catch {
+          // Não-crítico: formulário já está visível; apenas não detecta sign-out.
+        }
+      })
+      .catch(() => setView("linkInvalido"));
 
     return () => {
-      subscription.unsubscribe();
-      clearTimeout(safetyTimeout);
+      subscription?.unsubscribe();
     };
   }, [searchParams]);
 
