@@ -13,19 +13,33 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
 
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/redefinir-senha";
+  const rawNext = searchParams.get("next");
+
+  // Valida o parâmetro `next` para evitar open-redirect: aceita apenas caminhos relativos.
+  // Rejeita valores como "//@evil.com" que começam com "/" mas apontam para domínio externo.
+  let next = "/redefinir-senha";
+  if (rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//")) {
+    try {
+      const candidate = new URL(rawNext, origin);
+      if (candidate.origin === origin) {
+        next = candidate.pathname + candidate.search + candidate.hash;
+      }
+    } catch {
+      // Mantém o caminho padrão em caso de URL malformada
+    }
+  }
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(new URL(next, origin));
     }
 
     console.error("[auth/callback] exchangeCodeForSession error:", error.message);
   }
 
   // Falha → redireciona para redefinir-senha com flag de erro
-  return NextResponse.redirect(`${origin}/redefinir-senha?erro=link_invalido`);
+  return NextResponse.redirect(new URL("/redefinir-senha?erro=link_invalido", origin));
 }

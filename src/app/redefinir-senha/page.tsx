@@ -42,13 +42,26 @@ function RedefinirSenhaContent() {
 
     const supabase = createClient();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setView("form");
-      } else {
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Erro ao obter sessão do Supabase:", error);
+          setErro("Não foi possível validar o link de redefinição de senha.");
+          setView("linkInvalido");
+          return;
+        }
+        if (data?.session) {
+          setView("form");
+        } else {
+          setView("linkInvalido");
+        }
+      })
+      .catch((err) => {
+        console.error("Falha ao chamar supabase.auth.getSession():", err);
+        setErro("Ocorreu um erro ao validar o link de redefinição de senha.");
         setView("linkInvalido");
-      }
-    });
+      });
   }, [searchParams]);
 
   const handleRedefinir = async () => {
