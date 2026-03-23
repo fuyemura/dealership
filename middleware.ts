@@ -9,12 +9,26 @@ import { NextResponse, type NextRequest } from "next/server";
  * 2. Se a rota é protegida e não há sessão → redireciona para /login.
  * 3. Se já está logado e tenta acessar /login → redireciona para /minha-conta.
  */
+
+// Centralizado aqui para evitar duplicação no bloco de env vars ausentes
+const protectedPrefixes = ["/dashboard", "/minha-conta", "/veiculos", "/perfil", "/assinatura", "/faturas"];
+
 export async function middleware(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Sem as env vars o createClient() lançaria erro em qualquer rota.
+    // Falha de forma consistente com 500 para deixar a misconfiguração visível.
+    console.error("Supabase env vars ausentes: NEXT_PUBLIC_SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -42,7 +56,6 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rotas protegidas — prefixos que exigem sessão ativa
-  const protectedPrefixes = ["/dashboard", "/minha-conta", "/veiculos", "/perfil", "/assinatura", "/faturas"];
   const isProtected = protectedPrefixes.some((prefix) =>
     pathname.startsWith(prefix)
   );
