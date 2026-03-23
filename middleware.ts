@@ -15,7 +15,21 @@ export async function middleware(request: NextRequest) {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error("Supabase env vars ausentes: NEXT_PUBLIC_SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_ANON_KEY");
-    return NextResponse.next({ request });
+
+    const { pathname } = request.nextUrl;
+    const protectedPrefixes = ["/dashboard", "/minha-conta", "/veiculos", "/perfil", "/assinatura", "/faturas"];
+    const isProtected = protectedPrefixes.some((prefix) =>
+      pathname.startsWith(prefix)
+    );
+
+    if (isProtected) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 
   let supabaseResponse = NextResponse.next({ request });
