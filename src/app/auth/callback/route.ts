@@ -13,14 +13,19 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
 
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/redefinir-senha";
+
+  // Sanitiza `next`: aceita apenas caminhos relativos começando com "/"
+  // e rejeita URLs relativas de protocolo ("//evil.com") para evitar open redirect.
+  const rawNext = searchParams.get("next") ?? "/redefinir-senha";
+  const safePath = /^\/(?!\/)/.test(rawNext) ? rawNext : "/redefinir-senha";
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const redirectUrl = new URL(safePath, origin);
+      return NextResponse.redirect(redirectUrl.toString());
     }
 
     console.error("[auth/callback] exchangeCodeForSession error:", error.message);

@@ -30,7 +30,10 @@ function RedefinirSenhaContent() {
 
   /*
    * O Route Handler /auth/callback já trocou o code por uma sessão via cookies.
-   * Aqui só verificamos se a sessão existe e se chegou flag de erro.
+   * Importante: não basta verificar se existe sessão (getSession retorna qualquer
+   * sessão ativa, incluindo logins normais). É necessário confirmar o evento
+   * PASSWORD_RECOVERY, que o Supabase dispara exclusivamente quando a sessão
+   * foi estabelecida a partir de um link de redefinição de senha.
    */
   useEffect(() => {
     const erroParam = searchParams.get("erro");
@@ -42,13 +45,35 @@ function RedefinirSenhaContent() {
 
     const supabase = createClient();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setView("form");
-      } else {
-        setView("linkInvalido");
+    // Fallback de segurança: se PASSWORD_RECOVERY não chegar em 4s, o link é
+    // inválido ou o usuário não veio do fluxo de recovery.
+    const safetyTimeout = setTimeout(() => setView("linkInvalido"), 4000);
+
+    // Apenas PASSWORD_RECOVERY confirma que o usuário chegou via link de
+    // redefinição. Um usuário já autenticado (sessão normal) dispara
+    // INITIAL_SESSION, não PASSWORD_RECOVERY — esse caso é tratado como
+    // link inválido para impedir troca de senha sem reautenticação.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          clearTimeout(safetyTimeout);
+          setView("form");
+        } else if (event === "INITIAL_SESSION" && !session) {
+          // Sem sessão nenhuma → link expirado ou inválido
+          clearTimeout(safetyTimeout);
+          setView("linkInvalido");
+        } else if (event === "SIGNED_OUT") {
+          clearTimeout(safetyTimeout);
+          setView("linkInvalido");
+        }
+        // INITIAL_SESSION com sessão normal → aguarda safetyTimeout (não é recovery)
       }
-    });
+    );
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, [searchParams]);
 
   const handleRedefinir = async () => {
