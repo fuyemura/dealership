@@ -20,6 +20,7 @@ export default function EsqueceuSenhaPage() {
   useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
 
   const iniciarCooldown = (segundos: number) => {
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
     setCooldown(segundos);
     cooldownRef.current = setInterval(() => {
       setCooldown((s) => {
@@ -34,6 +35,7 @@ export default function EsqueceuSenhaPage() {
   };
 
   const handleEnviar = async () => {
+    if (loading || cooldown > 0) return;
     setErro(null);
 
     if (!email.trim()) {
@@ -140,7 +142,7 @@ export default function EsqueceuSenhaPage() {
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErro(null); }}
-                    onKeyDown={(e) => e.key === "Enter" && handleEnviar()}
+                    onKeyDown={(e) => e.key === "Enter" && !loading && cooldown === 0 && handleEnviar()}
                     placeholder="seu@email.com"
                     className="w-full border border-brand-gray-mid/60 rounded-xl px-4 py-3 text-sm text-brand-black bg-brand-gray-light placeholder:text-brand-black/30 focus:outline-none focus:ring-2 focus:ring-brand-black/10 transition"
                   />

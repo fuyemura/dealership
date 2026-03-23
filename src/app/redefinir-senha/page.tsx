@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,10 @@ function RedefinirSenhaContent() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Limpa o timer ao desmontar para evitar navegação após o componente sair da tela
+  useEffect(() => () => { if (redirectTimer.current) clearTimeout(redirectTimer.current); }, []);
 
   /*
    * O Route Handler /auth/callback já trocou o code por uma sessão via cookies.
@@ -48,6 +52,7 @@ function RedefinirSenhaContent() {
   }, [searchParams]);
 
   const handleRedefinir = async () => {
+    if (loading) return;
     setErro(null);
 
     if (!novaSenha || novaSenha.length < 8) {
@@ -68,10 +73,14 @@ function RedefinirSenhaContent() {
 
       if (error) throw error;
 
+      // Encerra a sessão antes de redirecionar para evitar que o middleware
+      // intercepte /login e redirecione de volta para /minha-conta.
+      await supabase.auth.signOut();
+
       setView("sucesso");
 
       // Redireciona para o login após 3 segundos
-      setTimeout(() => router.push("/login"), 3000);
+      redirectTimer.current = setTimeout(() => router.push("/login"), 3000);
     } catch {
       setErro("Não foi possível redefinir a senha. Solicite um novo link.");
     } finally {
@@ -195,7 +204,7 @@ function RedefinirSenhaContent() {
               type={mostrarSenha ? "text" : "password"}
               value={novaSenha}
               onChange={(e) => { setNovaSenha(e.target.value); setErro(null); }}
-              onKeyDown={(e) => e.key === "Enter" && handleRedefinir()}
+              onKeyDown={(e) => e.key === "Enter" && !loading && handleRedefinir()}
               className="w-full border border-brand-gray-mid/60 rounded-xl px-4 py-3 pr-11 text-sm text-brand-black bg-brand-gray-light placeholder:text-brand-black/30 focus:outline-none focus:ring-2 focus:ring-brand-black/10 transition"
             />
             <button
@@ -218,7 +227,7 @@ function RedefinirSenhaContent() {
             type={mostrarSenha ? "text" : "password"}
             value={confirmarSenha}
             onChange={(e) => { setConfirmarSenha(e.target.value); setErro(null); }}
-            onKeyDown={(e) => e.key === "Enter" && handleRedefinir()}
+            onKeyDown={(e) => e.key === "Enter" && !loading && handleRedefinir()}
             className="w-full border border-brand-gray-mid/60 rounded-xl px-4 py-3 text-sm text-brand-black bg-brand-gray-light placeholder:text-brand-black/30 focus:outline-none focus:ring-2 focus:ring-brand-black/10 transition"
           />
         </div>
