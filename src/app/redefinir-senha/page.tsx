@@ -70,8 +70,8 @@ function RedefinirSenhaContent() {
 
       setView("sucesso");
 
-      // Redireciona para o login após 3 segundos
-      setTimeout(() => router.push("/login"), 3000);
+      // Redireciona para minha conta após 3 segundos (sessão já está ativa após o reset)
+      setTimeout(() => router.push("/minha-conta"), 3000);
     } catch {
       setErro("Não foi possível redefinir a senha. Solicite um novo link.");
     } finally {
@@ -153,16 +153,16 @@ function RedefinirSenhaContent() {
             Senha redefinida!
           </h2>
           <p className="text-sm text-brand-black/60 leading-relaxed">
-            Sua senha foi atualizada com sucesso. Você será redirecionado para o
-            login em instantes.
+            Sua senha foi atualizada com sucesso. Você será redirecionado para
+            sua conta em instantes.
           </p>
         </div>
 
         <Link
-          href="/login"
+          href="/minha-conta"
           className="text-sm font-medium text-brand-black/70 hover:text-brand-black transition-colors duration-200 mt-1"
         >
-          Ir para o login agora
+          Ir para minha conta agora
         </Link>
       </div>
     );
