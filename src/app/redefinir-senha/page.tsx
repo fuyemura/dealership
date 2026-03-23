@@ -75,12 +75,25 @@ function RedefinirSenhaContent() {
 
       // Encerra a sessão antes de redirecionar para evitar que o middleware
       // intercepte /login e redirecione de volta para /minha-conta.
-      await supabase.auth.signOut();
+      const { error: signOutError } = await supabase.auth.signOut();
+
+      if (signOutError) {
+        // Se o sign-out falhar a sessão pode continuar ativa e o middleware
+        // redirecionaria /login → /minha-conta. Informamos o usuário e
+        // enviamos para /minha-conta, destino que não depende do sign-out.
+        setErro(
+          "Senha atualizada, mas não foi possível encerrar a sessão automaticamente. Redirecionando para sua conta…"
+        );
+        if (redirectTimer.current) clearTimeout(redirectTimer.current);
+        redirectTimer.current = setTimeout(() => router.push("/minha-conta"), 3000);
+        return;
+      }
 
       setView("sucesso");
 
       // Redireciona para o login após 3 segundos
-      setTimeout(() => router.push("/login"), 3000);
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+      redirectTimer.current = setTimeout(() => router.push("/login"), 3000);
     } catch {
       setErro("Não foi possível redefinir a senha. Solicite um novo link.");
     } finally {
@@ -163,15 +176,15 @@ function RedefinirSenhaContent() {
           </h2>
           <p className="text-sm text-brand-black/60 leading-relaxed">
             Sua senha foi atualizada com sucesso. Você será redirecionado para
-            sua conta em instantes.
+            o login em instantes.
           </p>
         </div>
 
         <Link
-          href="/minha-conta"
+          href="/login"
           className="text-sm font-medium text-brand-black/70 hover:text-brand-black transition-colors duration-200 mt-1"
         >
-          Ir para minha conta agora
+          Ir para o login agora
         </Link>
       </div>
     );
