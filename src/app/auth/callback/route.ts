@@ -13,14 +13,31 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
 
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/redefinir-senha";
+  const nextParam = searchParams.get("next");
+  const defaultPath = "/redefinir-senha";
+
+  // Valida/normaliza o parâmetro `next` para evitar open-redirect.
+  let safeNextPath = defaultPath;
+  if (nextParam && nextParam.startsWith("/")) {
+    try {
+      const candidateUrl = new URL(nextParam, origin);
+      if (candidateUrl.origin === origin) {
+        // Mantém apenas path+search+hash para garantir que o origin não seja alterado.
+        safeNextPath = candidateUrl.pathname + candidateUrl.search + candidateUrl.hash;
+      }
+    } catch {
+      // Em caso de erro na construção da URL, usa o path padrão.
+      safeNextPath = defaultPath;
+    }
+  }
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const redirectUrl = new URL(safeNextPath, origin);
+      return NextResponse.redirect(redirectUrl);
     }
 
     console.error("[auth/callback] exchangeCodeForSession error:", error.message);
