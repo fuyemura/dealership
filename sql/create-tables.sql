@@ -394,6 +394,100 @@ ALTER TABLE dealership.assinatura ADD CONSTRAINT uk_assinatura_empresa_id UNIQUE
 
 
 -- -----------------------------------------------------------------------------
+-- Tabela de histórico: captura o estado anterior a cada UPDATE em assinatura
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE dealership.assinatura_historico (
+    id                     UUID         NOT NULL DEFAULT gen_random_uuid(),
+    assinatura_id          UUID         NOT NULL,
+    empresa_id             UUID         NOT NULL,
+    plano_id               UUID         NOT NULL,
+    situacao_assinatura_id UUID         NOT NULL,
+    ciclo_cobranca_id      UUID         NOT NULL,
+    data_inicio            DATE         NOT NULL,
+    data_fim               DATE         NULL,
+    data_cancelamento      DATE         NULL,
+    motivo_cancelamento    VARCHAR(500) NULL,
+    trial_ativo            BOOLEAN      NOT NULL,
+    data_fim_trial         DATE         NULL,
+    gateway_cliente_id     VARCHAR(255) NULL,
+    gateway_assinatura_id  VARCHAR(255) NULL,
+    criado_em              TIMESTAMP(0) WITH TIME ZONE NOT NULL,
+    atualizado_em          TIMESTAMP(0) WITH TIME ZONE NOT NULL,
+    registrado_em          TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_assinatura_historico_assinatura_id ON dealership.assinatura_historico (assinatura_id);
+CREATE INDEX idx_assinatura_historico_empresa_id    ON dealership.assinatura_historico (empresa_id);
+
+COMMENT ON TABLE  dealership.assinatura_historico                          IS 'Histórico de alterações da assinatura. Cada linha representa o estado anterior ao UPDATE.';
+COMMENT ON COLUMN dealership.assinatura_historico.id                       IS 'Chave primária (PK) do registro de histórico.';
+COMMENT ON COLUMN dealership.assinatura_historico.assinatura_id            IS 'Referência ao id da assinatura que foi alterada.';
+COMMENT ON COLUMN dealership.assinatura_historico.empresa_id               IS 'Empresa dona da assinatura.';
+COMMENT ON COLUMN dealership.assinatura_historico.plano_id                 IS 'Plano vigente antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.situacao_assinatura_id   IS 'Situação da assinatura antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.ciclo_cobranca_id        IS 'Ciclo de cobrança antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.data_inicio              IS 'Data de início vigente antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.data_fim                 IS 'Data de fim vigente antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.data_cancelamento        IS 'Data de cancelamento antes da alteração, se houver.';
+COMMENT ON COLUMN dealership.assinatura_historico.motivo_cancelamento      IS 'Motivo do cancelamento antes da alteração, se houver.';
+COMMENT ON COLUMN dealership.assinatura_historico.trial_ativo              IS 'Estado do trial antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.data_fim_trial           IS 'Data fim do trial antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.gateway_cliente_id       IS 'ID do cliente no gateway antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.gateway_assinatura_id    IS 'ID da assinatura no gateway antes da alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.criado_em                IS 'Data de criação original do registro de assinatura.';
+COMMENT ON COLUMN dealership.assinatura_historico.atualizado_em            IS 'Data de atualização do registro de assinatura antes desta alteração.';
+COMMENT ON COLUMN dealership.assinatura_historico.registrado_em            IS 'Data e hora em que este registro de histórico foi criado pelo trigger.';
+
+ALTER TABLE dealership.assinatura_historico ADD PRIMARY KEY (id);
+
+-- Função e trigger: grava o estado anterior de assinatura antes de cada UPDATE
+CREATE OR REPLACE FUNCTION dealership.registrar_historico_assinatura()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO dealership.assinatura_historico (
+        assinatura_id,
+        empresa_id,
+        plano_id,
+        situacao_assinatura_id,
+        ciclo_cobranca_id,
+        data_inicio,
+        data_fim,
+        data_cancelamento,
+        motivo_cancelamento,
+        trial_ativo,
+        data_fim_trial,
+        gateway_cliente_id,
+        gateway_assinatura_id,
+        criado_em,
+        atualizado_em
+    ) VALUES (
+        OLD.id,
+        OLD.empresa_id,
+        OLD.plano_id,
+        OLD.situacao_assinatura_id,
+        OLD.ciclo_cobranca_id,
+        OLD.data_inicio,
+        OLD.data_fim,
+        OLD.data_cancelamento,
+        OLD.motivo_cancelamento,
+        OLD.trial_ativo,
+        OLD.data_fim_trial,
+        OLD.gateway_cliente_id,
+        OLD.gateway_assinatura_id,
+        OLD.criado_em,
+        OLD.atualizado_em
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_assinatura_historico
+    BEFORE UPDATE ON dealership.assinatura
+    FOR EACH ROW EXECUTE FUNCTION dealership.registrar_historico_assinatura();
+
+
+-- -----------------------------------------------------------------------------
 
 CREATE TABLE dealership.fatura (
     id                   UUID          NOT NULL DEFAULT gen_random_uuid(),

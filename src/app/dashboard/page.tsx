@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import SignOutButton from "@/app/minha-conta/sign-out-button";
+import SignOutButton from "@/components/sign-out-button";
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type StatusBadgeColor = "green" | "yellow" | "gray";
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
   const { data: usuario } = await supabase
     .schema("dealership")
     .from("usuario")
-    .select("nome_usuario, empresa_id")
+    .select("nome_usuario, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
     .eq("auth_id", user.id)
     .single();
 
@@ -200,6 +200,9 @@ export default async function DashboardPage() {
   // jamais sejam acessados.
   const empresaId = usuario?.empresa_id ?? null;
   if (!empresaId) redirect("/login");
+
+  const papel = usuario?.papel as unknown as { nome_dominio: string } | null;
+  const isAdmin = papel?.nome_dominio === "administrador";
 
   const { data: veiculos } = await supabase
       .schema("dealership")
@@ -252,6 +255,25 @@ export default async function DashboardPage() {
       qrCodes?.reduce((acc, q) => acc + (q.total_visualizacoes ?? 0), 0) ?? 0;
   }
 
+  // UNIQUE (empresa_id) garante exatamente 1 registro por empresa
+  const { data: assinaturaData } = await supabase
+    .schema("dealership")
+    .from("assinatura")
+    .select(`
+      data_fim,
+      situacao:situacao_assinatura_id(nome_dominio),
+      plano:plano_id(nome_plano, limite_veiculos)
+    `)
+    .eq("empresa_id", empresaId)
+    .maybeSingle();
+
+  const nomePlano =
+    (assinaturaData?.plano as unknown as { nome_plano: string } | null)?.nome_plano ?? "—";
+  const limiteVeiculos =
+    (assinaturaData?.plano as unknown as { limite_veiculos: number } | null)?.limite_veiculos ?? 0;
+  const situacaoAssinatura =
+    (assinaturaData?.situacao as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "—";
+
   const atividadeRecente = lista.slice(0, 5);
 
   return (
@@ -269,9 +291,9 @@ export default async function DashboardPage() {
 
           <nav className="hidden md:flex items-center gap-6">
             {[
-              { label: "Dashboard",   href: "/dashboard",   active: true  },
-              { label: "Veículos",    href: "/veiculos",    active: false },
-              { label: "Minha Conta", href: "/minha-conta", active: false },
+              { label: "Dashboard",     href: "/dashboard",     active: true  },
+              { label: "Veículos",      href: "/veiculos",      active: false },
+              ...(isAdmin ? [{ label: "Configurações", href: "/configuracoes", active: false }] : []),
             ].map((item) => (
               <Link key={item.href} href={item.href}
                 className={`nav-link text-sm font-medium transition-colors ${
@@ -382,40 +404,72 @@ export default async function DashboardPage() {
               <div>
                 <h2 className="section-label">Assinatura</h2>
                 <p className="font-display text-xl font-bold text-brand-black mt-1">
-                  Plano Básico
+                  {nomePlano}
                 </p>
                 <p className="text-xs text-brand-gray-text mt-0.5">
                   Gerencie sua assinatura abaixo
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 pt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-status-success-text inline-block" />
-                <span className="text-xs font-medium text-status-success-text">
-                  Ativo
-                </span>
-              </div>
+              {situacaoAssinatura !== "—" && (
+                <div className={`flex items-center gap-1.5 pt-1 ${
+                  situacaoAssinatura === "ativa" || situacaoAssinatura === "trial"
+                    ? "text-status-success-text"
+                    : situacaoAssinatura === "inadimplente"
+                    ? "text-status-warning-text"
+                    : "text-brand-gray-text"
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full inline-block ${
+                    situacaoAssinatura === "ativa" || situacaoAssinatura === "trial"
+                      ? "bg-status-success-text"
+                      : situacaoAssinatura === "inadimplente"
+                      ? "bg-status-warning-text"
+                      : "bg-brand-gray-text"
+                  }`} />
+                  <span className="text-xs font-medium capitalize">
+                    {situacaoAssinatura}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Veículos cadastrados */}
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-medium text-brand-black">Veículos cadastrados</p>
-                <p className="text-xs font-bold text-brand-black">{total}</p>
+                <p className="text-xs font-bold text-brand-black">
+                  {limiteVeiculos === -1
+                    ? `${total} / ilimitado`
+                    : limiteVeiculos > 0
+                    ? `${total} / ${limiteVeiculos}`
+                    : total}
+                </p>
               </div>
               <div className="w-full h-2 bg-brand-gray-soft rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-brand-black rounded-full transition-all duration-500"
-                  style={{ width: total > 0 ? "100%" : "0%" }}
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    limiteVeiculos > 0 && total / limiteVeiculos >= 0.9
+                      ? "bg-status-warning-text"
+                      : "bg-brand-black"
+                  }`}
+                  style={{
+                    width: limiteVeiculos === -1 || limiteVeiculos === 0
+                      ? total > 0 ? "100%" : "0%"
+                      : `${Math.min((total / limiteVeiculos) * 100, 100)}%`,
+                  }}
                 />
               </div>
               <p className="text-xs text-brand-gray-text mt-1.5">
-                {total} veículo{total !== 1 ? "s" : ""} no estoque
+                {limiteVeiculos === -1
+                  ? `${total} veículo${total !== 1 ? "s" : ""} — sem limite de cadastro`
+                  : limiteVeiculos > 0
+                  ? `${limiteVeiculos - total > 0 ? limiteVeiculos - total : 0} vaga${limiteVeiculos - total !== 1 ? "s" : ""} restante${limiteVeiculos - total !== 1 ? "s" : ""}`
+                  : `${total} veículo${total !== 1 ? "s" : ""} no estoque`}
               </p>
             </div>
 
             <div className="mt-auto pt-5">
               <Link
-                href="/assinatura"
+                href="/configuracoes/assinatura"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity"
               >
                 Gerenciar assinatura <IconArrowRight />

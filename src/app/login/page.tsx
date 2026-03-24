@@ -102,60 +102,66 @@ export default function LoginPage() {
             Login do Cliente
           </h1>
 
-          <div className="space-y-4">
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleLogin(); }}
+            noValidate
+            className="space-y-4"
+          >
             {/* Mensagem de erro */}
             {erro && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3" role="alert">
                 <p className="text-sm text-red-600 font-medium">{erro}</p>
               </div>
             )}
 
             {/* Email */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-brand-black">
+              <label htmlFor="email" className="text-sm font-medium text-brand-black">
                 E-mail
               </label>
               <input
+                id="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErro(null); }}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 className="w-full border border-brand-gray-mid/60 rounded-xl px-4 py-3 text-sm text-brand-black bg-brand-gray-light placeholder:text-brand-black/30 focus:outline-none focus:ring-2 focus:ring-brand-black/10 transition"
               />
             </div>
 
             {/* Senha */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-brand-black">
+              <label htmlFor="senha" className="text-sm font-medium text-brand-black">
                 Senha
               </label>
               <input
+                id="senha"
                 type="password"
+                autoComplete="current-password"
                 value={senha}
                 onChange={(e) => { setSenha(e.target.value); setErro(null); }}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 className="w-full border border-brand-gray-mid/60 rounded-xl px-4 py-3 text-sm text-brand-black bg-brand-gray-light placeholder:text-brand-black/30 focus:outline-none focus:ring-2 focus:ring-brand-black/10 transition"
               />
             </div>
-          </div>
 
-          {/* Actions row */}
-          <div className="flex items-center justify-between mt-6">
-            <Link
-              href="/esqueceu-senha"
-              className="text-sm font-medium text-brand-black/70 hover:text-brand-black transition-colors duration-200"
-            >
-              Esqueceu a senha?
-            </Link>
-            <Button
-              onClick={handleLogin}
-              disabled={loading}
-              size="sm"
-              className="rounded-full px-5 text-sm hover:scale-[1.02]"
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </div>
+            {/* Actions row */}
+            <div className="flex items-center justify-between pt-2">
+              <Link
+                href="/esqueceu-senha"
+                className="text-sm font-medium text-brand-black/70 hover:text-brand-black transition-colors duration-200"
+              >
+                Esqueceu a senha?
+              </Link>
+              <Button
+                type="submit"
+                disabled={loading}
+                size="sm"
+                className="rounded-full px-5 text-sm hover:scale-[1.02]"
+              >
+                {loading ? "Entrando..." : "Entrar"}
+              </Button>
+            </div>
+          </form>
 
           {/* Criar conta */}
           <div className="mt-6 pt-4 border-t border-brand-gray-mid/30">

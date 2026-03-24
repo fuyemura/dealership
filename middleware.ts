@@ -7,11 +7,11 @@ import { NextResponse, type NextRequest } from "next/server";
  * Fluxo:
  * 1. Atualiza o cookie de sessão do Supabase (refresh token silencioso).
  * 2. Se a rota é protegida e não há sessão → redireciona para /login.
- * 3. Se já está logado e tenta acessar /login → redireciona para /minha-conta.
+ * 3. Se já está logado e tenta acessar /login → redireciona para /dashboard.
  */
 
 // Centralizado aqui para evitar duplicação no bloco de env vars ausentes
-const protectedPrefixes = ["/dashboard", "/minha-conta", "/veiculos", "/perfil", "/assinatura", "/faturas"];
+const protectedPrefixes = ["/dashboard", "/veiculos", "/perfil", "/configuracoes"];
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -69,10 +69,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Já logado tentando acessar /login → minha conta
+  // Já logado tentando acessar /login → dashboard
   if (pathname === "/login" && user) {
     const accountUrl = request.nextUrl.clone();
-    accountUrl.pathname = "/minha-conta";
+    accountUrl.pathname = "/dashboard";
     return NextResponse.redirect(accountUrl);
   }
 
