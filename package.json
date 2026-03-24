@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src",
+    "lint": "eslint .",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema dealership > src/types/database.types.ts"
   },
   "dependencies": {
