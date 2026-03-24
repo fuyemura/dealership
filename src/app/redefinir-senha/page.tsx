@@ -119,18 +119,18 @@ function RedefinirSenhaContent() {
       if (error) throw error;
 
       // Encerra a sessão antes de redirecionar para evitar que o middleware
-      // intercepte /login e redirecione de volta para /minha-conta.
+      // intercepte /login e redirecione de volta para /dashboard.
       const { error: signOutError } = await supabase.auth.signOut();
 
       if (signOutError) {
         // Se o sign-out falhar a sessão pode continuar ativa e o middleware
-        // redirecionaria /login → /minha-conta. Informamos o usuário e
-        // enviamos para /minha-conta, destino que não depende do sign-out.
+        // redirecionaria /login → /dashboard. Informamos o usuário e
+        // enviamos para /dashboard, destino que não depende do sign-out.
         setErro(
-          "Senha atualizada, mas não foi possível encerrar a sessão automaticamente. Redirecionando para sua conta…"
+          "Senha atualizada, mas não foi possível encerrar a sessão automaticamente. Redirecionando para o dashboard…"
         );
         if (redirectTimer.current) clearTimeout(redirectTimer.current);
-        redirectTimer.current = setTimeout(() => router.push("/minha-conta"), 3000);
+        redirectTimer.current = setTimeout(() => router.push("/dashboard"), 3000);
         return;
       }
 
