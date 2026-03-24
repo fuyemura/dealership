@@ -67,10 +67,61 @@ function mapearFeatures(plano: PlanoDB): string[] {
 // evitando que a landing page dependa de sessão de usuário ou cookies.
 // unstable_cache armazena o resultado no Data Cache do Next.js,
 // revalidando automaticamente a cada hora sem bloquear requests.
+// Em ambientes sem as env vars (ex: CI, preview sem secrets), retorna fallback estático.
+
+const PLANOS_FALLBACK: PricingPlanDisplay[] = [
+  {
+    id: "basico",
+    name: "Básico",
+    price: "R$ 49,99",
+    description: "Para revendas que estão começando a digitalizar o estoque.",
+    features: ["Até 30 veículos", "Até 2 usuários", "Geração de QR Codes"],
+    popular: false,
+    cta: "Começar grátis",
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    price: "R$ 99,99",
+    description: "Para revendas em crescimento que precisam de mais recursos.",
+    features: [
+      "Até 100 veículos",
+      "Até 5 usuários",
+      "QR Codes personalizados",
+      "Relatórios e analytics",
+      "Suporte prioritário",
+    ],
+    popular: true,
+    cta: "Começar grátis",
+  },
+  {
+    id: "empresarial",
+    name: "Empresarial",
+    price: "R$ 199,99",
+    description: "Para grandes operações sem limite de escala.",
+    features: [
+      "Veículos ilimitados",
+      "Usuários ilimitados",
+      "QR Codes premium",
+      "Relatórios e analytics",
+      "Suporte dedicado",
+    ],
+    popular: false,
+    cta: "Começar grátis",
+  },
+];
 
 const getPlanos = unstable_cache(
   async (): Promise<PricingPlanDisplay[]> => {
-    const supabase = createAdminClient();
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !serviceKey) {
+      return PLANOS_FALLBACK;
+    }
+
+    try {
+      const supabase = createAdminClient();
 
     const { data } = await supabase
       .schema("dealership")
@@ -97,9 +148,12 @@ const getPlanos = unstable_cache(
       popular: planos.length > 1 && i === popularIdx,
       cta: "Começar grátis",
     }));
+    } catch {
+      return PLANOS_FALLBACK;
+    }
   },
   ["pricing-plans"],
-  { revalidate: 3600, tags: ["pricing-plans"] } // revalida a cada 1h; revalidateTag("pricing-plans") para on-demand
+  { revalidate: 3600, tags: ["pricing-plans"] }
 );
 
 // ─── Componente ───────────────────────────────────────────────────────────────
