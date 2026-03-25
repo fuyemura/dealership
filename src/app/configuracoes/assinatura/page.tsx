@@ -241,7 +241,7 @@ export default async function AssinaturaPage() {
   return (
     <>
       {/* ── Cabeçalho da página ── */}
-      <div className="mb-8">
+      <div className="mb-5">
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-black">
           Minha Assinatura
         </h1>
@@ -252,7 +252,7 @@ export default async function AssinaturaPage() {
 
       {/* ── Plano atual ── */}
       {assinatura ? (
-        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8 mb-8">
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-5 sm:p-6 mb-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-brand-gray-text mb-1">
@@ -270,7 +270,7 @@ export default async function AssinaturaPage() {
             <StatusBadge situacao={assinatura.situacao} />
           </div>
 
-          <ul className="mt-5 space-y-2">
+          <ul className="mt-3 space-y-1.5">
             {gerarBeneficios(assinatura.plano).map((b) => (
               <li key={b} className="flex items-center gap-2 text-sm text-brand-gray-text">
                 <span className="text-status-success-text">
@@ -281,7 +281,7 @@ export default async function AssinaturaPage() {
             ))}
           </ul>
 
-          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
             {assinatura.data_fim && (
               <div className="flex items-center gap-1.5 text-sm text-brand-gray-text">
                 <IconCalendar />
@@ -303,14 +303,14 @@ export default async function AssinaturaPage() {
 
           {isCancelada ? (
             /* Banner de reativação quando cancelada/expirada */
-            <div className="mt-6 rounded-xl border border-brand-gray-mid/30 bg-brand-gray-soft p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="mt-4 rounded-xl border border-brand-gray-mid/30 bg-brand-gray-soft p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm text-brand-gray-text">
                 Sua assinatura está <span className="font-medium text-brand-black">{assinatura.situacao}</span>.
                 Escolha um plano abaixo para reativar.
               </p>
             </div>
           ) : (
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors"
@@ -327,7 +327,7 @@ export default async function AssinaturaPage() {
           )}
         </section>
       ) : (
-        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 px-6 sm:px-8 py-12 mb-8 flex flex-col items-center justify-center text-center">
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 px-6 sm:px-8 py-8 mb-5 flex flex-col items-center justify-center text-center">
           <p className="text-sm font-medium text-brand-black mb-1">Sem assinatura ativa</p>
           <p className="text-sm text-brand-gray-text">
             Escolha um dos planos abaixo para começar.
@@ -338,7 +338,7 @@ export default async function AssinaturaPage() {
       {/* ── Planos disponíveis ── */}
       {planos.length > 0 && (
         <div>
-          <h2 className="font-display text-lg sm:text-xl font-bold text-brand-black mb-6">
+          <h2 className="font-display text-lg sm:text-xl font-bold text-brand-black mb-3">
             Planos Disponíveis
           </h2>
 
@@ -362,7 +362,7 @@ export default async function AssinaturaPage() {
                     </span>
                   )}
 
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <h3 className="font-display text-base font-bold text-brand-black">
                       {plano.nome_plano}
                     </h3>
@@ -373,14 +373,14 @@ export default async function AssinaturaPage() {
                     )}
                   </div>
 
-                  <div className="flex items-baseline gap-0.5 mb-5">
+                  <div className="flex items-baseline gap-0.5 mb-3">
                     <span className="font-display text-2xl font-bold text-brand-black">
                       {formatarPreco(plano.preco_mensal)}
                     </span>
                     <span className="text-sm text-brand-gray-text">/mês</span>
                   </div>
 
-                  <ul className="space-y-2 mb-6 flex-1">
+                  <ul className="space-y-1.5 mb-4 flex-1">
                     {beneficios.map((b) => (
                       <li
                         key={b}

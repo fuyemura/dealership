@@ -1,0 +1,30 @@
+name: Database Tests
+
+on:
+  pull_request:
+    paths:
+      - 'sql/**'
+      - 'supabase/**'
+
+jobs:
+  test-database:
+    name: pgTAP — Schema, PKs, FKs, Constraints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local
+        run: supabase start
+
+      - name: Enable pgTAP
+        run: supabase db execute --local "CREATE EXTENSION IF NOT EXISTS pgtap;"
+
+      - name: Run database tests
+        run: supabase test db

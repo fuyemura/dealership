@@ -293,6 +293,7 @@ export default async function DashboardPage() {
             {[
               { label: "Dashboard",     href: "/dashboard",     active: true  },
               { label: "Veículos",      href: "/veiculos",      active: false },
+              { label: "Clientes",      href: "/clientes",      active: false },
               ...(isAdmin ? [{ label: "Configurações", href: "/configuracoes", active: false }] : []),
             ].map((item) => (
               <Link key={item.href} href={item.href}

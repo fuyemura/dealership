@@ -131,6 +131,7 @@ export default async function ConfiguracoesLayout({
             {[
               { label: "Dashboard",     href: "/dashboard",     active: false },
               { label: "Veículos",      href: "/veiculos",      active: false },
+              { label: "Clientes",      href: "/clientes",      active: false },
               { label: "Configurações", href: "/configuracoes", active: true  },
             ].map((item) => (
               <Link
@@ -162,7 +163,7 @@ export default async function ConfiguracoesLayout({
       </header>
 
       {/* Body: sidebar + content */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-x-hidden">
         {/* Desktop sidebar */}
         <aside className="hidden md:flex flex-col w-52 lg:w-60 shrink-0 border-r border-brand-gray-mid/40 bg-white">
           <ConfiguracoesSidebar />
@@ -176,7 +177,7 @@ export default async function ConfiguracoesLayout({
           </div>
 
           {/* Page content */}
-          <main className="flex-1 px-6 lg:px-8 py-8 sm:py-12">
+          <main className="flex-1 min-w-0 px-6 lg:px-8 py-8 sm:py-12">
             {children}
           </main>
         </div>

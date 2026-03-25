@@ -128,7 +128,7 @@ export default async function CustosPage() {
           <div className="w-12 h-12 rounded-2xl bg-brand-gray-soft flex items-center justify-center mb-4 text-brand-gray-text">
             <IconTag size={22} />
           </div>
-          <h2 className="font-display font-semibold text-brand-black mb-1">
+          <h2 className="font-display text-base font-semibold text-brand-black mb-1">
             Nenhum tipo de custo cadastrado
           </h2>
           <p className="text-sm text-brand-gray-text max-w-xs mb-6">

@@ -104,7 +104,7 @@ export function CustoForm({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-2xl">
+    <div className="w-full max-w-2xl">
       {/* Breadcrumb */}
       <Link
         href="/configuracoes/custos"
