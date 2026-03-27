@@ -30,9 +30,9 @@ CREATE TEMP TABLE _test_fx (key TEXT PRIMARY KEY, val UUID NOT NULL);
 -- 1. localizacao (nenhuma FK)
 WITH r AS (
     INSERT INTO dealership.localizacao
-        (codigo_ibge, logradouro, numero_logradouro, bairro, cidade, estado)
+        (cep, logradouro, numero_logradouro, bairro, cidade, estado)
     VALUES
-        (9999999, 'Rua pgTAP Test', 1, 'Bairro Test', 'Cidade Test', 'SP')
+        ('99999-999', 'Rua pgTAP Test', 1, 'Bairro Test', 'Cidade Test', 'SP')
     RETURNING id
 )
 INSERT INTO _test_fx VALUES ('loc_id', (SELECT id FROM r));
@@ -277,8 +277,8 @@ SELECT throws_ok(
 -- C1. localizacao.logradouro não pode ser NULL
 SELECT throws_ok(
     $$INSERT INTO dealership.localizacao
-        (codigo_ibge, logradouro, numero_logradouro, bairro, cidade, estado)
-      VALUES (1234567, NULL, 1, 'Bairro', 'Cidade', 'SP')$$,
+        (cep, logradouro, numero_logradouro, bairro, cidade, estado)
+      VALUES ('12345-678', NULL, 1, 'Bairro', 'Cidade', 'SP')$$,
     '23502', NULL,
     'NOT NULL C1: localizacao.logradouro não pode ser NULL'
 );

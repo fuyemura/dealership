@@ -38,7 +38,7 @@ SELECT col_not_null('dealership', 'usuario', 'papel_usuario_id', 'usuario.papel_
 -- =============================================================================
 -- localizacao (6 colunas NOT NULL)
 -- =============================================================================
-SELECT col_not_null('dealership', 'localizacao', 'codigo_ibge',          'localizacao.codigo_ibge NOT NULL');
+SELECT col_not_null('dealership', 'localizacao', 'cep',                  'localizacao.cep NOT NULL');
 SELECT col_not_null('dealership', 'localizacao', 'logradouro',           'localizacao.logradouro NOT NULL');
 SELECT col_not_null('dealership', 'localizacao', 'numero_logradouro',    'localizacao.numero_logradouro NOT NULL');
 SELECT col_not_null('dealership', 'localizacao', 'bairro',               'localizacao.bairro NOT NULL');

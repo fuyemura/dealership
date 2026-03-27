@@ -51,7 +51,7 @@ export default async function ConfiguracoesLayout({
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex flex-col bg-brand-gray-soft">
+      <div className="min-h-screen overflow-x-clip flex flex-col bg-brand-gray-soft">
         {/* Header */}
         <header className="bg-white border-b border-brand-gray-mid/40 h-14 sm:h-16 sticky top-0 z-30">
           <div className="page-container h-full flex items-center justify-between">
@@ -116,7 +116,7 @@ export default async function ConfiguracoesLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-gray-soft">
+    <div className="min-h-screen overflow-x-clip flex flex-col bg-brand-gray-soft">
       {/* Header */}
       <header className="bg-white border-b border-brand-gray-mid/40 h-14 sm:h-16 sticky top-0 z-30">
         <div className="page-container h-full flex items-center justify-between">

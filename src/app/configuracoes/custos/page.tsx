@@ -179,10 +179,10 @@ export default async function CustosPage() {
                       <td className="px-6 py-3.5 text-brand-gray-text max-w-xs truncate">
                         {c.descricao ?? <span className="italic text-brand-gray-text/60">Sem descrição</span>}
                       </td>
-                      <td className="px-6 py-3.5 text-xs text-brand-gray-text whitespace-nowrap">
+                      <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
                         {formatData(c.criado_em)}
                       </td>
-                      <td className="px-6 py-3.5 text-xs text-brand-gray-text whitespace-nowrap">
+                      <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
                         {criadoPor}
                       </td>
                       <td className="px-6 py-3.5 text-right">

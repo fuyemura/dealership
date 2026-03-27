@@ -232,7 +232,7 @@ export default async function UsuariosPage() {
                       <td className="px-6 py-3.5">
                         <PapelBadge papel={papelNome} />
                       </td>
-                      <td className="px-6 py-3.5 text-xs text-brand-gray-text whitespace-nowrap">
+                      <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
                         {formatUltimoLogin(u.ultimo_login_em)}
                       </td>
                       <td className="px-6 py-3.5 text-right">

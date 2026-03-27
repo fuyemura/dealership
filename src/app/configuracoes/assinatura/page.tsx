@@ -262,7 +262,7 @@ export default async function AssinaturaPage() {
                 {assinatura.plano.nome_plano}
               </h2>
               {assinatura.plano.descricao_plano && (
-                <p className="mt-1 text-sm text-brand-gray-text">
+                <p className="mt-1 text-xs text-brand-gray-text">
                   {assinatura.plano.descricao_plano}
                 </p>
               )}
@@ -294,7 +294,7 @@ export default async function AssinaturaPage() {
               </div>
             )}
             <div className="flex items-baseline gap-0.5">
-              <span className="font-display text-lg font-bold text-brand-black">
+              <span className="font-display text-2xl font-bold text-brand-black">
                 {formatarPreco(assinatura.plano.preco_mensal)}
               </span>
               <span className="text-sm text-brand-gray-text">/mês</span>

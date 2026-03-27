@@ -52,7 +52,7 @@ export default async function EmpresaPage({
       telefone_representante,
       localizacao:localizacao_id (
         id,
-        codigo_ibge,
+        cep,
         logradouro,
         numero_logradouro,
         complemento_logradouro,
@@ -69,7 +69,7 @@ export default async function EmpresaPage({
 
   const loc = empresa.localizacao as unknown as {
     id: string;
-    codigo_ibge: number;
+    cep: string;
     logradouro: string;
     numero_logradouro: number;
     complemento_logradouro: string | null;
@@ -90,7 +90,7 @@ export default async function EmpresaPage({
     nome_representante: empresa.nome_representante,
     cargo_representante: empresa.cargo_representante,
     telefone_representante: empresa.telefone_representante,
-    codigo_ibge: loc.codigo_ibge,
+    cep: loc.cep,
     logradouro: loc.logradouro,
     numero_logradouro: loc.numero_logradouro,
     complemento_logradouro: loc.complemento_logradouro,

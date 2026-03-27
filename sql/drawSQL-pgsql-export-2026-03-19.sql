@@ -87,7 +87,7 @@ ALTER TABLE dealership.usuario ADD CONSTRAINT uk_usuario_cpf           UNIQUE (c
 
 CREATE TABLE dealership.localizacao (
     id                     UUID         NOT NULL DEFAULT gen_random_uuid(),
-    codigo_ibge            INTEGER      NOT NULL,
+    cep                    VARCHAR(9)   NOT NULL,
     logradouro             VARCHAR(100) NOT NULL,
     numero_logradouro      INTEGER      NOT NULL,
     complemento_logradouro VARCHAR(100) NULL,
@@ -100,7 +100,7 @@ CREATE TABLE dealership.localizacao (
 
 COMMENT ON TABLE  dealership.localizacao                          IS 'Cadastro de localizações.';
 COMMENT ON COLUMN dealership.localizacao.id                       IS 'Chave primária (PK) de identificação da localização.';
-COMMENT ON COLUMN dealership.localizacao.codigo_ibge              IS 'Código de identificação do IBGE.';
+COMMENT ON COLUMN dealership.localizacao.cep                      IS 'CEP (Código de Endereçamento Postal)';
 COMMENT ON COLUMN dealership.localizacao.logradouro               IS 'Descrição do logradouro.';
 COMMENT ON COLUMN dealership.localizacao.numero_logradouro        IS 'Número do logradouro.';
 COMMENT ON COLUMN dealership.localizacao.complemento_logradouro   IS 'Complemento do logradouro.';

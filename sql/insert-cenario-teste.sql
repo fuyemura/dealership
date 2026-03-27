@@ -8,10 +8,10 @@
 -- 1. LOCALIZAÇÕES
 -- =============================================================================
 
-INSERT INTO dealership.localizacao (id, codigo_ibge, logradouro, numero_logradouro, complemento_logradouro, bairro, cidade, estado, criado_em, atualizado_em) VALUES
-('11111111-0000-0000-0000-000000000001', 3550308, 'Avenida Paulista',         1578, 'Conjunto 42',  'Bela Vista',     'São Paulo',       'SP', NOW(), NOW()),
-('11111111-0000-0000-0000-000000000002', 3304557, 'Rua da Assembleia',         10, '12º Andar',     'Centro',         'Rio de Janeiro',  'RJ', NOW(), NOW()),
-('11111111-0000-0000-0000-000000000003', 4106902, 'Avenida Sete de Setembro', 4214, 'Sala 301',     'Batel',          'Curitiba',        'PR', NOW(), NOW());
+INSERT INTO dealership.localizacao (id, cep, logradouro, numero_logradouro, complemento_logradouro, bairro, cidade, estado, criado_em, atualizado_em) VALUES
+('11111111-0000-0000-0000-000000000001', '01310-100', 'Avenida Paulista',         1578, 'Conjunto 42',  'Bela Vista',     'São Paulo',       'SP', NOW(), NOW()),
+('11111111-0000-0000-0000-000000000002', '20011-020', 'Rua da Assembleia',         10, '12º Andar',     'Centro',         'Rio de Janeiro',  'RJ', NOW(), NOW()),
+('11111111-0000-0000-0000-000000000003', '80230-010', 'Avenida Sete de Setembro', 4214, 'Sala 301',     'Batel',          'Curitiba',        'PR', NOW(), NOW());
 
 
 -- =============================================================================

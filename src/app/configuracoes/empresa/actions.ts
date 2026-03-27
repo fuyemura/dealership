@@ -48,7 +48,7 @@ export interface EmpresaPayload {
   cargo_representante: string;
   telefone_representante: string | null;
   // Localização
-  codigo_ibge: number;
+  cep: string;
   logradouro: string;
   numero_logradouro: number;
   complemento_logradouro: string | null;
@@ -129,7 +129,7 @@ export async function atualizarEmpresa(
     .schema("dealership")
     .from("localizacao")
     .update({
-      codigo_ibge: payload.codigo_ibge,
+      cep: payload.cep,
       logradouro: payload.logradouro.trim(),
       numero_logradouro: payload.numero_logradouro,
       complemento_logradouro: payload.complemento_logradouro?.trim() || null,

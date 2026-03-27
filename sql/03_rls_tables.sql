@@ -135,3 +135,14 @@ CREATE POLICY veiculo_manutencao_empresa_isolada
 ON dealership.veiculo_manutencao FOR ALL
 USING (empresa_id = dealership.get_empresa_id_do_usuario())
 WITH CHECK (empresa_id = dealership.get_empresa_id_do_usuario());
+
+-- metodo_pagamento (INSERT/DELETE apenas via service role — tokenização pelo gateway)
+ALTER TABLE dealership.metodo_pagamento ENABLE ROW LEVEL SECURITY;
+CREATE POLICY metodo_pagamento_empresa_isolada_select
+ON dealership.metodo_pagamento FOR SELECT
+USING (empresa_id = dealership.get_empresa_id_do_usuario());
+
+CREATE POLICY metodo_pagamento_empresa_isolada_update
+ON dealership.metodo_pagamento FOR UPDATE
+USING (empresa_id = dealership.get_empresa_id_do_usuario())
+WITH CHECK (empresa_id = dealership.get_empresa_id_do_usuario());

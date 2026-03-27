@@ -188,7 +188,7 @@ export function UsuarioForm({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-2xl">
+    <div className="w-full max-w-2xl">
       {/* Breadcrumb */}
       <Link
         href="/configuracoes/usuarios"
@@ -296,7 +296,7 @@ export function UsuarioForm({
               <label className="block text-xs font-semibold uppercase tracking-wide text-brand-gray-text">
                 E-mail
               </label>
-              <p className="w-full rounded-xl border border-brand-gray-mid/30 bg-brand-gray-light/30 px-4 py-2.5 text-sm text-brand-gray-text">
+              <p className="w-full rounded-xl border border-brand-gray-mid/30 bg-brand-gray-soft px-4 py-2.5 text-sm text-brand-gray-text">
                 {initialData.email_usuario}
               </p>
               <p className="text-xs text-brand-gray-text/50">

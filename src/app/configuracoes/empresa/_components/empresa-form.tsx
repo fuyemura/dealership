@@ -90,10 +90,10 @@ const schema = z.object({
     .optional()
     .transform((v) => v ?? ""),
   // Localização
-  codigo_ibge: z
+  cep: z
     .string()
-    .min(1, "O código IBGE é obrigatório.")
-    .refine((v) => /^\d+$/.test(v) && parseInt(v, 10) > 0, "Código IBGE inválido."),
+    .min(1, "O CEP é obrigatório.")
+    .refine((v) => /^\d{5}-\d{3}$/.test(v), "CEP inválido (use o formato 00000-000)."),
   logradouro: z
     .string()
     .min(1, "O logradouro é obrigatório.")
@@ -144,7 +144,7 @@ export interface EmpresaInitialData {
   cargo_representante: string;
   telefone_representante: string | null;
   // Localização
-  codigo_ibge: number;
+  cep: string;
   logradouro: string;
   numero_logradouro: number;
   complemento_logradouro: string | null;
@@ -175,6 +175,12 @@ function formatarCnpj(cnpj: string): string {
     /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
     "$1.$2.$3/$4-$5"
   );
+}
+
+function formatarCep(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 5) return digits;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
 
 // ─── Sub-componente: Campo de texto ───────────────────────────────────────────
@@ -238,6 +244,9 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       ? formatarTelefone(initialData.telefone_representante)
       : ""
   );
+  const [cepDisplay, setCepDisplay] = useState(
+    initialData.cep ? formatarCep(initialData.cep) : ""
+  );
 
   const inputClass = (hasError: boolean) =>
     `w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
@@ -274,7 +283,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       telefone_representante: initialData.telefone_representante
         ? formatarTelefone(initialData.telefone_representante)
         : "",
-      codigo_ibge: String(initialData.codigo_ibge),
+      cep: initialData.cep,
       logradouro: initialData.logradouro,
       numero_logradouro: String(initialData.numero_logradouro),
       complemento_logradouro: initialData.complemento_logradouro ?? "",
@@ -297,6 +306,12 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       setValue(field, masked, { shouldValidate: false });
     };
 
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const masked = formatarCep(e.target.value);
+    setCepDisplay(masked);
+    setValue("cep", masked, { shouldValidate: false });
+  };
+
   // ── Descartar ──────────────────────────────────────────────────────────────
 
   const handleReset = () => {
@@ -304,6 +319,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
     setTel1(initialData.telefone_principal ? formatarTelefone(initialData.telefone_principal) : "");
     setTel2(initialData.telefone_secundario ? formatarTelefone(initialData.telefone_secundario) : "");
     setTelRep(initialData.telefone_representante ? formatarTelefone(initialData.telefone_representante) : "");
+    setCepDisplay(initialData.cep ? formatarCep(initialData.cep) : "");
   };
 
   // ── Proteção de mudanças não salvas ─────────────────────────────────────────
@@ -337,7 +353,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       nome_representante: values.nome_representante,
       cargo_representante: values.cargo_representante,
       telefone_representante: values.telefone_representante || null,
-      codigo_ibge: parseInt(values.codigo_ibge, 10),
+      cep: values.cep,
       logradouro: values.logradouro,
       numero_logradouro: parseInt(values.numero_logradouro, 10),
       complemento_logradouro: values.complemento_logradouro || null,
@@ -601,36 +617,26 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
               </Field>
             </div>
 
-            {/* Código IBGE — por último, campo mais técnico */}
+            {/* CEP */}
             <Field
-              id="codigo_ibge"
-              label="Código IBGE"
+              id="cep"
+              label="CEP"
               required
-              error={errors.codigo_ibge?.message}
-              hint={
-                <>
-                  Código do município.{" "}
-                  <a
-                    href="https://www.ibge.gov.br/explica/codigos-dos-municipios.php"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-brand-black transition-colors"
-                  >
-                    Consultar →
-                  </a>
-                </>
-              }
+              error={errors.cep?.message}
             >
               <input
-                id="codigo_ibge"
+                id="cep"
                 type="text"
                 inputMode="numeric"
-                autoComplete="off"
-                placeholder="Ex: 3550308"
-                aria-invalid={!!errors.codigo_ibge}
-                aria-describedby={errors.codigo_ibge ? "codigo_ibge-error" : undefined}
-                {...register("codigo_ibge")}
-                className={inputClass(!!errors.codigo_ibge)}
+                autoComplete="postal-code"
+                placeholder="Ex: 01310-100"
+                maxLength={9}
+                value={cepDisplay}
+                aria-invalid={!!errors.cep}
+                aria-describedby={errors.cep ? "cep-error" : undefined}
+                {...register("cep")}
+                onChange={handleCepChange}
+                className={inputClass(!!errors.cep)}
               />
             </Field>
           </section>

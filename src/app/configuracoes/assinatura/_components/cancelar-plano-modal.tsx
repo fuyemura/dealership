@@ -44,7 +44,7 @@ function getRetencao(motivoId: MotivoId, nomePlano: string): RetencaoConfig {
       return {
         titulo: "Sabemos que a rotina é corrida",
         mensagem:
-          "Entre em contato com nosso suporte — podemos encontrar uma solução que se encaixe melhor na operação da sua concessionária.",
+          "Entre em contato com nosso suporte — podemos encontrar uma solução que se encaixe melhor na operação da sua revenda de veículos.",
       };
     case "funcionalidades":
       return {
@@ -61,7 +61,7 @@ function getRetencao(motivoId: MotivoId, nomePlano: string): RetencaoConfig {
     default:
       return {
         titulo: "Sentiremos sua falta",
-        mensagem: `O plano ${nomePlano} inclui todos os recursos que sua concessionária precisa para operar com eficiência. Tem certeza que deseja cancelar?`,
+        mensagem: `O plano ${nomePlano} inclui todos os recursos que sua revenda de veículos precisa para operar com eficiência. Tem certeza que deseja cancelar?`,
       };
   }
 }
