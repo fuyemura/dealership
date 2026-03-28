@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/sign-out-button";
 import ConfiguracoesSidebar from "./configuracoes-sidebar";
 
+export const dynamic = "force-dynamic";
+
 function LogoMark() {
   return (
     <div className="grid grid-cols-2 gap-[3px] w-[18px] h-[18px] flex-shrink-0">

@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/sign-out-button";
 
+export const dynamic = "force-dynamic";
+
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type StatusBadgeColor = "green" | "yellow" | "gray";
 
