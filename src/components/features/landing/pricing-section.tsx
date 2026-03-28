@@ -123,7 +123,7 @@ const getPlanos = unstable_cache(
     try {
       const supabase = createClient(url, anonKey);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .schema("dealership")
       .from("plano")
       .select(
@@ -133,6 +133,8 @@ const getPlanos = unstable_cache(
       )
       .eq("plano_ativo", true)
       .order("preco_mensal", { ascending: true });
+
+    if (error) return PLANOS_FALLBACK;
 
     const planos = (data ?? []) as PlanoDB[];
 

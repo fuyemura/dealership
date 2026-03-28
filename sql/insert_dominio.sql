@@ -8,7 +8,8 @@
 INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('papel_usuario', 'administrador'),
     ('papel_usuario', 'gerente'),
-    ('papel_usuario', 'usuario');
+    ('papel_usuario', 'usuario')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Situação da assinatura
@@ -18,14 +19,16 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('situacao_assinatura', 'trial'),
     ('situacao_assinatura', 'inadimplente'),
     ('situacao_assinatura', 'cancelada'),
-    ('situacao_assinatura', 'expirada');
+    ('situacao_assinatura', 'expirada')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Ciclo de cobrança
 -- -----------------------------------------------------------------------------
 INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('ciclo_cobranca', 'mensal'),
-    ('ciclo_cobranca', 'anual');
+    ('ciclo_cobranca', 'anual')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Situação da fatura
@@ -35,7 +38,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('situacao_fatura', 'paga'),
     ('situacao_fatura', 'atrasada'),
     ('situacao_fatura', 'cancelada'),
-    ('situacao_fatura', 'estornada');
+    ('situacao_fatura', 'estornada')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Método de pagamento (usado em fatura.metodo_pagamento_id)
@@ -43,7 +47,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
 INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('metodo_pagamento', 'cartao_credito'),
     ('metodo_pagamento', 'boleto'),
-    ('metodo_pagamento', 'pix');
+    ('metodo_pagamento', 'pix')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Situação da manutenção
@@ -52,7 +57,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('situacao_manutencao', 'pendente'),
     ('situacao_manutencao', 'em_andamento'),
     ('situacao_manutencao', 'concluida'),
-    ('situacao_manutencao', 'cancelada');
+    ('situacao_manutencao', 'cancelada')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Bandeira do cartão de crédito
@@ -62,14 +68,16 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('bandeira_cartao', 'mastercard'),
     ('bandeira_cartao', 'elo'),
     ('bandeira_cartao', 'amex'),
-    ('bandeira_cartao', 'hipercard');
+    ('bandeira_cartao', 'hipercard')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Tipo de arquivo do veículo
 -- -----------------------------------------------------------------------------
 INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('tipo_arquivo_veiculo', 'foto'),
-    ('tipo_arquivo_veiculo', 'laudo');
+    ('tipo_arquivo_veiculo', 'laudo')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Situação do veículo
@@ -79,7 +87,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('situacao_veiculo', 'Reservado'),
     ('situacao_veiculo', 'Em Negociação'),
     ('situacao_veiculo', 'Em Manutenção'),
-    ('situacao_veiculo', 'Vendido');
+    ('situacao_veiculo', 'Vendido')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Combustível
@@ -91,7 +100,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('combustivel', 'Diesel'),
     ('combustivel', 'Elétrico'),
     ('combustivel', 'Híbrido'),
-    ('combustivel', 'GNV');
+    ('combustivel', 'GNV')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Câmbio
@@ -100,7 +110,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('cambio', 'Manual'),
     ('cambio', 'Automático'),
     ('cambio', 'Automatizado'),
-    ('cambio', 'CVT');
+    ('cambio', 'CVT')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Tipo de direção
@@ -109,7 +120,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('tipo_direcao', 'Hidráulica'),
     ('tipo_direcao', 'Elétrica'),
     ('tipo_direcao', 'Eletro-hidráulica'),
-    ('tipo_direcao', 'Manual');
+    ('tipo_direcao', 'Manual')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Marca do veículo
@@ -143,7 +155,8 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('marca', 'Porsche'),
     ('marca', 'Suzuki'),
     ('marca', 'Yamaha'),
-    ('marca', 'Outro');
+    ('marca', 'Outro')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- Modelo do veículo
@@ -291,5 +304,6 @@ INSERT INTO dealership.dominio (grupo_dominio, nome_dominio) VALUES
     ('modelo', 'Haval H2'),
     ('modelo', 'ORA 03'),
     -- Outros
-    ('modelo', 'Outro');
+    ('modelo', 'Outro')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 

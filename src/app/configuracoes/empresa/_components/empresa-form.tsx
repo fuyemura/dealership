@@ -335,6 +335,9 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
   // ── Descartar ──────────────────────────────────────────────────────────────
 
   const handleReset = () => {
+    cepAbortRef.current?.abort();
+    cepAbortRef.current = null;
+    setIsCepLoading(false);
     reset();
     setTel1(initialData.telefone_principal ? formatarTelefone(initialData.telefone_principal) : "");
     setTel2(initialData.telefone_secundario ? formatarTelefone(initialData.telefone_secundario) : "");
