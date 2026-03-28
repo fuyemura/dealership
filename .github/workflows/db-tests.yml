@@ -26,5 +26,12 @@ jobs:
       - name: Enable pgTAP
         run: supabase db query "CREATE EXTENSION IF NOT EXISTS pgtap;"
 
+      - name: Apply database schema
+        run: |
+          supabase db query "CREATE SCHEMA IF NOT EXISTS dealership;"
+          supabase db query --file sql/01_create-tables.sql
+          supabase db query --file sql/02_grant-dealership.sql
+          supabase db query --file sql/04_functions.sql
+
       - name: Run database tests
         run: supabase test db

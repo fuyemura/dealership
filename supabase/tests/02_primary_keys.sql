@@ -1,13 +1,13 @@
 -- =============================================================================
 -- 02_primary_keys.sql
 -- Verifica Primary Keys: existência da constraint e que a coluna 'id' é a PK
--- em todas as 14 tabelas do schema dealership.
+-- em todas as 15 tabelas do schema dealership.
 --
 -- Execução: supabase test db
 -- =============================================================================
 
 BEGIN;
-SELECT plan(28);
+SELECT plan(30);
 
 -- empresa
 SELECT has_pk  ('dealership', 'empresa',              'empresa deve ter PK');
@@ -64,6 +64,10 @@ SELECT col_is_pk('dealership', 'veiculo_custo', 'id', 'veiculo_custo.id é a PK'
 -- veiculo_manutencao
 SELECT has_pk  ('dealership', 'veiculo_manutencao',        'veiculo_manutencao deve ter PK');
 SELECT col_is_pk('dealership', 'veiculo_manutencao', 'id', 'veiculo_manutencao.id é a PK');
+
+-- metodo_pagamento
+SELECT has_pk  ('dealership', 'metodo_pagamento',        'metodo_pagamento deve ter PK');
+SELECT col_is_pk('dealership', 'metodo_pagamento', 'id', 'metodo_pagamento.id é a PK');
 
 SELECT * FROM finish();
 ROLLBACK;

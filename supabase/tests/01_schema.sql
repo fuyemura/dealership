@@ -7,7 +7,7 @@
 -- =============================================================================
 
 BEGIN;
-SELECT plan(15);
+SELECT plan(16);
 
 -- Schema
 SELECT has_schema('dealership', 'Schema dealership deve existir');
@@ -27,6 +27,7 @@ SELECT has_table('dealership', 'assinatura_historico', 'Tabela assinatura_histor
 SELECT has_table('dealership', 'fatura',               'Tabela fatura deve existir');
 SELECT has_table('dealership', 'veiculo_custo',        'Tabela veiculo_custo deve existir');
 SELECT has_table('dealership', 'veiculo_manutencao',   'Tabela veiculo_manutencao deve existir');
+SELECT has_table('dealership', 'metodo_pagamento',     'Tabela metodo_pagamento deve existir');
 
 SELECT * FROM finish();
 ROLLBACK;

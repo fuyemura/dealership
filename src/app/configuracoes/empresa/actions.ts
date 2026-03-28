@@ -97,6 +97,18 @@ function validarPayload(p: EmpresaPayload): ActionResult {
     return { error: "Cidade: máximo de 50 caracteres." };
   if (!p.estado.trim() || p.estado.length !== 2)
     return { error: "Informe o estado com 2 letras (UF)." };
+  const cepDigitos = p.cep.replace(/\D/g, "");
+  if (!cepDigitos || cepDigitos.length !== 8)
+    return { error: "CEP inválido. Informe 8 dígitos." };
+  if (p.complemento_logradouro && p.complemento_logradouro.length > 100)
+    return { error: "Complemento: máximo de 100 caracteres." };
+  const telefoneDigitos = (t: string) => t.replace(/\D/g, "");
+  if (p.telefone_principal && telefoneDigitos(p.telefone_principal).length > 11)
+    return { error: "Telefone principal: máximo de 11 dígitos." };
+  if (p.telefone_secundario && telefoneDigitos(p.telefone_secundario).length > 11)
+    return { error: "Telefone secundário: máximo de 11 dígitos." };
+  if (p.telefone_representante && telefoneDigitos(p.telefone_representante).length > 11)
+    return { error: "Telefone do representante: máximo de 11 dígitos." };
   if (
     p.email_empresa &&
     p.email_empresa.trim() &&
@@ -115,54 +127,33 @@ export async function atualizarEmpresa(
 
   const { supabase, usuarioAtual } = await getAdminAutorizado();
 
-  // Buscar localizacao_id atual da empresa
-  const { data: empresa } = await supabase
+  // Atualiza localização + empresa em uma única transação via RPC
+  const { error: rpcError } = await supabase
     .schema("dealership")
-    .from("empresa")
-    .select("id, localizacao_id")
-    .eq("id", usuarioAtual.empresa_id)
-    .single();
+    .rpc("atualizar_empresa_completa", {
+      p_empresa_id:             usuarioAtual.empresa_id,
+      // empresa
+      p_nome_legal_empresa:     payload.nome_legal_empresa.trim(),
+      p_nome_fantasia_empresa:  payload.nome_fantasia_empresa?.trim() || null,
+      p_inscricao_municipal:    payload.inscricao_municipal.trim(),
+      p_inscricao_estadual:     payload.inscricao_estadual.trim(),
+      p_telefone_principal:     payload.telefone_principal?.replace(/\D/g, "") || null,
+      p_telefone_secundario:    payload.telefone_secundario?.replace(/\D/g, "") || null,
+      p_email_empresa:          payload.email_empresa?.trim().toLowerCase() || null,
+      p_nome_representante:     payload.nome_representante.trim(),
+      p_cargo_representante:    payload.cargo_representante.trim(),
+      p_telefone_representante: payload.telefone_representante?.replace(/\D/g, "") || null,
+      // localizacao
+      p_cep:                    payload.cep.replace(/\D/g, ""),
+      p_logradouro:             payload.logradouro.trim(),
+      p_numero_logradouro:      payload.numero_logradouro,
+      p_complemento_logradouro: payload.complemento_logradouro?.trim() || null,
+      p_bairro:                 payload.bairro.trim(),
+      p_cidade:                 payload.cidade.trim(),
+      p_estado:                 payload.estado.trim().toUpperCase(),
+    });
 
-  if (!empresa) return { error: "Empresa não encontrada." };
-
-  // Atualizar localização
-  const { error: locError } = await supabase
-    .schema("dealership")
-    .from("localizacao")
-    .update({
-      cep: payload.cep.replace(/\D/g, ""),
-      logradouro: payload.logradouro.trim(),
-      numero_logradouro: payload.numero_logradouro,
-      complemento_logradouro: payload.complemento_logradouro?.trim() || null,
-      bairro: payload.bairro.trim(),
-      cidade: payload.cidade.trim(),
-      estado: payload.estado.trim().toUpperCase(),
-      atualizado_em: new Date().toISOString(),
-    })
-    .eq("id", empresa.localizacao_id);
-
-  if (locError) return { error: "Erro ao atualizar o endereço. Tente novamente." };
-
-  // Atualizar empresa
-  const { error: empError } = await supabase
-    .schema("dealership")
-    .from("empresa")
-    .update({
-      nome_legal_empresa: payload.nome_legal_empresa.trim(),
-      nome_fantasia_empresa: payload.nome_fantasia_empresa?.trim() || null,
-      inscricao_municipal: payload.inscricao_municipal.trim(),
-      inscricao_estadual: payload.inscricao_estadual.trim(),
-      telefone_principal: payload.telefone_principal?.replace(/\D/g, "") || null,
-      telefone_secundario: payload.telefone_secundario?.replace(/\D/g, "") || null,
-      email_empresa: payload.email_empresa?.trim().toLowerCase() || null,
-      nome_representante: payload.nome_representante.trim(),
-      cargo_representante: payload.cargo_representante.trim(),
-      telefone_representante: payload.telefone_representante?.replace(/\D/g, "") || null,
-      atualizado_em: new Date().toISOString(),
-    })
-    .eq("id", empresa.id);
-
-  if (empError) return { error: "Erro ao atualizar os dados da empresa. Tente novamente." };
+  if (rpcError) return { error: "Erro ao atualizar os dados da empresa. Tente novamente." };
 
   revalidatePath("/configuracoes/empresa");
   redirect("/configuracoes/empresa?saved=1");
