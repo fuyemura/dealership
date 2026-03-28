@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cancelarAssinatura } from "../actions";
 
@@ -81,6 +81,11 @@ export function CancelarPlanoModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // ── Fechar modal ─────────────────────────────────────────────────────────────
+  const handleClose = useCallback(() => {
+    setOpen(false);
+  }, []);
+
   // ── Fechar no Escape ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
@@ -89,8 +94,7 @@ export function CancelarPlanoModal({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPending]);
+  }, [open, isPending, handleClose]);
 
   // ── Travar scroll do body ───────────────────────────────────────────────────
   useEffect(() => {
@@ -112,11 +116,6 @@ export function CancelarPlanoModal({
     setMotivoOutro("");
     setError(null);
     setOpen(true);
-  }
-
-  function handleClose() {
-    if (isPending) return;
-    setOpen(false);
   }
 
   function handleProsseguirParaRetencao() {

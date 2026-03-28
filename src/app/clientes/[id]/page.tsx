@@ -20,11 +20,15 @@ export default async function EditarClientePage({
   const { data: usuario } = await supabase
     .schema("dealership")
     .from("usuario")
-    .select("empresa_id")
+    .select("empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
     .eq("auth_id", user.id)
     .single();
 
   if (!usuario?.empresa_id) redirect("/login");
+
+  const isAdmin =
+    (usuario.papel as unknown as { nome_dominio: string } | null)
+      ?.nome_dominio === "administrador";
 
   const { data: cliente } = await supabase
     .schema("dealership")
@@ -42,7 +46,7 @@ export default async function EditarClientePage({
   return (
     <ClienteForm
       saveAction={saveAction}
-      deleteAction={deleteAction}
+      deleteAction={isAdmin ? deleteAction : undefined}
       initialData={{
         id: cliente.id,
         nome_cliente: cliente.nome_cliente,

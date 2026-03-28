@@ -1,21 +1,7 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatCpf(cpf: string): string {
-  return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
-}
-
-function formatTelefone(tel: string): string {
-  const d = tel.replace(/\D/g, "");
-  if (d.length === 11)
-    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-  if (d.length === 10)
-    return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return tel;
-}
+import { formatCpf, formatTelefone, formatData } from "@/lib/utils/formatters";
 
 // ─── Ícones ───────────────────────────────────────────────────────────────────
 
@@ -134,9 +120,9 @@ export default async function ClientesPage({
     .order("nome_cliente", { ascending: true });
 
   if (termoBusca) {
-    // Busca por nome ou CPF (apenas dígitos para comparação parcial)
+    // Busca por nome ou CPF: interpreta como CPF se tiver ao menos 6 dígitos
     const cpfDigitos = termoBusca.replace(/\D/g, "");
-    if (cpfDigitos.length > 0 && /^\d+$/.test(termoBusca.replace(/[\.\-]/g, ""))) {
+    if (cpfDigitos.length >= 6 && cpfDigitos === termoBusca.replace(/[.\-\s]/g, "")) {
       query = query.ilike("cpf", `%${cpfDigitos}%`);
     } else {
       query = query.ilike("nome_cliente", `%${termoBusca}%`);
@@ -150,26 +136,26 @@ export default async function ClientesPage({
     <>
       {/* Cabeçalho da página */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-black">
-              Clientes
-            </h1>
-            <p className="text-sm text-brand-gray-text mt-1">
-              {lista.length}{" "}
-              {lista.length === 1 ? "cliente cadastrado" : "clientes cadastrados"}
-              {termoBusca && (
-                <span className="ml-1">
-                  para &ldquo;<strong>{termoBusca}</strong>&rdquo;
-                </span>
-              )}
-            </p>
-          </div>
-          <Link
-            href="/clientes/novo"
-            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors"
-          >
-            <IconPlus /> Novo Cliente
-          </Link>
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-black">
+            Clientes
+          </h1>
+          <p className="text-sm text-brand-gray-text mt-1">
+            {lista.length}{" "}
+            {lista.length === 1 ? "cliente cadastrado" : "clientes cadastrados"}
+            {termoBusca && (
+              <span className="ml-1">
+                para &ldquo;<strong>{termoBusca}</strong>&rdquo;
+              </span>
+            )}
+          </p>
+        </div>
+        <Link
+          href="/clientes/novo"
+          className="inline-flex items-center gap-2 self-start sm:self-auto rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors"
+        >
+          <IconPlus /> Novo Cliente
+        </Link>
       </div>
 
       {/* Barra de pesquisa */}
@@ -184,13 +170,39 @@ export default async function ClientesPage({
             defaultValue={termoBusca}
             aria-label="Buscar clientes por nome ou CPF"
             placeholder="Buscar por nome ou CPF…"
-              className="w-full rounded-xl border border-brand-gray-mid/60 bg-white pl-9 pr-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 outline-none focus:ring-2 focus:ring-brand-black/10 focus:border-brand-black/40 transition-colors"
+            className="w-full rounded-xl border border-brand-gray-mid/60 bg-white pl-9 pr-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 outline-none focus:ring-2 focus:ring-brand-black/10 focus:border-brand-black/40 transition-colors"
           />
         </div>
       </form>
 
+      {/* Estado vazio */}
+      {lista.length === 0 && (
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-brand-gray-soft flex items-center justify-center mb-4 text-brand-gray-text">
+            <IconUsers size={22} />
+          </div>
+          <h2 className="font-display text-base font-semibold text-brand-black mb-1">
+            {termoBusca ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
+          </h2>
+          <p className="text-sm text-brand-gray-text max-w-xs mb-6">
+            {termoBusca
+              ? `Nenhum resultado para "${termoBusca}". Tente um nome ou CPF diferente.`
+              : "Cadastre o primeiro cliente da empresa para começar."}
+          </p>
+          {!termoBusca && (
+            <Link
+              href="/clientes/novo"
+              className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors"
+            >
+              <IconPlus /> Novo Cliente
+            </Link>
+          )}
+        </section>
+      )}
+
       {/* Tabela */}
-      <section className="bg-white rounded-2xl border border-brand-gray-mid/30 overflow-hidden">
+      {lista.length > 0 && (
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 overflow-hidden">
 
           {/* Desktop */}
           <div className="hidden sm:block overflow-x-auto">
@@ -208,123 +220,83 @@ export default async function ClientesPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-gray-mid/20">
-                {lista.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-16 text-center"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-brand-gray-soft flex items-center justify-center text-brand-gray-text">
-                          <IconUsers size={22} />
-                        </div>
-                        <p className="text-sm text-brand-gray-text">
-                          {termoBusca
-                            ? "Nenhum cliente encontrado para esta busca."
-                            : "Nenhum cliente cadastrado ainda."}
-                        </p>
-                        {!termoBusca && (
-                          <Link
-                            href="/clientes/novo"
-                            className="text-xs font-medium text-brand-black underline underline-offset-2 hover:opacity-70 transition-opacity"
-                          >
-                            Cadastrar primeiro cliente
-                          </Link>
-                        )}
-                      </div>
+                {lista.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="hover:bg-brand-gray-soft/50 transition-colors"
+                  >
+                    <td className="px-6 py-3.5 font-medium text-brand-black whitespace-nowrap">
+                      {c.nome_cliente}
+                    </td>
+                    <td className="px-6 py-3.5 font-mono text-xs tracking-wider text-brand-gray-text whitespace-nowrap">
+                      {formatCpf(c.cpf)}
+                    </td>
+                    <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
+                      {c.telefone_cliente ? formatTelefone(c.telefone_cliente) : (
+                        <span className="text-brand-gray-text/40">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-3.5 text-brand-gray-text">
+                      {c.email_cliente ?? <span className="text-brand-gray-text/40">—</span>}
+                    </td>
+                    <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
+                      {formatData(c.criado_em)}
+                    </td>
+                    <td className="px-6 py-3.5 text-right">
+                      <Link
+                        href={`/clientes/${c.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity whitespace-nowrap"
+                      >
+                        Editar <IconArrowRight />
+                      </Link>
                     </td>
                   </tr>
-                ) : (
-                  lista.map((c) => (
-                    <tr
-                      key={c.id}
-                      className="hover:bg-brand-gray-soft/50 transition-colors"
-                    >
-                      <td className="px-6 py-3.5 font-medium text-brand-black whitespace-nowrap">
-                        {c.nome_cliente}
-                      </td>
-                      <td className="px-6 py-3.5 font-mono text-xs tracking-wider text-brand-gray-text whitespace-nowrap">
-                        {formatCpf(c.cpf)}
-                      </td>
-                      <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
-                        {c.telefone_cliente ? formatTelefone(c.telefone_cliente) : (
-                          <span className="text-brand-gray-text/40">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3.5 text-brand-gray-text">
-                        {c.email_cliente ?? <span className="text-brand-gray-text/40">—</span>}
-                      </td>
-                      <td className="px-6 py-3.5 text-xs text-brand-gray-text whitespace-nowrap">
-                        {new Date(c.criado_em).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
-                      <td className="px-6 py-3.5 text-right">
-                        <Link
-                          href={`/clientes/${c.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity whitespace-nowrap"
-                        >
-                          Editar <IconArrowRight />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
 
-          {/* Mobile */}
+          {/* Mobile: cards */}
           <div className="sm:hidden divide-y divide-brand-gray-mid/20">
-            {lista.length === 0 ? (
-              <div className="px-4 py-12 text-center">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-gray-soft flex items-center justify-center text-brand-gray-text">
-                    <IconUsers size={22} />
-                  </div>
-                  <p className="text-sm text-brand-gray-text">
-                    {termoBusca
-                      ? "Nenhum cliente encontrado."
-                      : "Nenhum cliente cadastrado ainda."}
+            {lista.map((c) => (
+              <div
+                key={c.id}
+                className="px-5 py-4 flex items-start justify-between gap-4"
+              >
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-sm font-medium text-brand-black truncate">
+                    {c.nome_cliente}
                   </p>
-                  {!termoBusca && (
-                    <Link
-                      href="/clientes/novo"
-                      className="text-xs font-medium text-brand-black underline underline-offset-2 hover:opacity-70 transition-opacity"
-                    >
-                      Cadastrar primeiro cliente
-                    </Link>
+                  <p className="font-mono text-xs tracking-wider text-brand-gray-text/70">
+                    {formatCpf(c.cpf)}
+                  </p>
+                  {c.telefone_cliente && (
+                    <p className="text-xs text-brand-gray-text">
+                      {formatTelefone(c.telefone_cliente)}
+                    </p>
                   )}
+                  {c.email_cliente && (
+                    <p className="text-xs text-brand-gray-text truncate">
+                      {c.email_cliente}
+                    </p>
+                  )}
+                  <p className="text-xs text-brand-gray-text">
+                    Cadastrado em {formatData(c.criado_em)}
+                  </p>
                 </div>
-              </div>
-            ) : (
-              lista.map((c) => (
                 <Link
-                  key={c.id}
                   href={`/clientes/${c.id}`}
-                  className="flex items-center justify-between px-4 py-4 hover:bg-brand-gray-soft/50 transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-brand-black truncate">
-                      {c.nome_cliente}
-                    </p>
-                    <p className="text-xs text-brand-gray-text font-mono tracking-wider mt-0.5">
-                      {formatCpf(c.cpf)}
-                    </p>
-                    {c.telefone_cliente && (
-                      <p className="text-xs text-brand-gray-text mt-0.5">
-                        {formatTelefone(c.telefone_cliente)}
-                      </p>
-                    )}
-                  </div>
-                  <IconArrowRight />
+                  Editar <IconArrowRight size={12} />
                 </Link>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         </section>
+      )}
     </>
   );
 }
+
+

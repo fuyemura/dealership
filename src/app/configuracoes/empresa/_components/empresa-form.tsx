@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { formatTelefone as formatarTelefone, formatCnpj as formatarCnpj, formatCep as formatarCep } from "@/lib/utils/formatters";
 import type { ActionResult, EmpresaPayload } from "../actions";
 
 // ─── Estados brasileiros ─────────────────────────────────────────────────────
@@ -121,10 +122,8 @@ const schema = z.object({
     .transform((v) => v.toUpperCase()),
 });
 
-// FormValues representa os valores do formulário (campos string, sem transforms)
-type FormValues = z.infer<typeof schema>;
-// Alias para deixar explícito que todos os campos são strings neste contexto
-type FormInput = { [K in keyof FormValues]: string };
+// FormInput representa os valores brutos (pré-transform) que o react-hook-form gerencia
+type FormInput = z.input<typeof schema>;
 
 // ─── Tipos públicos ───────────────────────────────────────────────────────────
 
@@ -161,29 +160,7 @@ interface EmpresaFormProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatarTelefone(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10)
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
-
-function formatarCnpj(cnpj: string): string {
-  return cnpj.replace(
-    /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-    "$1.$2.$3/$4-$5"
-  );
-}
-
-function formatarCep(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 5) return digits;
-  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-}
-
-// ─── Sub-componente: Campo de texto ───────────────────────────────────────────
+// Sub-componente: Campo de texto ───────────────────────────────────────────
 
 function Field({
   id,
@@ -247,6 +224,11 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
   const [cepDisplay, setCepDisplay] = useState(
     initialData.cep ? formatarCep(initialData.cep) : ""
   );
+  const [isCepLoading, setIsCepLoading] = useState(false);
+  const [cepNotFound, setCepNotFound] = useState(false);
+  const [cepNetworkError, setCepNetworkError] = useState(false);
+
+  const cepAbortRef = useRef<AbortController | null>(null);
 
   const inputClass = (hasError: boolean) =>
     `w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
@@ -264,8 +246,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
     setValue,
     reset,
     formState: { errors, isDirty },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useForm<FormInput>({ resolver: zodResolver(schema) as any, mode: "onBlur",
+  } = useForm<FormInput>({ resolver: zodResolver(schema), mode: "onBlur",
     defaultValues: {
       nome_legal_empresa: initialData.nome_legal_empresa,
       nome_fantasia_empresa: initialData.nome_fantasia_empresa ?? "",
@@ -283,7 +264,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       telefone_representante: initialData.telefone_representante
         ? formatarTelefone(initialData.telefone_representante)
         : "",
-      cep: initialData.cep,
+      cep: initialData.cep ? formatarCep(initialData.cep) : "",
       logradouro: initialData.logradouro,
       numero_logradouro: String(initialData.numero_logradouro),
       complemento_logradouro: initialData.complemento_logradouro ?? "",
@@ -303,13 +284,52 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const masked = formatarTelefone(e.target.value);
       setter(masked);
-      setValue(field, masked, { shouldValidate: false });
+      setValue(field, masked, { shouldValidate: false, shouldDirty: true });
     };
+
+  const buscarCep = async (digits: string) => {
+    cepAbortRef.current?.abort();
+    const controller = new AbortController();
+    cepAbortRef.current = controller;
+
+    setIsCepLoading(true);
+    setCepNotFound(false);
+    setCepNetworkError(false);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error("Falha na requisição");
+      const data: {
+        erro?: true;
+        logradouro?: string;
+        bairro?: string;
+        localidade?: string;
+        uf?: string;
+      } = await res.json();
+      if (data.erro) {
+        setCepNotFound(true);
+        return;
+      }
+      if (data.logradouro) setValue("logradouro", data.logradouro, { shouldDirty: true });
+      if (data.bairro) setValue("bairro", data.bairro, { shouldDirty: true });
+      if (data.localidade) setValue("cidade", data.localidade, { shouldDirty: true });
+      if (data.uf) setValue("estado", data.uf, { shouldDirty: true });
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") setCepNetworkError(true);
+    } finally {
+      setIsCepLoading(false);
+    }
+  };
 
   const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const masked = formatarCep(e.target.value);
     setCepDisplay(masked);
-    setValue("cep", masked, { shouldValidate: false });
+    setCepNotFound(false);
+    setCepNetworkError(false);
+    setValue("cep", masked, { shouldValidate: false, shouldDirty: true });
+    const digits = masked.replace(/\D/g, "");
+    if (digits.length === 8) buscarCep(digits);
   };
 
   // ── Descartar ──────────────────────────────────────────────────────────────
@@ -320,6 +340,8 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
     setTel2(initialData.telefone_secundario ? formatarTelefone(initialData.telefone_secundario) : "");
     setTelRep(initialData.telefone_representante ? formatarTelefone(initialData.telefone_representante) : "");
     setCepDisplay(initialData.cep ? formatarCep(initialData.cep) : "");
+    setCepNotFound(false);
+    setCepNetworkError(false);
   };
 
   // ── Proteção de mudanças não salvas ─────────────────────────────────────────
@@ -391,6 +413,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       )}
 
       {/* ── Grade 2 colunas ─────────────────────────────────────────────── */}
+      <fieldset disabled={isSaving} className="border-0 p-0 m-0 min-w-0">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
         {/* ── Coluna esquerda ─────────────────────────────────────────── */}
@@ -490,10 +513,52 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
           </section>
 
           {/* Endereço Comercial */}
-          <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8 space-y-5">
+          <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-5 sm:p-6 space-y-4">
             <div className="flex items-center gap-2 text-brand-black">
               <IconMapPin />
               <h2 className="font-display text-base font-semibold text-brand-black">Endereço Comercial</h2>
+            </div>
+
+            {/* CEP — primeiro para autopreenchimento */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="cep"
+                className="block text-xs font-semibold uppercase tracking-wide text-brand-gray-text"
+              >
+                CEP
+                <span className="text-red-500 font-normal ml-1">*</span>
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="relative w-40 shrink-0">
+                  <input
+                    id="cep"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    placeholder="00000-000"
+                    maxLength={9}
+                    value={cepDisplay}
+                    aria-invalid={!!errors.cep || cepNotFound || cepNetworkError}
+                    aria-describedby={errors.cep ? "cep-error" : undefined}
+                    {...register("cep")}
+                    onChange={handleCepChange}
+                    className={`${inputClass(!!errors.cep || cepNotFound)} pr-9`}
+                  />
+                  {isCepLoading && (
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray-text">
+                      <IconSpinner size={14} />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-brand-gray-text/60 leading-relaxed">
+                  Digite o CEP para preencher<br />o endereço automaticamente.
+                </p>
+              </div>
+              {(errors.cep || cepNotFound || cepNetworkError) && (
+                <p id="cep-error" role="alert" className="text-xs text-red-500">
+                  {errors.cep?.message ?? (cepNetworkError ? "Não foi possível consultar o CEP. Preencha o endereço manualmente." : "CEP não encontrado.")}
+                </p>
+              )}
             </div>
 
             {/* Logradouro | Número */}
@@ -616,29 +681,6 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
                 </select>
               </Field>
             </div>
-
-            {/* CEP */}
-            <Field
-              id="cep"
-              label="CEP"
-              required
-              error={errors.cep?.message}
-            >
-              <input
-                id="cep"
-                type="text"
-                inputMode="numeric"
-                autoComplete="postal-code"
-                placeholder="Ex: 01310-100"
-                maxLength={9}
-                value={cepDisplay}
-                aria-invalid={!!errors.cep}
-                aria-describedby={errors.cep ? "cep-error" : undefined}
-                {...register("cep")}
-                onChange={handleCepChange}
-                className={inputClass(!!errors.cep)}
-              />
-            </Field>
           </section>
         </div>
 
@@ -782,6 +824,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
           </section>
         </div>
       </div>
+      </fieldset>
 
       {/* ── Barra de ações ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 mt-5 bg-white rounded-2xl border border-brand-gray-mid/30 p-4">

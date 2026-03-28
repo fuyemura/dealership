@@ -1,6 +1,7 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { formatCpf } from "@/lib/utils/formatters";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type PapelBadgeCfg = { label: string; className: string };
@@ -23,9 +24,6 @@ const papelConfig: Record<string, PapelBadgeCfg> = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function formatCpf(cpf: string): string {
-  return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
-}
 
 function formatUltimoLogin(dateStr: string | null): string {
   if (!dateStr) return "Nunca";
@@ -305,3 +303,4 @@ export default async function UsuariosPage() {
     </>
   );
 }
+

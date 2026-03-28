@@ -47,9 +47,10 @@ export default async function ConfiguracoesLayout({
     .toUpperCase();
 
   const papel = usuario.papel as unknown as { nome_dominio: string } | null;
-  const isAdmin = papel?.nome_dominio === "administrador";
+  const papelNome = papel?.nome_dominio ?? "";
+  const temAcesso = papelNome === "administrador" || papelNome === "gerente";
 
-  if (!isAdmin) {
+  if (!temAcesso) {
     return (
       <div className="min-h-screen overflow-x-clip flex flex-col bg-brand-gray-soft">
         {/* Header */}
@@ -99,8 +100,8 @@ export default async function ConfiguracoesLayout({
               Acesso Restrito
             </h1>
             <p className="text-sm text-brand-gray-text mb-8 leading-relaxed">
-              Esta área é exclusiva para administradores. Entre em contato com o
-              administrador da sua empresa caso precise de acesso.
+              Esta área é exclusiva para administradores e gerentes. Entre em
+              contato com o administrador da sua empresa caso precise de acesso.
             </p>
 
             <Link

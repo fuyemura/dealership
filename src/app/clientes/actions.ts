@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult = { error: string } | undefined;
@@ -18,20 +19,37 @@ async function getUsuarioAutorizado() {
   const { data: usuarioAtual } = await supabase
     .schema("dealership")
     .from("usuario")
-    .select("id, empresa_id")
+    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
     .eq("auth_id", user.id)
     .single();
 
   if (!usuarioAtual?.empresa_id) redirect("/login");
 
-  return { supabase, usuarioAtual };
+  const papel =
+    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
+      ?.nome_dominio ?? "";
+
+  return { supabase, usuarioAtual, papel };
 }
 
 // ─── Validação server-side ────────────────────────────────────────────────────
 
 function validarCpf(cpf: string): boolean {
   const digits = cpf.replace(/\D/g, "");
-  return digits.length === 11;
+  if (digits.length !== 11) return false;
+  // Rejeita sequências homogêneas (ex: 111.111.111-11)
+  if (/^(\d)\1{10}$/.test(digits)) return false;
+
+  const calc = (factor: number) => {
+    let sum = 0;
+    for (let i = 0; i < factor - 1; i++) {
+      sum += parseInt(digits[i]) * (factor - i);
+    }
+    const rem = (sum * 10) % 11;
+    return rem === 10 || rem === 11 ? 0 : rem;
+  };
+
+  return calc(10) === parseInt(digits[9]) && calc(11) === parseInt(digits[10]);
 }
 
 function sanitizarCpf(cpf: string): string {
@@ -85,7 +103,7 @@ export async function criarCliente(
       empresa_id: usuarioAtual.empresa_id,
       cpf: cpfSanitizado,
       nome_cliente: nome.trim(),
-      telefone_cliente: telefone?.trim() || null,
+      telefone_cliente: telefone ? sanitizarTelefone(telefone) : null,
       email_cliente: email?.trim().toLowerCase() || null,
       criado_por: usuarioAtual.id,
     });
@@ -96,6 +114,7 @@ export async function criarCliente(
     return { error: "Erro ao cadastrar o cliente. Tente novamente." };
   }
 
+  revalidatePath("/clientes");
   redirect("/clientes");
 }
 
@@ -120,7 +139,7 @@ export async function atualizarCliente(
     .update({
       cpf: cpfSanitizado,
       nome_cliente: nome.trim(),
-      telefone_cliente: telefone?.trim() || null,
+      telefone_cliente: telefone ? sanitizarTelefone(telefone) : null,
       email_cliente: email?.trim().toLowerCase() || null,
       atualizado_em: new Date().toISOString(),
     })
@@ -133,13 +152,18 @@ export async function atualizarCliente(
     return { error: "Erro ao atualizar o cliente. Tente novamente." };
   }
 
+  revalidatePath("/clientes");
   redirect("/clientes");
 }
 
 // ─── Excluir cliente ──────────────────────────────────────────────────────────
 
 export async function excluirCliente(id: string): Promise<ActionResult> {
-  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
+  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
+
+  if (papel !== "administrador") {
+    return { error: "Apenas administradores podem excluir clientes." };
+  }
 
   const { error } = await supabase
     .schema("dealership")
@@ -157,5 +181,6 @@ export async function excluirCliente(id: string): Promise<ActionResult> {
     return { error: "Erro ao excluir o cliente. Tente novamente." };
   }
 
+  revalidatePath("/clientes");
   redirect("/clientes");
 }

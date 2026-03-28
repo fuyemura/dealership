@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { ActionResult } from "../actions";
+import { formatCpf as formatarCpf, formatTelefone as formatarTelefone } from "@/lib/utils/formatters";
 
 // ─── Schema de validação ──────────────────────────────────────────────────────
 
@@ -62,26 +63,6 @@ interface ClienteFormProps {
     telefone_cliente: string | null;
     email_cliente: string | null;
   };
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatarCpf(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-  if (digits.length <= 9)
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-}
-
-function formatarTelefone(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10)
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -249,6 +230,7 @@ export function ClienteForm({
               aria-invalid={!!errors.nome_cliente}
               aria-describedby={errors.nome_cliente ? "nome-error" : undefined}
               {...register("nome_cliente")}
+              disabled={isSaving}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
                 errors.nome_cliente
                   ? "border-red-300 focus:border-red-400"
@@ -282,6 +264,7 @@ export function ClienteForm({
               aria-describedby={errors.cpf ? "cpf-error" : undefined}
               {...register("cpf")}
               onChange={handleCpfChange}
+              disabled={isSaving}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
                 errors.cpf
                   ? "border-red-300 focus:border-red-400"
@@ -319,6 +302,7 @@ export function ClienteForm({
                 }
                 {...register("telefone_cliente")}
                 onChange={handleTelefoneChange}
+                disabled={isSaving}
                 className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
                   errors.telefone_cliente
                     ? "border-red-300 focus:border-red-400"
@@ -354,6 +338,7 @@ export function ClienteForm({
                   errors.email_cliente ? "email-error" : undefined
                 }
                 {...register("email_cliente")}
+                disabled={isSaving}
                 className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
                   errors.email_cliente
                     ? "border-red-300 focus:border-red-400"

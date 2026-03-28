@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult = { error: string } | undefined;
@@ -129,7 +130,7 @@ export async function atualizarEmpresa(
     .schema("dealership")
     .from("localizacao")
     .update({
-      cep: payload.cep,
+      cep: payload.cep.replace(/\D/g, ""),
       logradouro: payload.logradouro.trim(),
       numero_logradouro: payload.numero_logradouro,
       complemento_logradouro: payload.complemento_logradouro?.trim() || null,
@@ -163,5 +164,6 @@ export async function atualizarEmpresa(
 
   if (empError) return { error: "Erro ao atualizar os dados da empresa. Tente novamente." };
 
+  revalidatePath("/configuracoes/empresa");
   redirect("/configuracoes/empresa?saved=1");
 }

@@ -29,6 +29,25 @@ CREATE POLICY localizacao_leitura_autenticada
 ON dealership.localizacao FOR SELECT
 USING (auth.role() = 'authenticated');
 
+-- Apenas a empresa dona da localização pode atualizá-la.
+-- O vínculo é indireto: localizacao ← empresa.localizacao_id.
+CREATE POLICY localizacao_update_empresa
+ON dealership.localizacao FOR UPDATE
+USING (
+  id IN (
+    SELECT localizacao_id
+    FROM dealership.empresa
+    WHERE id = dealership.get_empresa_id_do_usuario()
+  )
+)
+WITH CHECK (
+  id IN (
+    SELECT localizacao_id
+    FROM dealership.empresa
+    WHERE id = dealership.get_empresa_id_do_usuario()
+  )
+);
+
 ALTER TABLE dealership.dominio ENABLE ROW LEVEL SECURITY;
 CREATE POLICY dominio_leitura_autenticada
 ON dealership.dominio FOR SELECT
@@ -38,6 +57,11 @@ ALTER TABLE dealership.plano ENABLE ROW LEVEL SECURITY;
 CREATE POLICY plano_leitura_autenticada
 ON dealership.plano FOR SELECT
 USING (auth.role() = 'authenticated' AND plano_ativo = TRUE);
+
+-- Planos ativos são exibidos na landing page pública (usuário anônimo).
+CREATE POLICY plano_leitura_anonima
+ON dealership.plano FOR SELECT
+USING (auth.role() = 'anon' AND plano_ativo = TRUE);
 
 
 -- =============================================================================

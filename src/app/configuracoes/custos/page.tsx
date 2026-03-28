@@ -1,15 +1,7 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatData(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatData } from "@/lib/utils/formatters";
 
 // ─── Ícones ───────────────────────────────────────────────────────────────────
 function IconPlus({ size = 16 }: { size?: number }) {
@@ -239,3 +231,4 @@ export default async function CustosPage() {
     </>
   );
 }
+

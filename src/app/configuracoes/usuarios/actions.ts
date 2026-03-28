@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -39,7 +40,20 @@ async function getAdminAutorizado() {
 
 function validarCpf(cpf: string): boolean {
   const digits = cpf.replace(/\D/g, "");
-  return digits.length === 11;
+  if (digits.length !== 11) return false;
+  // Rejeita sequências homogêneas (ex: 111.111.111-11)
+  if (/^(\d)\1{10}$/.test(digits)) return false;
+
+  const calc = (factor: number) => {
+    let sum = 0;
+    for (let i = 0; i < factor - 1; i++) {
+      sum += parseInt(digits[i]) * (factor - i);
+    }
+    const rem = (sum * 10) % 11;
+    return rem === 10 || rem === 11 ? 0 : rem;
+  };
+
+  return calc(10) === parseInt(digits[9]) && calc(11) === parseInt(digits[10]);
 }
 
 function sanitizarCpf(cpf: string): string {
@@ -170,6 +184,7 @@ export async function atualizarUsuario(
 
   if (error) return { error: "Erro ao salvar. Tente novamente." };
 
+  revalidatePath("/configuracoes/usuarios");
   redirect("/configuracoes/usuarios");
 }
 

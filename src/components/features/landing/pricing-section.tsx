@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 import { PricingGrid } from "./_pricing-grid";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -114,14 +114,14 @@ const PLANOS_FALLBACK: PricingPlanDisplay[] = [
 const getPlanos = unstable_cache(
   async (): Promise<PricingPlanDisplay[]> => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!url || !serviceKey) {
+    if (!url || !anonKey) {
       return PLANOS_FALLBACK;
     }
 
     try {
-      const supabase = createAdminClient();
+      const supabase = createClient(url, anonKey);
 
     const { data } = await supabase
       .schema("dealership")
