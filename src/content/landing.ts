@@ -18,16 +18,7 @@ export interface Benefit {
   iconName: "git-branch" | "lightbulb" | "qr-code";
 }
 
-export interface PricingPlan {
-  id: string;
-  name: string;
-  price: string;
-  period: string;
-  description: string;
-  features: string[];
-  popular?: boolean;
-  cta: string;
-}
+
 
 export const FEATURES: Feature[] = [
   {
@@ -75,48 +66,4 @@ export const BENEFITS: Benefit[] = [
   },
 ];
 
-export const PRICING_PLANS: PricingPlan[] = [
-  {
-    id: "basico",
-    name: "Básico",
-    price: "R$ 49,99",
-    period: "/mês",
-    description: "Perfeito para pequenas revendas de veículos.",
-    features: [
-      "Até 50 veículos",
-      "QR Codes básicos",
-      "Dashboard simples",
-      "Suporte por WhatsApp",
-    ],
-    cta: "Começar grátis",
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    price: "R$ 99,99",
-    period: "/mês",
-    description: "Para revendas em crescimento que precisam de mais recursos.",
-    features: [
-      "Até 100 veículos",
-      "QR Codes personalizados",
-      "Dashboard avançado",
-      "Suporte prioritário por WhatsApp",
-    ],
-    popular: true,
-    cta: "Começar grátis",
-  },
-  {
-    id: "empresarial",
-    name: "Empresarial",
-    price: "R$ 199,99",
-    period: "/mês",
-    description: "Para grandes operações sem limite de escala.",
-    features: [
-      "Veículos ilimitados",
-      "QR Codes premium",
-      "Dashboard completo com métricas",
-      "Suporte dedicado",
-    ],
-    cta: "Começar grátis",
-  },
-];
+

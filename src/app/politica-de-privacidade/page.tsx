@@ -29,7 +29,7 @@ export default function PoliticaDePrivacidadePage() {
       <section id="intro">
         <h2>1. Introdução</h2>
         <p>
-          A <strong>Uyemura Tech Ltda.</strong> ("Uyemura Tech", "nós" ou "nosso") está
+          A <strong>Uyemura Tech Ltda.</strong> (&ldquo;Uyemura Tech&rdquo;, &ldquo;nós&rdquo; ou &ldquo;nosso&rdquo;) está
           comprometida com a proteção da privacidade e dos dados pessoais de nossos clientes,
           usuários e parceiros.
         </p>

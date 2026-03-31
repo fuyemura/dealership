@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 const config: Config = {
   darkMode: ["class"],
@@ -10,7 +11,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        display: ["var(--font-syne)", "sans-serif"],
+        display: ["var(--font-poppins)", "sans-serif"],
         sans: ["var(--font-dm-sans)", "sans-serif"],
       },
       colors: {
@@ -22,6 +23,20 @@ const config: Config = {
           "gray-mid": "#d4d4d0",
           "gray-text": "#6b6b66",
         },
+        status: {
+          // Disponível — verde
+          "success-bg":     "#ecfdf5",
+          "success-text":   "#047857",
+          "success-border": "#a7f3d0",
+          // Em Negociação — âmbar
+          "warning-bg":     "#fffbeb",
+          "warning-text":   "#b45309",
+          "warning-border": "#fde68a",
+          // Vendido — cinza neutro (usa tokens brand existentes)
+          // bg:     brand-gray-soft  (#f5f5f3)
+          // text:   brand-gray-text  (#6b6b66)
+          // border: brand-gray-mid   (#d4d4d0)
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -30,7 +45,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animate],
 };
 
 export default config;
