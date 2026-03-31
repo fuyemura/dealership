@@ -73,11 +73,32 @@ WITH r AS (
 )
 INSERT INTO _test_fx VALUES ('usr_id', (SELECT id FROM r));
 
+-- 5. plano (nenhuma FK) — necessário para A6 (assinatura.empresa_id)
+WITH r AS (
+    INSERT INTO dealership.plano
+        (nome_plano, preco_mensal, limite_veiculos, limite_usuarios, limite_fotos_veiculo)
+    VALUES ('Plano pgTAP Fixture', 0.00, 1, 1, 1)
+    RETURNING id
+)
+INSERT INTO _test_fx VALUES ('plano_id', (SELECT id FROM r));
+
+-- 6. veiculo_custo (depende de empresa + usuario) — necessário para A10 (veiculo_manutencao.veiculo_id)
+WITH r AS (
+    INSERT INTO dealership.veiculo_custo
+        (empresa_id, nome_custo, criado_por)
+    VALUES
+        ((SELECT val FROM _test_fx WHERE key = 'emp_id'),
+         'Custo pgTAP Fixture',
+         (SELECT val FROM _test_fx WHERE key = 'usr_id'))
+    RETURNING id
+)
+INSERT INTO _test_fx VALUES ('custo_id', (SELECT id FROM r));
+
 -- =============================================================================
 -- BLOCO A — VIOLAÇÕES DE FK (foreign_key_violation → 23503)
--- Usa gen_random_uuid() como FK, garantindo UUID inexistente na tabela pai.
--- Quando a tabela tem múltiplas FKs NOT NULL, todas recebem UUID aleatório:
--- o banco rejeita com 23503 assim que encontrar a primeira FK inválida.
+-- Cada teste deixa inválida APENAS a FK sob teste; todas as outras FK obrigatórias
+-- recebem valores válidos dos fixtures acima. Isso garante que o SQLSTATE 23503
+-- seja disparado pela constraint correta e não por uma FK adjacente.
 -- =============================================================================
 
 -- A1. empresa.localizacao_id aponta para localizacao inexistente
@@ -92,32 +113,46 @@ SELECT throws_ok(
 );
 
 -- A2. usuario.empresa_id aponta para empresa inexistente
+--     papel_usuario_id válido (fixture) — somente empresa_id é inválido
 SELECT throws_ok(
-    $$INSERT INTO dealership.usuario
-        (empresa_id, auth_id, email_usuario, cpf, nome_usuario, papel_usuario_id)
-      VALUES (gen_random_uuid(), gen_random_uuid(),
-              'fk_a2@test.com','10000000001','User FK A2',gen_random_uuid())$$,
+    format(
+        $$INSERT INTO dealership.usuario
+            (empresa_id, auth_id, email_usuario, cpf, nome_usuario, papel_usuario_id)
+          VALUES (gen_random_uuid(), gen_random_uuid(),
+                  'fk_a2@test.com','10000000001','User FK A2', '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'dom_id')
+    ),
     '23503', NULL,
     'FK A2: usuario.empresa_id deve rejeitar empresa inexistente'
 );
 
 -- A3. cliente.empresa_id aponta para empresa inexistente
+--     criado_por válido (fixture) — somente empresa_id é inválido
 SELECT throws_ok(
-    $$INSERT INTO dealership.cliente
-        (empresa_id, cpf, nome_cliente, criado_por)
-      VALUES (gen_random_uuid(),'20000000002','Cliente FK A3',gen_random_uuid())$$,
+    format(
+        $$INSERT INTO dealership.cliente
+            (empresa_id, cpf, nome_cliente, criado_por)
+          VALUES (gen_random_uuid(),'20000000002','Cliente FK A3', '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
     '23503', NULL,
     'FK A3: cliente.empresa_id deve rejeitar empresa inexistente'
 );
 
 -- A4. veiculo_arquivo.veiculo_id aponta para veiculo inexistente
+--     empresa_id, tipo_arquivo_id e criado_por válidos (fixtures) — somente veiculo_id é inválido
 SELECT throws_ok(
-    $$INSERT INTO dealership.veiculo_arquivo
-        (veiculo_id, empresa_id, tipo_arquivo_id, url_arquivo,
-         caminho_storage, tamanho_arquivo, criado_por)
-      VALUES (gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
-              'https://example.com/foto.jpg', '/bucket/foto.jpg', 204800,
-              gen_random_uuid())$$,
+    format(
+        $$INSERT INTO dealership.veiculo_arquivo
+            (veiculo_id, empresa_id, tipo_arquivo_id, url_arquivo,
+             caminho_storage, tamanho_arquivo, criado_por)
+          VALUES (gen_random_uuid(), '%s'::uuid, '%s'::uuid,
+                  'https://example.com/foto.jpg', '/bucket/foto.jpg', 204800,
+                  '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'emp_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id'),
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
     '23503', NULL,
     'FK A4: veiculo_arquivo.veiculo_id deve rejeitar veiculo inexistente'
 );
@@ -133,58 +168,81 @@ SELECT throws_ok(
 );
 
 -- A6. assinatura.empresa_id aponta para empresa inexistente
+--     plano_id, situacao_assinatura_id e ciclo_cobranca_id válidos (fixtures) — somente empresa_id é inválido
 SELECT throws_ok(
-    $$INSERT INTO dealership.assinatura
-        (empresa_id, plano_id, situacao_assinatura_id, ciclo_cobranca_id, data_inicio)
-      VALUES (gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
-              gen_random_uuid(), CURRENT_DATE)$$,
+    format(
+        $$INSERT INTO dealership.assinatura
+            (empresa_id, plano_id, situacao_assinatura_id, ciclo_cobranca_id, data_inicio)
+          VALUES (gen_random_uuid(), '%s'::uuid, '%s'::uuid, '%s'::uuid, CURRENT_DATE)$$,
+        (SELECT val FROM _test_fx WHERE key = 'plano_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id')
+    ),
     '23503', NULL,
     'FK A6: assinatura.empresa_id deve rejeitar empresa inexistente'
 );
 
 -- A7. assinatura.plano_id aponta para plano inexistente
---     empresa_id válida (fixture), plano_id inválido → FK no plano deve falhar
+--     empresa_id, situacao_assinatura_id e ciclo_cobranca_id válidos (fixtures) — somente plano_id é inválido
 SELECT throws_ok(
     format(
         $$INSERT INTO dealership.assinatura
             (empresa_id, plano_id, situacao_assinatura_id, ciclo_cobranca_id, data_inicio)
-          VALUES ('%s'::uuid, gen_random_uuid(), gen_random_uuid(),
-                  gen_random_uuid(), CURRENT_DATE)$$,
-        (SELECT val FROM _test_fx WHERE key = 'emp_id')
+          VALUES ('%s'::uuid, gen_random_uuid(), '%s'::uuid, '%s'::uuid, CURRENT_DATE)$$,
+        (SELECT val FROM _test_fx WHERE key = 'emp_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id')
     ),
     '23503', NULL,
     'FK A7: assinatura.plano_id deve rejeitar plano inexistente'
 );
 
 -- A8. fatura.assinatura_id aponta para assinatura inexistente
+--     empresa_id, situacao_fatura_id e metodo_pagamento_id válidos (fixtures) — somente assinatura_id é inválido
 SELECT throws_ok(
-    $$INSERT INTO dealership.fatura
-        (assinatura_id, empresa_id, numero_fatura, situacao_fatura_id,
-         valor_bruto, valor_desconto, valor_liquido,
-         data_competencia, data_vencimento, metodo_pagamento_id)
-      VALUES (gen_random_uuid(), gen_random_uuid(), 'FAT-FK-A8-TEST',
-              gen_random_uuid(), 100.00, 0.00, 100.00,
-              CURRENT_DATE, CURRENT_DATE + 30, gen_random_uuid())$$,
+    format(
+        $$INSERT INTO dealership.fatura
+            (assinatura_id, empresa_id, numero_fatura, situacao_fatura_id,
+             valor_bruto, valor_desconto, valor_liquido,
+             data_competencia, data_vencimento, metodo_pagamento_id)
+          VALUES (gen_random_uuid(), '%s'::uuid, 'FAT-FK-A8-TEST',
+                  '%s'::uuid, 100.00, 0.00, 100.00,
+                  CURRENT_DATE, CURRENT_DATE + 30, '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'emp_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id')
+    ),
     '23503', NULL,
     'FK A8: fatura.assinatura_id deve rejeitar assinatura inexistente'
 );
 
 -- A9. veiculo_custo.empresa_id aponta para empresa inexistente
+--     criado_por válido (fixture) — somente empresa_id é inválido
 SELECT throws_ok(
-    $$INSERT INTO dealership.veiculo_custo
-        (empresa_id, nome_custo, criado_por)
-      VALUES (gen_random_uuid(), 'Custo FK A9', gen_random_uuid())$$,
+    format(
+        $$INSERT INTO dealership.veiculo_custo
+            (empresa_id, nome_custo, criado_por)
+          VALUES (gen_random_uuid(), 'Custo FK A9', '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
     '23503', NULL,
     'FK A9: veiculo_custo.empresa_id deve rejeitar empresa inexistente'
 );
 
 -- A10. veiculo_manutencao.veiculo_id aponta para veiculo inexistente
+--      custo_id, empresa_id, situacao_manutencao_id e criado_por válidos (fixtures) — somente veiculo_id é inválido
 SELECT throws_ok(
-    $$INSERT INTO dealership.veiculo_manutencao
-        (veiculo_id, custo_id, empresa_id, valor_manutencao,
-         situacao_manutencao_id, data_conclusao, criado_por)
-      VALUES (gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
-              500.00, gen_random_uuid(), CURRENT_DATE, gen_random_uuid())$$,
+    format(
+        $$INSERT INTO dealership.veiculo_manutencao
+            (veiculo_id, custo_id, empresa_id, valor_manutencao,
+             situacao_manutencao_id, data_conclusao, criado_por)
+          VALUES (gen_random_uuid(), '%s'::uuid, '%s'::uuid,
+                  500.00, '%s'::uuid, CURRENT_DATE, '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'custo_id'),
+        (SELECT val FROM _test_fx WHERE key = 'emp_id'),
+        (SELECT val FROM _test_fx WHERE key = 'dom_id'),
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
     '23503', NULL,
     'FK A10: veiculo_manutencao.veiculo_id deve rejeitar veiculo inexistente'
 );
