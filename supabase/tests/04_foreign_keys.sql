@@ -1,14 +1,14 @@
 -- =============================================================================
 -- 04_foreign_keys.sql
 -- Verifica que todas as FK declaradas existem e apontam para as tabelas e
--- colunas corretas. Total: 36 FKs.
+-- colunas corretas. Total: 38 FKs.
 --
 -- Nomenclatura das constraints: fk_<tabela>_<coluna>
 -- Execução: supabase test db
 -- =============================================================================
 
 BEGIN;
-SELECT plan(36);
+SELECT plan(38);
 
 -- =============================================================================
 -- empresa (1 FK)
@@ -300,6 +300,24 @@ SELECT fk_ok(
     'dealership', 'veiculo_manutencao',  ARRAY['criado_por'],
     'dealership', 'usuario',             ARRAY['id'],
     'fk_veiculo_manutencao_criado_por: veiculo_manutencao.criado_por → usuario.id'
+);
+
+-- =============================================================================
+-- metodo_pagamento (2 FKs)
+-- =============================================================================
+
+-- fk_metodo_pagamento_empresa_id → empresa.id
+SELECT fk_ok(
+    'dealership', 'metodo_pagamento',  ARRAY['empresa_id'],
+    'dealership', 'empresa',           ARRAY['id'],
+    'fk_metodo_pagamento_empresa_id: metodo_pagamento.empresa_id → empresa.id'
+);
+
+-- fk_metodo_pagamento_bandeira_id → dominio.id
+SELECT fk_ok(
+    'dealership', 'metodo_pagamento',  ARRAY['bandeira_id'],
+    'dealership', 'dominio',           ARRAY['id'],
+    'fk_metodo_pagamento_bandeira_id: metodo_pagamento.bandeira_id → dominio.id'
 );
 
 SELECT * FROM finish();

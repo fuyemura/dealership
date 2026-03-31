@@ -7,7 +7,7 @@
 -- =============================================================================
 
 BEGIN;
-SELECT plan(13);
+SELECT plan(15);
 
 -- -----------------------------------------------------------------------------
 -- empresa
@@ -110,6 +110,21 @@ SELECT col_is_unique(
 SELECT col_is_unique(
     'dealership', 'fatura', 'gateway_fatura_id',
     'uk_fatura_gateway_fatura_id: fatura.gateway_fatura_id deve ser único'
+);
+
+-- -----------------------------------------------------------------------------
+-- metodo_pagamento
+-- uk_metodo_pagamento_gateway_payment_method_id: token do gateway globalmente único
+-- uk_metodo_pagamento_empresa_principal        : índice único parcial — no máximo
+--   um cartão principal (metodo_principal = TRUE) por empresa
+-- -----------------------------------------------------------------------------
+SELECT col_is_unique(
+    'dealership', 'metodo_pagamento', 'gateway_payment_method_id',
+    'uk_metodo_pagamento_gateway_payment_method_id: gateway_payment_method_id deve ser único globalmente'
+);
+SELECT index_is_unique(
+    'dealership', 'metodo_pagamento', 'uk_metodo_pagamento_empresa_principal',
+    'uk_metodo_pagamento_empresa_principal: no máximo 1 cartão principal por empresa (índice único parcial)'
 );
 
 SELECT * FROM finish();

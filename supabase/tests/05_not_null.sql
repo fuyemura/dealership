@@ -7,12 +7,12 @@
 --   • id          → coberto em 02_primary_keys.sql
 --   • criado_em, atualizado_em, registrado_em → colunas de auditoria com DEFAULT
 --
--- Total de asserções: 103
+-- Total de asserções: 112
 -- Execução: supabase test db
 -- =============================================================================
 
 BEGIN;
-SELECT plan(103);
+SELECT plan(112);
 
 -- =============================================================================
 -- empresa (7 colunas NOT NULL)
@@ -174,6 +174,20 @@ SELECT col_not_null('dealership', 'veiculo_manutencao', 'valor_manutencao',     
 SELECT col_not_null('dealership', 'veiculo_manutencao', 'situacao_manutencao_id', 'veiculo_manutencao.situacao_manutencao_id NOT NULL');
 SELECT col_not_null('dealership', 'veiculo_manutencao', 'data_conclusao',         'veiculo_manutencao.data_conclusao NOT NULL');
 SELECT col_not_null('dealership', 'veiculo_manutencao', 'criado_por',             'veiculo_manutencao.criado_por NOT NULL');
+
+-- =============================================================================
+-- metodo_pagamento (9 colunas NOT NULL)
+-- metodo_principal e metodo_ativo são NOT NULL com DEFAULT
+-- =============================================================================
+SELECT col_not_null('dealership', 'metodo_pagamento', 'empresa_id',                'metodo_pagamento.empresa_id NOT NULL');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'gateway_payment_method_id', 'metodo_pagamento.gateway_payment_method_id NOT NULL');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'bandeira_id',               'metodo_pagamento.bandeira_id NOT NULL');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'ultimos_quatro_digitos',    'metodo_pagamento.ultimos_quatro_digitos NOT NULL');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'mes_expiracao',             'metodo_pagamento.mes_expiracao NOT NULL');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'ano_expiracao',             'metodo_pagamento.ano_expiracao NOT NULL');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'nome_titular',              'metodo_pagamento.nome_titular NOT NULL');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'metodo_principal',          'metodo_pagamento.metodo_principal NOT NULL (DEFAULT FALSE)');
+SELECT col_not_null('dealership', 'metodo_pagamento', 'metodo_ativo',              'metodo_pagamento.metodo_ativo NOT NULL (DEFAULT TRUE)');
 
 SELECT * FROM finish();
 ROLLBACK;

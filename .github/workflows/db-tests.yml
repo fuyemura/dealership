@@ -28,10 +28,12 @@ jobs:
 
       - name: Apply database schema
         run: |
+          DB_URL=$(supabase status --output env | grep '^DB_URL=' | cut -d= -f2-)
           supabase db query "CREATE SCHEMA IF NOT EXISTS dealership;"
-          supabase db query --file sql/01_create-tables.sql
-          supabase db query --file sql/02_grant-dealership.sql
-          supabase db query --file sql/04_functions.sql
+          psql "$DB_URL" -f sql/01_create-tables.sql
+          psql "$DB_URL" -f sql/02_grant-dealership.sql
+          psql "$DB_URL" -f sql/03_rls_tables.sql
+          psql "$DB_URL" -f sql/04_functions.sql
 
       - name: Run database tests
         run: supabase test db
