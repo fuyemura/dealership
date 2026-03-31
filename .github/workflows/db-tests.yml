@@ -27,8 +27,9 @@ jobs:
         run: supabase db query "CREATE EXTENSION IF NOT EXISTS pgtap;"
 
       - name: Apply database schema
+        env:
+          DB_URL: postgresql://postgres:postgres@localhost:54322/postgres
         run: |
-          DB_URL=$(supabase status --output env | grep '^DB_URL=' | cut -d= -f2-)
           supabase db query "CREATE SCHEMA IF NOT EXISTS dealership;"
           psql "$DB_URL" -f sql/01_create-tables.sql
           psql "$DB_URL" -f sql/02_grant-dealership.sql
