@@ -88,7 +88,7 @@ function IconUsers({ size = 20 }: { size?: number }) {
 export default async function ClientesPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }) {
   const supabase = await createClient();
 
@@ -109,7 +109,7 @@ export default async function ClientesPage({
   const empresaId = usuario.empresa_id;
 
   // ── Busca ────────────────────────────────────────────────────────────────────
-  const { q: busca = "" } = searchParams;
+  const { q: busca = "" } = await searchParams;
   const termoBusca = busca.trim();
 
   let query = supabase
