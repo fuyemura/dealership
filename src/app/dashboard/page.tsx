@@ -205,6 +205,7 @@ export default async function DashboardPage() {
 
   const papel = usuario?.papel as unknown as { nome_dominio: string } | null;
   const isAdmin = papel?.nome_dominio === "administrador";
+  const temAcessoConfig = isAdmin || papel?.nome_dominio === "gerente";
 
   const { data: veiculos } = await supabase
       .schema("dealership")
@@ -296,7 +297,7 @@ export default async function DashboardPage() {
               { label: "Dashboard",     href: "/dashboard",     active: true  },
               { label: "Veículos",      href: "/veiculos",      active: false },
               { label: "Clientes",      href: "/clientes",      active: false },
-              ...(isAdmin ? [{ label: "Configurações", href: "/configuracoes", active: false }] : []),
+              ...(temAcessoConfig ? [{ label: "Configurações", href: "/configuracoes", active: false }] : []),
             ].map((item) => (
               <Link key={item.href} href={item.href}
                 className={`nav-link text-sm font-medium transition-colors ${

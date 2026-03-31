@@ -6,10 +6,9 @@ import { atualizarEmpresa } from "./actions";
 export default async function EmpresaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: { saved?: string };
 }) {
-  const params = await searchParams;
-  const savedOk = params.saved === "1";
+  const savedOk = searchParams.saved === "1";
 
   const supabase = await createClient();
 

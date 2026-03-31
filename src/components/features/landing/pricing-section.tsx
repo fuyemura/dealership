@@ -63,8 +63,8 @@ function mapearFeatures(plano: PlanoDB): string[] {
 }
 
 // ─── Busca com cache ISR (1h) ─────────────────────────────────────────────────
-// createAdminClient() usa a service role (server-only) e bypassa o RLS,
-// evitando que a landing page dependa de sessão de usuário ou cookies.
+// createClient() usa a anon key com RLS — a tabela `plano` tem policy de leitura
+// pública (SELECT para anon), portanto não é necessário service role aqui.
 // unstable_cache armazena o resultado no Data Cache do Next.js,
 // revalidando automaticamente a cada hora sem bloquear requests.
 // Em ambientes sem as env vars (ex: CI, preview sem secrets), retorna fallback estático.

@@ -6,9 +6,9 @@ import { atualizarCliente, excluirCliente } from "../actions";
 export default async function EditarClientePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
+  const { id } = params;
 
   const supabase = await createClient();
 

@@ -49,6 +49,7 @@ export default async function ClientesLayout({
 
   const papel = usuario.papel as unknown as { nome_dominio: string } | null;
   const isAdmin = papel?.nome_dominio === "administrador";
+  const temAcessoConfig = isAdmin || papel?.nome_dominio === "gerente";
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-gray-soft">
@@ -67,7 +68,7 @@ export default async function ClientesLayout({
               { label: "Dashboard",    href: "/dashboard",    active: false },
               { label: "Veículos",     href: "/veiculos",     active: false },
               { label: "Clientes",     href: "/clientes",     active: true  },
-              ...(isAdmin
+              ...(temAcessoConfig
                 ? [{ label: "Configurações", href: "/configuracoes", active: false }]
                 : []),
             ].map((item) => (

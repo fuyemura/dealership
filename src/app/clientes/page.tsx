@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatCpf, formatTelefone, formatData } from "@/lib/utils/formatters";
@@ -88,7 +88,7 @@ function IconUsers({ size = 20 }: { size?: number }) {
 export default async function ClientesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: { q?: string };
 }) {
   const supabase = await createClient();
 
@@ -109,7 +109,7 @@ export default async function ClientesPage({
   const empresaId = usuario.empresa_id;
 
   // ── Busca ────────────────────────────────────────────────────────────────────
-  const { q: busca = "" } = await searchParams;
+  const { q: busca = "" } = searchParams;
   const termoBusca = busca.trim();
 
   let query = supabase
