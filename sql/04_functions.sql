@@ -83,6 +83,11 @@ BEGIN
     telefone_representante = p_telefone_representante,
     atualizado_em          = NOW()
   WHERE id = p_empresa_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'empresa não encontrada ou acesso negado: %', p_empresa_id
+      USING ERRCODE = 'P0002';
+  END IF;
 END;
 $$;
 

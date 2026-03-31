@@ -83,8 +83,9 @@ export function CancelarPlanoModal({
 
   // ── Fechar modal ─────────────────────────────────────────────────────────────
   const handleClose = useCallback(() => {
+    if (isPending) return;
     setOpen(false);
-  }, []);
+  }, [isPending]);
 
   // ── Fechar no Escape ────────────────────────────────────────────────────────
   useEffect(() => {
