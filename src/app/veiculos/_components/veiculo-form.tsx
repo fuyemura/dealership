@@ -1,0 +1,1333 @@
+"use client";
+
+import { useState, useRef } from "react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import type {
+  ActionResult,
+  VeiculoFormData,
+  QrCodeResult,
+} from "../actions";
+
+// ─── Tipos ────────────────────────────────────────────────────────────────────
+
+export interface Dominio {
+  id: string;
+  nome_dominio: string;
+}
+
+export interface Dominios {
+  marcas: Dominio[];
+  modelos: Dominio[];
+  combustiveis: Dominio[];
+  cambios: Dominio[];
+  direcoes: Dominio[];
+  situacoes: Dominio[];
+}
+
+export interface VeiculoInicial {
+  id: string;
+  placa: string;
+  renavam: string;
+  numero_chassi: string;
+  marca_veiculo_id: string;
+  modelo_veiculo_id: string;
+  combustivel_veiculo_id: string;
+  cambio_veiculo_id: string;
+  direcao_veiculo_id: string;
+  situacao_veiculo_id: string;
+  ano_fabricacao: number;
+  ano_modelo: number;
+  cor_veiculo: string;
+  quantidade_portas: number;
+  quilometragem: number;
+  vidro_eletrico: boolean;
+  trava_eletrica: boolean;
+  laudo_aprovado: boolean;
+  data_compra: string;
+  preco_compra: number;
+  preco_venda: number | null;
+  data_venda: string | null;
+  data_entrega: string | null;
+  descricao: string | null;
+}
+
+export interface QrCodeInfo {
+  url_publica: string;
+  token_publica: string;
+  total_visualizacoes: number;
+}
+
+export interface VeiculoFormProps {
+  dominios: Dominios;
+  salvarAction: (data: VeiculoFormData) => Promise<ActionResult>;
+  excluirAction?: () => Promise<ActionResult>;
+  gerarQrCodeAction?: () => Promise<QrCodeResult>;
+  initialData?: VeiculoInicial;
+  qrCodeInicial?: QrCodeInfo | null;
+}
+
+// ─── Schema Zod ───────────────────────────────────────────────────────────────
+
+const PLACA_RE = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+
+const schema = z.object({
+  placa: z
+    .string()
+    .transform((v) => v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())
+    .pipe(z.string().regex(PLACA_RE, "Placa inválida. Formato: ABC1234 ou ABC1D23.")),
+  renavam: z
+    .string()
+    .transform((v) => v.replace(/\D/g, ""))
+    .pipe(z.string().length(11, "RENAVAM deve ter 11 dígitos.")),
+  numero_chassi: z
+    .string()
+    .min(1, "Chassi é obrigatório.")
+    .max(20, "Máximo 20 caracteres."),
+  marca_veiculo_id: z.string().min(1, "Selecione a marca."),
+  modelo_veiculo_id: z.string().min(1, "Selecione o modelo."),
+  combustivel_veiculo_id: z.string().min(1, "Selecione o combustível."),
+  cambio_veiculo_id: z.string().min(1, "Selecione a transmissão."),
+  direcao_veiculo_id: z.string().min(1, "Selecione a direção."),
+  situacao_veiculo_id: z.string().min(1, "Selecione a situação."),
+  ano_fabricacao: z.coerce
+    .number()
+    .int()
+    .min(1900, "Ano inválido.")
+    .max(new Date().getFullYear() + 1, "Ano inválido."),
+  ano_modelo: z.coerce
+    .number()
+    .int()
+    .min(1900, "Ano inválido.")
+    .max(new Date().getFullYear() + 2, "Ano inválido."),
+  cor_veiculo: z
+    .string()
+    .min(1, "Cor é obrigatória.")
+    .max(20, "Máximo 20 caracteres."),
+  quantidade_portas: z.coerce
+    .number()
+    .int()
+    .min(1, "Mínimo 1 porta.")
+    .max(10, "Máximo 10 portas."),
+  quilometragem: z.coerce.number().int().min(0, "Quilometragem inválida."),
+  vidro_eletrico: z.boolean(),
+  trava_eletrica: z.boolean(),
+  laudo_aprovado: z.boolean(),
+  data_compra: z.string().min(1, "Data de compra é obrigatória."),
+  preco_compra: z.coerce.number().positive("Informe um preço de compra válido."),
+  preco_venda: z.coerce.number().min(0).optional().nullable(),
+  data_venda: z.string().optional().nullable(),
+  data_entrega: z.string().optional().nullable(),
+  descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+// ─── Ícones inline ────────────────────────────────────────────────────────────
+
+function IconChevronLeft({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function IconQrCode({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+      <path d="M14 14h3v3h-3z" /><path d="M17 17h4" /><path d="M17 14v7" />
+    </svg>
+  );
+}
+
+function IconPrint({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="6 9 6 2 18 2 18 9" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="14" width="12" height="8" />
+    </svg>
+  );
+}
+
+function IconCopy({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function IconX({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+function IconSearch({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+function IconWrench({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const inputCls = (hasError: boolean) =>
+  `w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
+    hasError
+      ? "border-red-300 focus:border-red-400"
+      : "border-brand-gray-mid/60 focus:border-brand-black/40"
+  }`;
+
+const labelCls =
+  "block text-xs font-semibold uppercase tracking-wide text-brand-gray-text";
+
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <p role="alert" className="text-xs text-red-500 mt-1">
+      {msg}
+    </p>
+  );
+}
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="pb-3 mb-6 border-b border-brand-gray-mid/30">
+      <h2 className="text-sm font-semibold text-brand-black">{title}</h2>
+    </div>
+  );
+}
+
+/** Tenta encontrar o UUID de um domínio pelo texto (case-insensitive) */
+function matchId(value: string | null | undefined, list: Dominio[]): string {
+  if (!value) return "";
+  const lower = value.toLowerCase().trim();
+  const exact = list.find((d) => d.nome_dominio.toLowerCase() === lower);
+  if (exact) return exact.id;
+  const partial = list.find(
+    (d) =>
+      d.nome_dominio.toLowerCase().includes(lower) ||
+      lower.includes(d.nome_dominio.toLowerCase())
+  );
+  return partial?.id ?? "";
+}
+
+// ─── Modal QR Code ────────────────────────────────────────────────────────────
+
+interface QrModalProps {
+  qrCode: QrCodeInfo;
+  placa: string;
+  onClose: () => void;
+}
+
+function QrCodeModal({ qrCode, placa, onClose }: QrModalProps) {
+  const [copiado, setCopiado] = useState(false);
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+    qrCode.url_publica
+  )}`;
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(qrCode.url_publica);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      /* navegador sem permissão */
+    }
+  };
+
+  const imprimir = () => window.print();
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/40 z-40 print:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="QR Code do veículo"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 print:static print:inset-auto print:z-auto print:p-0"
+      >
+        <div className="bg-white rounded-2xl border border-brand-gray-mid/30 p-8 w-full max-w-sm shadow-lg flex flex-col items-center gap-6 print:shadow-none print:border-none print:p-0">
+          {/* Título + fechar */}
+          <div className="flex items-center justify-between w-full print:hidden">
+            <h3 className="font-display text-lg font-bold text-brand-black">
+              QR Code — {placa}
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-brand-gray-text hover:text-brand-black transition-colors p-1"
+              aria-label="Fechar"
+            >
+              <IconX size={16} />
+            </button>
+          </div>
+
+          {/* QR Code */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrUrl}
+            alt={`QR Code do veículo ${placa}`}
+            width={200}
+            height={200}
+            className="rounded-xl border border-brand-gray-mid/30"
+          />
+
+          {/* Placa (visível na impressão) */}
+          <p className="hidden print:block text-center font-bold text-lg">{placa}</p>
+
+          {/* URL */}
+          <div className="w-full print:hidden">
+            <p className="text-xs text-brand-gray-text mb-1.5">Link público</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={qrCode.url_publica}
+                className="flex-1 rounded-xl border border-brand-gray-mid/60 bg-brand-gray-soft px-3 py-2 text-xs text-brand-gray-text outline-none"
+              />
+              <button
+                type="button"
+                onClick={copiar}
+                className="flex-shrink-0 rounded-xl border border-brand-gray-mid/60 px-3 py-2 text-xs font-medium text-brand-black hover:bg-brand-gray-soft transition-colors flex items-center gap-1.5"
+              >
+                <IconCopy size={13} />
+                {copiado ? "Copiado!" : "Copiar"}
+              </button>
+            </div>
+          </div>
+
+          {/* Visualizações */}
+          <p className="text-xs text-brand-gray-text print:hidden">
+            {qrCode.total_visualizacoes === 0
+              ? "Nenhuma visualização ainda."
+              : `${qrCode.total_visualizacoes} visualização${
+                  qrCode.total_visualizacoes !== 1 ? "ões" : ""
+                } até agora.`}
+          </p>
+
+          {/* Ações */}
+          <div className="flex items-center gap-3 w-full print:hidden">
+            <button
+              type="button"
+              onClick={imprimir}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-5 py-2.5 hover:bg-brand-gray-soft transition-colors"
+            >
+              <IconPrint size={15} />
+              Imprimir
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Etapa 1: Entrada de placa ────────────────────────────────────────────────
+
+interface PlacaStepProps {
+  onNext: (placa: string, dadosApi: ApiDadosVeiculo | null) => void;
+}
+
+interface ApiDadosVeiculo {
+  configurado: boolean;
+  marca?: string | null;
+  modelo?: string | null;
+  ano_fabricacao?: number | null;
+  ano_modelo?: number | null;
+  cor?: string | null;
+  combustivel?: string | null;
+  renavam?: string | null;
+  chassi?: string | null;
+  valor_fipe?: string | null;
+}
+
+function PlacaStep({ onNext }: PlacaStepProps) {
+  const [placa, setPlaca] = useState("");
+  const [erro, setErro] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase()
+      .slice(0, 7);
+    setPlaca(val);
+    setErro(null);
+  };
+
+  const handleNext = async () => {
+    const normalizada = placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+    if (!PLACA_RE.test(normalizada)) {
+      setErro("Placa inválida. Use o formato ABC1234 ou ABC1D23 (Mercosul).");
+      return;
+    }
+
+    setLoading(true);
+    setErro(null);
+
+    try {
+      const res = await fetch("/api/consulta-placa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ placa: normalizada }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          // Veículo não encontrado, mas a placa pode ainda ser cadastrada
+          onNext(normalizada, null);
+          return;
+        }
+        setErro(json?.error ?? "Erro ao consultar a placa.");
+        return;
+      }
+
+      onNext(normalizada, json as ApiDadosVeiculo);
+    } catch {
+      setErro("Erro de conexão. Verifique sua internet e tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleNext();
+  };
+
+  const placaExibida =
+    placa.length > 3
+      ? `${placa.slice(0, 3)}-${placa.slice(3)}`
+      : placa;
+
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-full max-w-lg">
+        {/* Breadcrumb */}
+        <Link
+          href="/veiculos"
+          className="inline-flex items-center gap-1.5 text-sm text-brand-gray-text hover:text-brand-black transition-colors mb-6"
+        >
+          <IconChevronLeft size={16} />
+          Veículos
+        </Link>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl border border-brand-gray-mid/30 overflow-hidden shadow-sm">
+          {/* Header azul */}
+          <div className="bg-brand-black px-8 py-5">
+            <h1 className="font-display text-xl font-semibold text-brand-white">
+              Preencha a placa do veículo
+            </h1>
+            <p className="text-sm text-brand-white/60 mt-1">
+              O sistema tentará preencher os dados automaticamente.
+            </p>
+          </div>
+
+          {/* Body */}
+          <div className="px-8 py-8 flex flex-col gap-6">
+            {/* Input grande da placa */}
+            <div>
+              <label htmlFor="placa-input" className="sr-only">
+                Placa do veículo
+              </label>
+              <input
+                id="placa-input"
+                type="text"
+                value={placaExibida}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                placeholder="ABC1234"
+                maxLength={8}
+                autoFocus
+                autoComplete="off"
+                className={`w-full rounded-xl border px-6 py-5 text-center text-4xl font-bold font-mono tracking-[0.3em] text-brand-black uppercase placeholder:text-brand-gray-text/30 bg-brand-gray-soft outline-none focus:ring-2 focus:ring-brand-black/10 transition-colors ${
+                  erro
+                    ? "border-red-300 focus:border-red-400"
+                    : "border-brand-gray-mid/60 focus:border-brand-black/40"
+                }`}
+              />
+              {erro && (
+                <p role="alert" className="text-xs text-red-500 mt-2 text-center">
+                  {erro}
+                </p>
+              )}
+            </div>
+
+            {/* Info */}
+            <p className="text-xs text-brand-gray-text text-center">
+              Formatos aceitos: <strong>ABC1234</strong> (antigo) ou{" "}
+              <strong>ABC1D23</strong> (Mercosul)
+            </p>
+
+            {/* Botões */}
+            <div className="flex items-center justify-end gap-3">
+              <Link
+                href="/veiculos"
+                className="rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-5 py-2.5 hover:bg-brand-gray-soft transition-colors"
+              >
+                Cancelar
+              </Link>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={loading || placa.length < 7}
+                className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    Consultando...
+                  </>
+                ) : (
+                  <>
+                    <IconSearch size={15} />
+                    Próximo
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
+export function VeiculoForm({
+  dominios,
+  salvarAction,
+  excluirAction,
+  gerarQrCodeAction,
+  initialData,
+  qrCodeInicial,
+}: VeiculoFormProps) {
+  const isEditing = !!initialData;
+
+  // Etapa do fluxo de criação
+  const [step, setStep] = useState<"placa" | "form">(isEditing ? "form" : "placa");
+
+  // Estado do formulário
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [valorFipe, setValorFipe] = useState<string | null>(null);
+
+  // QR Code
+  const [qrCode, setQrCode] = useState<QrCodeInfo | null>(qrCodeInicial ?? null);
+  const [showQr, setShowQr] = useState(false);
+  const [gerandoQr, setGerandoQr] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      placa: initialData?.placa ?? "",
+      renavam: initialData?.renavam ?? "",
+      numero_chassi: initialData?.numero_chassi ?? "",
+      marca_veiculo_id: initialData?.marca_veiculo_id ?? "",
+      modelo_veiculo_id: initialData?.modelo_veiculo_id ?? "",
+      combustivel_veiculo_id: initialData?.combustivel_veiculo_id ?? "",
+      cambio_veiculo_id: initialData?.cambio_veiculo_id ?? "",
+      direcao_veiculo_id: initialData?.direcao_veiculo_id ?? "",
+      situacao_veiculo_id: initialData?.situacao_veiculo_id ?? "",
+      ano_fabricacao: initialData?.ano_fabricacao,
+      ano_modelo: initialData?.ano_modelo,
+      cor_veiculo: initialData?.cor_veiculo ?? "",
+      quantidade_portas: initialData?.quantidade_portas,
+      quilometragem: initialData?.quilometragem,
+      vidro_eletrico: initialData?.vidro_eletrico ?? false,
+      trava_eletrica: initialData?.trava_eletrica ?? false,
+      laudo_aprovado: initialData?.laudo_aprovado ?? false,
+      data_compra: initialData?.data_compra ?? "",
+      preco_compra: initialData?.preco_compra,
+      preco_venda: initialData?.preco_venda ?? undefined,
+      data_venda: initialData?.data_venda ?? "",
+      data_entrega: initialData?.data_entrega ?? "",
+      descricao: initialData?.descricao ?? "",
+    },
+  });
+
+  const descricaoValue = watch("descricao") ?? "";
+  const placaValue = watch("placa") ?? initialData?.placa ?? "";
+
+  // ── Callback da etapa de placa ──────────────────────────────────────────────
+
+  const handlePlacaNext = (
+    placa: string,
+    dados: {
+      configurado?: boolean;
+      marca?: string | null;
+      modelo?: string | null;
+      ano_fabricacao?: number | null;
+      ano_modelo?: number | null;
+      cor?: string | null;
+      combustivel?: string | null;
+      renavam?: string | null;
+      chassi?: string | null;
+      valor_fipe?: string | null;
+    } | null
+  ) => {
+    setValue("placa", placa);
+
+    if (dados?.configurado) {
+      if (dados.renavam) setValue("renavam", dados.renavam.replace(/\D/g, ""));
+      if (dados.chassi) setValue("numero_chassi", dados.chassi);
+      if (dados.ano_fabricacao) setValue("ano_fabricacao", dados.ano_fabricacao);
+      if (dados.ano_modelo) setValue("ano_modelo", dados.ano_modelo);
+      if (dados.cor) setValue("cor_veiculo", dados.cor);
+
+      // Tenta fazer match dos domínios pelo texto
+      if (dados.marca) {
+        const id = matchId(dados.marca, dominios.marcas);
+        if (id) setValue("marca_veiculo_id", id);
+      }
+      if (dados.modelo) {
+        const id = matchId(dados.modelo, dominios.modelos);
+        if (id) setValue("modelo_veiculo_id", id);
+      }
+      if (dados.combustivel) {
+        const id = matchId(dados.combustivel, dominios.combustiveis);
+        if (id) setValue("combustivel_veiculo_id", id);
+      }
+      if (dados.valor_fipe) setValorFipe(dados.valor_fipe);
+    }
+
+    setStep("form");
+  };
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
+  const onSubmit = async (values: FormValues) => {
+    setServerError(null);
+    setIsSaving(true);
+
+    const data: VeiculoFormData = {
+      placa: values.placa,
+      renavam: values.renavam,
+      numero_chassi: values.numero_chassi,
+      marca_veiculo_id: values.marca_veiculo_id,
+      modelo_veiculo_id: values.modelo_veiculo_id,
+      combustivel_veiculo_id: values.combustivel_veiculo_id,
+      cambio_veiculo_id: values.cambio_veiculo_id,
+      direcao_veiculo_id: values.direcao_veiculo_id,
+      situacao_veiculo_id: values.situacao_veiculo_id,
+      ano_fabricacao: values.ano_fabricacao,
+      ano_modelo: values.ano_modelo,
+      cor_veiculo: values.cor_veiculo,
+      quantidade_portas: values.quantidade_portas,
+      quilometragem: values.quilometragem,
+      vidro_eletrico: values.vidro_eletrico,
+      trava_eletrica: values.trava_eletrica,
+      laudo_aprovado: values.laudo_aprovado,
+      data_compra: values.data_compra,
+      preco_compra: values.preco_compra,
+      preco_venda: values.preco_venda ?? null,
+      data_venda: values.data_venda || null,
+      data_entrega: values.data_entrega || null,
+      descricao: values.descricao?.trim() || null,
+    };
+
+    const result = await salvarAction(data);
+    if (result?.error) {
+      setServerError(result.error);
+      setIsSaving(false);
+    }
+  };
+
+  // ── Excluir ─────────────────────────────────────────────────────────────────
+
+  const handleDelete = async () => {
+    if (!excluirAction) return;
+    setDeleteError(null);
+    setIsDeleting(true);
+    const result = await excluirAction();
+    if (result?.error) {
+      setDeleteError(result.error);
+      setConfirmingDelete(false);
+      setIsDeleting(false);
+    }
+  };
+
+  // ── QR Code ─────────────────────────────────────────────────────────────────
+
+  const handleQrCode = async () => {
+    if (qrCode) {
+      setShowQr(true);
+      return;
+    }
+    if (!gerarQrCodeAction) return;
+    setGerandoQr(true);
+    setQrError(null);
+    const result = await gerarQrCodeAction();
+    setGerandoQr(false);
+    if ("error" in result) {
+      setQrError(result.error);
+    } else {
+      setQrCode(result);
+      setShowQr(true);
+    }
+  };
+
+  // ── Etapa de placa ──────────────────────────────────────────────────────────
+
+  if (step === "placa") {
+    return <PlacaStep onNext={handlePlacaNext} />;
+  }
+
+  // ── Formulário completo ─────────────────────────────────────────────────────
+
+  const placaFormatada =
+    placaValue.length > 3
+      ? `${placaValue.slice(0, 3)}-${placaValue.slice(3)}`
+      : placaValue;
+
+  return (
+    <div className="w-full max-w-5xl" ref={printRef}>
+      {/* Breadcrumb */}
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          href="/veiculos"
+          className="inline-flex items-center gap-1.5 text-sm text-brand-gray-text hover:text-brand-black transition-colors"
+        >
+          <IconChevronLeft size={16} />
+          Veículos
+        </Link>
+        {/* Ações rápidas (edição) */}
+        {isEditing && (
+          <div className="flex items-center gap-2 print:hidden">
+            {qrError && (
+              <p className="text-xs text-red-500">{qrError}</p>
+            )}
+            <Link
+              href={`/veiculos/${initialData!.id}/custos`}
+              className="inline-flex items-center gap-2 rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-4 py-2 hover:bg-brand-gray-soft transition-colors"
+            >
+              <IconWrench size={15} />
+              Custos
+            </Link>
+            <button
+              type="button"
+              onClick={handleQrCode}
+              disabled={gerandoQr}
+              className="inline-flex items-center gap-2 rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-4 py-2 hover:bg-brand-gray-soft transition-colors disabled:opacity-50"
+            >
+              <IconQrCode size={15} />
+              {gerandoQr ? "Gerando..." : "QR Code"}
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-4 py-2 hover:bg-brand-gray-soft transition-colors"
+            >
+              <IconPrint size={15} />
+              Imprimir
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Título */}
+      <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-black mb-2">
+        {isEditing ? `Editar Veículo — ${placaFormatada}` : "Novo Veículo"}
+      </h1>
+      {!isEditing && (
+        <p className="text-sm text-brand-gray-text mb-8">
+          Placa: <span className="font-mono font-semibold text-brand-black">{placaFormatada}</span>
+          {valorFipe && (
+            <> · Tabela FIPE: <span className="font-semibold text-brand-black">{valorFipe}</span></>
+          )}
+        </p>
+      )}
+      {isEditing && valorFipe && (
+        <p className="text-sm text-brand-gray-text mb-8">
+          Tabela FIPE: <span className="font-semibold text-brand-black">{valorFipe}</span>
+        </p>
+      )}
+      {isEditing && !valorFipe && <div className="mb-8" />}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+        {/* ── Erro global ──────────────────────────────────────────────────── */}
+        {serverError && (
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {serverError}
+          </div>
+        )}
+
+        {/* ── Seção 1: Identificação ───────────────────────────────────────── */}
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8">
+          <SectionHeader title="Identificação" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Placa */}
+            <div className="space-y-1.5">
+              <label htmlFor="placa" className={labelCls}>
+                Placa <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="placa"
+                type="text"
+                autoComplete="off"
+                placeholder="ABC1234"
+                maxLength={8}
+                {...register("placa")}
+                onChange={(e) => {
+                  const v = e.target.value
+                    .replace(/[^a-zA-Z0-9]/g, "")
+                    .toUpperCase()
+                    .slice(0, 7);
+                  setValue("placa", v, { shouldValidate: true });
+                }}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.placa)} font-mono tracking-widest`}
+              />
+              <FieldError msg={errors.placa?.message} />
+            </div>
+
+            {/* RENAVAM */}
+            <div className="space-y-1.5">
+              <label htmlFor="renavam" className={labelCls}>
+                RENAVAM <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="renavam"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="00000000000"
+                maxLength={11}
+                {...register("renavam")}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  setValue("renavam", v, { shouldValidate: true });
+                }}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.renavam)} font-mono`}
+              />
+              <FieldError msg={errors.renavam?.message} />
+            </div>
+
+            {/* Chassi */}
+            <div className="space-y-1.5">
+              <label htmlFor="numero_chassi" className={labelCls}>
+                Número do Chassi <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="numero_chassi"
+                type="text"
+                autoComplete="off"
+                placeholder="9BWZZZ377VT004251"
+                maxLength={20}
+                {...register("numero_chassi")}
+                onChange={(e) => {
+                  setValue("numero_chassi", e.target.value.toUpperCase(), {
+                    shouldValidate: true,
+                  });
+                }}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.numero_chassi)} font-mono`}
+              />
+              <FieldError msg={errors.numero_chassi?.message} />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Seção 2: Especificações Técnicas ────────────────────────────── */}
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8">
+          <SectionHeader title="Especificações Técnicas" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Marca */}
+            <div className="space-y-1.5">
+              <label htmlFor="marca_veiculo_id" className={labelCls}>
+                Marca <span className="text-red-500 font-normal">*</span>
+              </label>
+              <select
+                id="marca_veiculo_id"
+                {...register("marca_veiculo_id")}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.marca_veiculo_id)} cursor-pointer`}
+              >
+                <option value="">Selecione a marca</option>
+                {dominios.marcas.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nome_dominio}
+                  </option>
+                ))}
+              </select>
+              <FieldError msg={errors.marca_veiculo_id?.message} />
+            </div>
+
+            {/* Modelo */}
+            <div className="space-y-1.5">
+              <label htmlFor="modelo_veiculo_id" className={labelCls}>
+                Modelo <span className="text-red-500 font-normal">*</span>
+              </label>
+              <select
+                id="modelo_veiculo_id"
+                {...register("modelo_veiculo_id")}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.modelo_veiculo_id)} cursor-pointer`}
+              >
+                <option value="">Selecione o modelo</option>
+                {dominios.modelos.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nome_dominio}
+                  </option>
+                ))}
+              </select>
+              <FieldError msg={errors.modelo_veiculo_id?.message} />
+            </div>
+
+            {/* Combustível */}
+            <div className="space-y-1.5">
+              <label htmlFor="combustivel_veiculo_id" className={labelCls}>
+                Combustível <span className="text-red-500 font-normal">*</span>
+              </label>
+              <select
+                id="combustivel_veiculo_id"
+                {...register("combustivel_veiculo_id")}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.combustivel_veiculo_id)} cursor-pointer`}
+              >
+                <option value="">Selecione o combustível</option>
+                {dominios.combustiveis.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nome_dominio}
+                  </option>
+                ))}
+              </select>
+              <FieldError msg={errors.combustivel_veiculo_id?.message} />
+            </div>
+
+            {/* Câmbio */}
+            <div className="space-y-1.5">
+              <label htmlFor="cambio_veiculo_id" className={labelCls}>
+                Transmissão <span className="text-red-500 font-normal">*</span>
+              </label>
+              <select
+                id="cambio_veiculo_id"
+                {...register("cambio_veiculo_id")}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.cambio_veiculo_id)} cursor-pointer`}
+              >
+                <option value="">Selecione a transmissão</option>
+                {dominios.cambios.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nome_dominio}
+                  </option>
+                ))}
+              </select>
+              <FieldError msg={errors.cambio_veiculo_id?.message} />
+            </div>
+
+            {/* Direção */}
+            <div className="space-y-1.5">
+              <label htmlFor="direcao_veiculo_id" className={labelCls}>
+                Direção <span className="text-red-500 font-normal">*</span>
+              </label>
+              <select
+                id="direcao_veiculo_id"
+                {...register("direcao_veiculo_id")}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.direcao_veiculo_id)} cursor-pointer`}
+              >
+                <option value="">Selecione a direção</option>
+                {dominios.direcoes.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nome_dominio}
+                  </option>
+                ))}
+              </select>
+              <FieldError msg={errors.direcao_veiculo_id?.message} />
+            </div>
+
+            {/* Ano Fabricação */}
+            <div className="space-y-1.5">
+              <label htmlFor="ano_fabricacao" className={labelCls}>
+                Ano de Fabricação <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="ano_fabricacao"
+                type="number"
+                min={1900}
+                max={new Date().getFullYear() + 1}
+                placeholder={String(new Date().getFullYear())}
+                {...register("ano_fabricacao")}
+                disabled={isSaving}
+                className={inputCls(!!errors.ano_fabricacao)}
+              />
+              <FieldError msg={errors.ano_fabricacao?.message} />
+            </div>
+
+            {/* Ano Modelo */}
+            <div className="space-y-1.5">
+              <label htmlFor="ano_modelo" className={labelCls}>
+                Ano do Modelo <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="ano_modelo"
+                type="number"
+                min={1900}
+                max={new Date().getFullYear() + 2}
+                placeholder={String(new Date().getFullYear())}
+                {...register("ano_modelo")}
+                disabled={isSaving}
+                className={inputCls(!!errors.ano_modelo)}
+              />
+              <FieldError msg={errors.ano_modelo?.message} />
+            </div>
+
+            {/* Cor */}
+            <div className="space-y-1.5">
+              <label htmlFor="cor_veiculo" className={labelCls}>
+                Cor <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="cor_veiculo"
+                type="text"
+                placeholder="Ex: Preto"
+                maxLength={20}
+                {...register("cor_veiculo")}
+                disabled={isSaving}
+                className={inputCls(!!errors.cor_veiculo)}
+              />
+              <FieldError msg={errors.cor_veiculo?.message} />
+            </div>
+
+            {/* Quantidade de portas */}
+            <div className="space-y-1.5">
+              <label htmlFor="quantidade_portas" className={labelCls}>
+                N° de Portas <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="quantidade_portas"
+                type="number"
+                min={1}
+                max={10}
+                placeholder="4"
+                {...register("quantidade_portas")}
+                disabled={isSaving}
+                className={inputCls(!!errors.quantidade_portas)}
+              />
+              <FieldError msg={errors.quantidade_portas?.message} />
+            </div>
+
+            {/* Quilometragem */}
+            <div className="space-y-1.5">
+              <label htmlFor="quilometragem" className={labelCls}>
+                Quilometragem <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="quilometragem"
+                type="number"
+                min={0}
+                placeholder="0"
+                {...register("quilometragem")}
+                disabled={isSaving}
+                className={inputCls(!!errors.quilometragem)}
+              />
+              <FieldError msg={errors.quilometragem?.message} />
+            </div>
+          </div>
+
+          {/* Opcionais booleanos */}
+          <div className="mt-6 flex flex-wrap gap-6">
+            {(
+              [
+                { name: "vidro_eletrico" as const, label: "Vidro Elétrico" },
+                { name: "trava_eletrica" as const, label: "Trava Elétrica" },
+                { name: "laudo_aprovado" as const, label: "Laudo Aprovado" },
+              ] as { name: keyof FormValues; label: string }[]
+            ).map(({ name, label }) => (
+              <label
+                key={name}
+                className="inline-flex items-center gap-2.5 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  {...register(name as "vidro_eletrico" | "trava_eletrica" | "laudo_aprovado")}
+                  disabled={isSaving}
+                  className="w-4 h-4 rounded border-brand-gray-mid/60 text-brand-black focus:ring-brand-black/10 focus:ring-2 cursor-pointer"
+                />
+                <span className="text-sm text-brand-black">{label}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Seção 3: Dados Comerciais ────────────────────────────────────── */}
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8">
+          <SectionHeader title="Dados Comerciais" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Situação */}
+            <div className="space-y-1.5">
+              <label htmlFor="situacao_veiculo_id" className={labelCls}>
+                Situação <span className="text-red-500 font-normal">*</span>
+              </label>
+              <select
+                id="situacao_veiculo_id"
+                {...register("situacao_veiculo_id")}
+                disabled={isSaving}
+                className={`${inputCls(!!errors.situacao_veiculo_id)} cursor-pointer`}
+              >
+                <option value="">Selecione a situação</option>
+                {dominios.situacoes.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nome_dominio}
+                  </option>
+                ))}
+              </select>
+              <FieldError msg={errors.situacao_veiculo_id?.message} />
+            </div>
+
+            {/* Data de Compra */}
+            <div className="space-y-1.5">
+              <label htmlFor="data_compra" className={labelCls}>
+                Data de Compra <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="data_compra"
+                type="date"
+                {...register("data_compra")}
+                disabled={isSaving}
+                className={inputCls(!!errors.data_compra)}
+              />
+              <FieldError msg={errors.data_compra?.message} />
+            </div>
+
+            {/* Preço de Compra */}
+            <div className="space-y-1.5">
+              <label htmlFor="preco_compra" className={labelCls}>
+                Preço de Compra (R$) <span className="text-red-500 font-normal">*</span>
+              </label>
+              <input
+                id="preco_compra"
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="0,00"
+                {...register("preco_compra")}
+                disabled={isSaving}
+                className={inputCls(!!errors.preco_compra)}
+              />
+              <FieldError msg={errors.preco_compra?.message} />
+            </div>
+
+            {/* Preço de Venda */}
+            <div className="space-y-1.5">
+              <label htmlFor="preco_venda" className={labelCls}>
+                Preço de Venda (R$)
+              </label>
+              <input
+                id="preco_venda"
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="0,00"
+                {...register("preco_venda")}
+                disabled={isSaving}
+                className={inputCls(!!errors.preco_venda)}
+              />
+              <FieldError msg={errors.preco_venda?.message} />
+            </div>
+
+            {/* Data de Venda */}
+            <div className="space-y-1.5">
+              <label htmlFor="data_venda" className={labelCls}>
+                Data de Venda
+              </label>
+              <input
+                id="data_venda"
+                type="date"
+                {...register("data_venda")}
+                disabled={isSaving}
+                className={inputCls(!!errors.data_venda)}
+              />
+            </div>
+
+            {/* Data de Entrega */}
+            <div className="space-y-1.5">
+              <label htmlFor="data_entrega" className={labelCls}>
+                Data de Entrega
+              </label>
+              <input
+                id="data_entrega"
+                type="date"
+                {...register("data_entrega")}
+                disabled={isSaving}
+                className={inputCls(!!errors.data_entrega)}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Seção 4: Observações ──────────────────────────────────────────── */}
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8">
+          <SectionHeader title="Observações" />
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="descricao" className={labelCls}>
+                Comentários
+              </label>
+              <span
+                className={`text-xs tabular-nums ${
+                  descricaoValue.length > 900
+                    ? descricaoValue.length > 1000
+                      ? "text-red-500"
+                      : "text-status-warning-text"
+                    : "text-brand-gray-text/50"
+                }`}
+              >
+                {descricaoValue.length}/1000
+              </span>
+            </div>
+            <textarea
+              id="descricao"
+              rows={4}
+              placeholder="Digite qualquer nota adicional sobre o veículo..."
+              {...register("descricao")}
+              disabled={isSaving}
+              className={`${inputCls(!!errors.descricao)} resize-y`}
+            />
+            <FieldError msg={errors.descricao?.message} />
+          </div>
+        </section>
+
+        {/* ── Zona de perigo (exclusão) ─────────────────────────────────────── */}
+        {isEditing && excluirAction && (
+          <section className="bg-white rounded-2xl border border-red-100 p-6 sm:p-8 print:hidden">
+            <SectionHeader title="Zona de Perigo" />
+            {deleteError && (
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-4">
+                {deleteError}
+              </div>
+            )}
+            {!confirmingDelete ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-brand-black">
+                    Excluir veículo
+                  </p>
+                  <p className="text-xs text-brand-gray-text mt-0.5">
+                    Esta ação não pode ser desfeita. Todos os dados serão removidos.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="rounded-full border border-red-200 text-red-600 text-sm font-medium px-5 py-2.5 hover:bg-red-50 transition-colors"
+                >
+                  Excluir
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-brand-black">
+                  Tem certeza? Esta ação é <strong>irreversível</strong>.
+                </p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(false)}
+                    disabled={isDeleting}
+                    className="rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-4 py-2 hover:bg-brand-gray-soft transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="rounded-full bg-red-600 text-white text-sm font-medium px-4 py-2 hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    {isDeleting ? "Excluindo..." : "Confirmar Exclusão"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ── Barra de ações ───────────────────────────────────────────────── */}
+        <div className="flex items-center justify-end gap-3 print:hidden">
+          <Link
+            href="/veiculos"
+            className="rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-5 py-2.5 hover:bg-brand-gray-soft transition-colors"
+          >
+            Cancelar
+          </Link>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="rounded-full bg-brand-black text-brand-white text-sm font-medium px-6 py-2.5 hover:bg-brand-black/85 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? "Salvando..." : "Salvar"}
+          </button>
+        </div>
+      </form>
+
+      {/* ── Modal QR Code ─────────────────────────────────────────────────── */}
+      {showQr && qrCode && (
+        <QrCodeModal
+          qrCode={qrCode}
+          placa={placaFormatada}
+          onClose={() => setShowQr(false)}
+        />
+      )}
+    </div>
+  );
+}
