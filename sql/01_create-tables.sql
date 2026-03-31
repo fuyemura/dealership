@@ -100,7 +100,7 @@ CREATE TABLE dealership.localizacao (
 
 COMMENT ON TABLE  dealership.localizacao                          IS 'Cadastro de localizações.';
 COMMENT ON COLUMN dealership.localizacao.id                       IS 'Chave primária (PK) de identificação da localização.';
-COMMENT ON COLUMN dealership.localizacao.cep                      IS 'CEP (Código de Endereçamento Postal)';
+COMMENT ON COLUMN dealership.localizacao.cep                      IS 'CEP (Código de Endereçamento Postal).';
 COMMENT ON COLUMN dealership.localizacao.logradouro               IS 'Descrição do logradouro.';
 COMMENT ON COLUMN dealership.localizacao.numero_logradouro        IS 'Número do logradouro.';
 COMMENT ON COLUMN dealership.localizacao.complemento_logradouro   IS 'Complemento do logradouro.';
@@ -605,6 +605,57 @@ COMMENT ON COLUMN dealership.veiculo_manutencao.atualizado_em            IS 'Dat
 ALTER TABLE dealership.veiculo_manutencao ADD PRIMARY KEY (id);
 
 
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE dealership.metodo_pagamento (
+    id                        UUID         NOT NULL DEFAULT gen_random_uuid(),
+    empresa_id                UUID         NOT NULL,
+    gateway_payment_method_id VARCHAR(255) NOT NULL,
+    bandeira_id               UUID         NOT NULL,
+    ultimos_quatro_digitos    VARCHAR(4)   NOT NULL,
+    mes_expiracao             SMALLINT     NOT NULL,
+    ano_expiracao             SMALLINT     NOT NULL,
+    nome_titular              VARCHAR(255) NOT NULL,
+    metodo_principal          BOOLEAN      NOT NULL DEFAULT FALSE,
+    metodo_ativo              BOOLEAN      NOT NULL DEFAULT TRUE,
+    criado_em                 TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    atualizado_em             TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+ 
+CREATE INDEX idx_metodo_pagamento_empresa_id ON dealership.metodo_pagamento (empresa_id);
+ 
+COMMENT ON TABLE  dealership.metodo_pagamento                              IS 'Metadados não-sensíveis dos cartões de crédito tokenizados pelo gateway de pagamento (ex: Stripe). Nenhum dado sensível (número completo, CVV) é armazenado aqui.';
+COMMENT ON COLUMN dealership.metodo_pagamento.id                           IS 'Chave primária (PK) de identificação do método de pagamento.';
+COMMENT ON COLUMN dealership.metodo_pagamento.empresa_id                   IS 'Chave estrangeira (FK) de identificação da empresa proprietária do cartão.';
+COMMENT ON COLUMN dealership.metodo_pagamento.gateway_payment_method_id    IS 'Identificador do método de pagamento no gateway externo (ex: Stripe PaymentMethod ID — pm_xxx). Token que representa o cartão sem expor dados sensíveis.';
+COMMENT ON COLUMN dealership.metodo_pagamento.bandeira_id                  IS 'Chave estrangeira (FK) para dominio — grupo: bandeira_cartao. Valores: visa, mastercard, elo, amex, hipercard.';
+COMMENT ON COLUMN dealership.metodo_pagamento.ultimos_quatro_digitos       IS 'Últimos quatro dígitos do cartão. Uso exclusivo para exibição na interface (ex: "•••• 4242").';
+COMMENT ON COLUMN dealership.metodo_pagamento.mes_expiracao                IS 'Mês de vencimento do cartão (1–12). Uso para alertas de cartão próximo ao vencimento.';
+COMMENT ON COLUMN dealership.metodo_pagamento.ano_expiracao                IS 'Ano de vencimento do cartão (ex: 2028). Uso para alertas de cartão próximo ao vencimento.';
+COMMENT ON COLUMN dealership.metodo_pagamento.nome_titular                 IS 'Nome do titular impresso no cartão. Retornado pelo gateway após tokenização.';
+COMMENT ON COLUMN dealership.metodo_pagamento.metodo_principal             IS 'Indica se este é o cartão padrão para cobranças automáticas da assinatura. Apenas um registro por empresa pode ter este campo como TRUE.';
+COMMENT ON COLUMN dealership.metodo_pagamento.metodo_ativo                 IS 'Indica se o método de pagamento está ativo. FALSE quando o cartão é removido pelo usuário ou recusado definitivamente pelo gateway, preservando o histórico.';
+COMMENT ON COLUMN dealership.metodo_pagamento.criado_em                    IS 'Data e hora de criação do registro na tabela.';
+COMMENT ON COLUMN dealership.metodo_pagamento.atualizado_em                IS 'Data e hora de atualização do registro na tabela.';
+ 
+ALTER TABLE dealership.metodo_pagamento ADD PRIMARY KEY (id);
+ 
+ALTER TABLE dealership.metodo_pagamento
+    ADD CONSTRAINT uk_metodo_pagamento_gateway_payment_method_id
+    UNIQUE (gateway_payment_method_id);
+ 
+-- Garante que no máximo um cartão por empresa seja marcado como principal.
+-- A aplicação deve respeitar esta constraint ao promover um novo cartão principal:
+--   1. UPDATE metodo_pagamento SET metodo_principal = FALSE WHERE empresa_id = $1
+--   2. UPDATE metodo_pagamento SET metodo_principal = TRUE  WHERE id = $2
+CREATE UNIQUE INDEX uk_metodo_pagamento_empresa_principal
+    ON dealership.metodo_pagamento (empresa_id)
+    WHERE metodo_principal = TRUE;
+
+
+
+
+
 -- =============================================================================
 -- FOREIGN KEYS — fk_<tabela>_<coluna>
 -- =============================================================================
@@ -762,3 +813,13 @@ ALTER TABLE dealership.veiculo_manutencao
 ALTER TABLE dealership.veiculo_manutencao
     ADD CONSTRAINT fk_veiculo_manutencao_criado_por
     FOREIGN KEY (criado_por) REFERENCES dealership.usuario (id);
+
+-- metodo_pagamento
+ALTER TABLE dealership.metodo_pagamento
+    ADD CONSTRAINT fk_metodo_pagamento_empresa_id
+    FOREIGN KEY (empresa_id) REFERENCES dealership.empresa (id);
+ 
+ALTER TABLE dealership.metodo_pagamento
+    ADD CONSTRAINT fk_metodo_pagamento_bandeira_id
+    FOREIGN KEY (bandeira_id) REFERENCES dealership.dominio (id);
+ 

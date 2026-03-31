@@ -8,10 +8,10 @@
 -- 1. LOCALIZAÇÕES
 -- =============================================================================
 
-INSERT INTO dealership.localizacao (id, codigo_ibge, logradouro, numero_logradouro, complemento_logradouro, bairro, cidade, estado, criado_em, atualizado_em) VALUES
-('11111111-0000-0000-0000-000000000001', 3550308, 'Avenida Paulista',         1578, 'Conjunto 42',  'Bela Vista',     'São Paulo',       'SP', NOW(), NOW()),
-('11111111-0000-0000-0000-000000000002', 3304557, 'Rua da Assembleia',         10, '12º Andar',     'Centro',         'Rio de Janeiro',  'RJ', NOW(), NOW()),
-('11111111-0000-0000-0000-000000000003', 4106902, 'Avenida Sete de Setembro', 4214, 'Sala 301',     'Batel',          'Curitiba',        'PR', NOW(), NOW());
+INSERT INTO dealership.localizacao (id, cep, logradouro, numero_logradouro, complemento_logradouro, bairro, cidade, estado, criado_em, atualizado_em) VALUES
+('11111111-0000-0000-0000-000000000001', '01310-100', 'Avenida Paulista',         1578, 'Conjunto 42',  'Bela Vista',     'São Paulo',       'SP', NOW(), NOW()),
+('11111111-0000-0000-0000-000000000002', '20011-020', 'Rua da Assembleia',         10, '12º Andar',     'Centro',         'Rio de Janeiro',  'RJ', NOW(), NOW()),
+('11111111-0000-0000-0000-000000000003', '80230-010', 'Avenida Sete de Setembro', 4214, 'Sala 301',     'Batel',          'Curitiba',        'PR', NOW(), NOW());
 
 
 -- =============================================================================
@@ -27,7 +27,8 @@ INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0001-0000-0000-000000000005', 'marca', 'Hyundai'),
 ('aaaaaaaa-0001-0000-0000-000000000006', 'marca', 'Fiat'),
 ('aaaaaaaa-0001-0000-0000-000000000007', 'marca', 'Ford'),
-('aaaaaaaa-0001-0000-0000-000000000008', 'marca', 'Nissan');
+('aaaaaaaa-0001-0000-0000-000000000008', 'marca', 'Nissan')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: modelo
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
@@ -40,7 +41,8 @@ INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0002-0000-0000-000000000007', 'modelo', 'Ka'),
 ('aaaaaaaa-0002-0000-0000-000000000008', 'modelo', 'Kicks'),
 ('aaaaaaaa-0002-0000-0000-000000000009', 'modelo', 'Polo'),
-('aaaaaaaa-0002-0000-0000-000000000010', 'modelo', 'Hilux');
+('aaaaaaaa-0002-0000-0000-000000000010', 'modelo', 'Hilux')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: combustivel
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
@@ -49,39 +51,45 @@ INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0003-0000-0000-000000000003', 'combustivel', 'Etanol'),
 ('aaaaaaaa-0003-0000-0000-000000000004', 'combustivel', 'Diesel'),
 ('aaaaaaaa-0003-0000-0000-000000000005', 'combustivel', 'Elétrico'),
-('aaaaaaaa-0003-0000-0000-000000000006', 'combustivel', 'Híbrido');
+('aaaaaaaa-0003-0000-0000-000000000006', 'combustivel', 'Híbrido')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: cambio
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0004-0000-0000-000000000001', 'cambio', 'Manual'),
 ('aaaaaaaa-0004-0000-0000-000000000002', 'cambio', 'Automático'),
 ('aaaaaaaa-0004-0000-0000-000000000003', 'cambio', 'CVT'),
-('aaaaaaaa-0004-0000-0000-000000000004', 'cambio', 'Automatizado');
+('aaaaaaaa-0004-0000-0000-000000000004', 'cambio', 'Automatizado')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: tipo_direcao
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0005-0000-0000-000000000001', 'tipo_direcao', 'Hidráulica'),
 ('aaaaaaaa-0005-0000-0000-000000000002', 'tipo_direcao', 'Elétrica'),
-('aaaaaaaa-0005-0000-0000-000000000003', 'tipo_direcao', 'Manual');
+('aaaaaaaa-0005-0000-0000-000000000003', 'tipo_direcao', 'Manual')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: situacao_veiculo
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0006-0000-0000-000000000001', 'situacao_veiculo', 'Disponível'),
 ('aaaaaaaa-0006-0000-0000-000000000002', 'situacao_veiculo', 'Reservado'),
 ('aaaaaaaa-0006-0000-0000-000000000003', 'situacao_veiculo', 'Vendido'),
-('aaaaaaaa-0006-0000-0000-000000000004', 'situacao_veiculo', 'Em Negociação')
-('aaaaaaaa-0006-0000-0000-000000000005', 'situacao_veiculo', 'Em Manutenção');
+('aaaaaaaa-0006-0000-0000-000000000004', 'situacao_veiculo', 'Em Negociação'),
+('aaaaaaaa-0006-0000-0000-000000000005', 'situacao_veiculo', 'Em Manutenção')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: papel_usuario
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0007-0000-0000-000000000001', 'papel_usuario', 'administrador'),
 ('aaaaaaaa-0007-0000-0000-000000000002', 'papel_usuario', 'gerente'),
-('aaaaaaaa-0007-0000-0000-000000000003', 'papel_usuario', 'usuario');
+('aaaaaaaa-0007-0000-0000-000000000003', 'papel_usuario', 'usuario')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: tipo_arquivo_veiculo
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0008-0000-0000-000000000001', 'tipo_arquivo_veiculo', 'foto'),
-('aaaaaaaa-0008-0000-0000-000000000002', 'tipo_arquivo_veiculo', 'laudo');
+('aaaaaaaa-0008-0000-0000-000000000002', 'tipo_arquivo_veiculo', 'laudo')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: situacao_assinatura
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
@@ -89,12 +97,14 @@ INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0009-0000-0000-000000000002', 'situacao_assinatura', 'trial'),
 ('aaaaaaaa-0009-0000-0000-000000000003', 'situacao_assinatura', 'inadimplente'),
 ('aaaaaaaa-0009-0000-0000-000000000004', 'situacao_assinatura', 'cancelada'),
-('aaaaaaaa-0009-0000-0000-000000000005', 'situacao_assinatura', 'expirada');
+('aaaaaaaa-0009-0000-0000-000000000005', 'situacao_assinatura', 'expirada')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: ciclo_cobranca
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0010-0000-0000-000000000001', 'ciclo_cobranca', 'mensal'),
-('aaaaaaaa-0010-0000-0000-000000000002', 'ciclo_cobranca', 'anual');
+('aaaaaaaa-0010-0000-0000-000000000002', 'ciclo_cobranca', 'anual')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: situacao_fatura
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
@@ -102,19 +112,22 @@ INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0011-0000-0000-000000000002', 'situacao_fatura', 'paga'),
 ('aaaaaaaa-0011-0000-0000-000000000003', 'situacao_fatura', 'atrasada'),
 ('aaaaaaaa-0011-0000-0000-000000000004', 'situacao_fatura', 'cancelada'),
-('aaaaaaaa-0011-0000-0000-000000000005', 'situacao_fatura', 'estornada');
+('aaaaaaaa-0011-0000-0000-000000000005', 'situacao_fatura', 'estornada')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: metodo_pagamento
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0012-0000-0000-000000000001', 'metodo_pagamento', 'cartao_credito'),
 ('aaaaaaaa-0012-0000-0000-000000000002', 'metodo_pagamento', 'boleto'),
-('aaaaaaaa-0012-0000-0000-000000000003', 'metodo_pagamento', 'pix');
+('aaaaaaaa-0012-0000-0000-000000000003', 'metodo_pagamento', 'pix')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 -- grupo: situacao_manutencao
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
 ('aaaaaaaa-0013-0000-0000-000000000001', 'situacao_manutencao', 'pendente'),
 ('aaaaaaaa-0013-0000-0000-000000000002', 'situacao_manutencao', 'em_andamento'),
-('aaaaaaaa-0013-0000-0000-000000000003', 'situacao_manutencao', 'concluida');
+('aaaaaaaa-0013-0000-0000-000000000003', 'situacao_manutencao', 'concluida')
+ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
 
 
 -- =============================================================================

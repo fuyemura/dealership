@@ -1,8 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validarCpf, sanitizarCpf } from "@/lib/utils/validators";
 
 export type ActionResult = { error: string } | undefined;
 
@@ -37,14 +39,6 @@ async function getAdminAutorizado() {
 
 // ─── Validação server-side ────────────────────────────────────────────────────
 
-function validarCpf(cpf: string): boolean {
-  const digits = cpf.replace(/\D/g, "");
-  return digits.length === 11;
-}
-
-function sanitizarCpf(cpf: string): string {
-  return cpf.replace(/\D/g, "");
-}
 
 // ─── Convidar novo usuário ────────────────────────────────────────────────────
 
@@ -170,6 +164,7 @@ export async function atualizarUsuario(
 
   if (error) return { error: "Erro ao salvar. Tente novamente." };
 
+  revalidatePath("/configuracoes/usuarios");
   redirect("/configuracoes/usuarios");
 }
 

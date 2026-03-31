@@ -11,7 +11,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 
 // Centralizado aqui para evitar duplicação no bloco de env vars ausentes
-const protectedPrefixes = ["/dashboard", "/veiculos", "/perfil", "/configuracoes"];
+const protectedPrefixes = ["/dashboard", "/veiculos", "/perfil", "/configuracoes", "/clientes"];
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

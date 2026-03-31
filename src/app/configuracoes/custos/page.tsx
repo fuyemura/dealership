@@ -1,15 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatData(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatData } from "@/lib/utils/formatters";
 
 // ─── Ícones ───────────────────────────────────────────────────────────────────
 function IconPlus({ size = 16 }: { size?: number }) {
@@ -128,7 +120,7 @@ export default async function CustosPage() {
           <div className="w-12 h-12 rounded-2xl bg-brand-gray-soft flex items-center justify-center mb-4 text-brand-gray-text">
             <IconTag size={22} />
           </div>
-          <h2 className="font-display font-semibold text-brand-black mb-1">
+          <h2 className="font-display text-base font-semibold text-brand-black mb-1">
             Nenhum tipo de custo cadastrado
           </h2>
           <p className="text-sm text-brand-gray-text max-w-xs mb-6">
@@ -179,10 +171,10 @@ export default async function CustosPage() {
                       <td className="px-6 py-3.5 text-brand-gray-text max-w-xs truncate">
                         {c.descricao ?? <span className="italic text-brand-gray-text/60">Sem descrição</span>}
                       </td>
-                      <td className="px-6 py-3.5 text-xs text-brand-gray-text whitespace-nowrap">
+                      <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
                         {formatData(c.criado_em)}
                       </td>
-                      <td className="px-6 py-3.5 text-xs text-brand-gray-text whitespace-nowrap">
+                      <td className="px-6 py-3.5 text-brand-gray-text whitespace-nowrap">
                         {criadoPor}
                       </td>
                       <td className="px-6 py-3.5 text-right">
@@ -239,3 +231,4 @@ export default async function CustosPage() {
     </>
   );
 }
+

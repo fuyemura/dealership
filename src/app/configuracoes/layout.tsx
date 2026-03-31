@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/sign-out-button";
 import ConfiguracoesSidebar from "./configuracoes-sidebar";
 
+export const dynamic = "force-dynamic";
+
 function LogoMark() {
   return (
     <div className="grid grid-cols-2 gap-[3px] w-[18px] h-[18px] flex-shrink-0">
@@ -47,11 +49,12 @@ export default async function ConfiguracoesLayout({
     .toUpperCase();
 
   const papel = usuario.papel as unknown as { nome_dominio: string } | null;
-  const isAdmin = papel?.nome_dominio === "administrador";
+  const papelNome = papel?.nome_dominio ?? "";
+  const temAcesso = papelNome === "administrador" || papelNome === "gerente";
 
-  if (!isAdmin) {
+  if (!temAcesso) {
     return (
-      <div className="min-h-screen flex flex-col bg-brand-gray-soft">
+      <div className="min-h-screen overflow-x-clip flex flex-col bg-brand-gray-soft">
         {/* Header */}
         <header className="bg-white border-b border-brand-gray-mid/40 h-14 sm:h-16 sticky top-0 z-30">
           <div className="page-container h-full flex items-center justify-between">
@@ -99,8 +102,8 @@ export default async function ConfiguracoesLayout({
               Acesso Restrito
             </h1>
             <p className="text-sm text-brand-gray-text mb-8 leading-relaxed">
-              Esta área é exclusiva para administradores. Entre em contato com o
-              administrador da sua empresa caso precise de acesso.
+              Esta área é exclusiva para administradores e gerentes. Entre em
+              contato com o administrador da sua empresa caso precise de acesso.
             </p>
 
             <Link
@@ -116,7 +119,7 @@ export default async function ConfiguracoesLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-gray-soft">
+    <div className="min-h-screen overflow-x-clip flex flex-col bg-brand-gray-soft">
       {/* Header */}
       <header className="bg-white border-b border-brand-gray-mid/40 h-14 sm:h-16 sticky top-0 z-30">
         <div className="page-container h-full flex items-center justify-between">
@@ -131,6 +134,7 @@ export default async function ConfiguracoesLayout({
             {[
               { label: "Dashboard",     href: "/dashboard",     active: false },
               { label: "Veículos",      href: "/veiculos",      active: false },
+              { label: "Clientes",      href: "/clientes",      active: false },
               { label: "Configurações", href: "/configuracoes", active: true  },
             ].map((item) => (
               <Link
@@ -162,7 +166,7 @@ export default async function ConfiguracoesLayout({
       </header>
 
       {/* Body: sidebar + content */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-x-hidden">
         {/* Desktop sidebar */}
         <aside className="hidden md:flex flex-col w-52 lg:w-60 shrink-0 border-r border-brand-gray-mid/40 bg-white">
           <ConfiguracoesSidebar />
@@ -176,7 +180,7 @@ export default async function ConfiguracoesLayout({
           </div>
 
           {/* Page content */}
-          <main className="flex-1 px-6 lg:px-8 py-8 sm:py-12">
+          <main className="flex-1 min-w-0 px-6 lg:px-8 py-8 sm:py-12">
             {children}
           </main>
         </div>
