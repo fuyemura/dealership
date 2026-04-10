@@ -1,4 +1,4 @@
-﻿# Guia de Boas Práticas: Frontend Web com Next.js, TypeScript, Tailwind CSS e Shadcn/ui
+# Guia de Boas Práticas: Frontend Web com Next.js, TypeScript, Tailwind CSS e Shadcn/ui
 
 > Stack: **TypeScript · Next.js 14+ (App Router) · React · Tailwind CSS · Shadcn/ui · Supabase · Vercel**
 

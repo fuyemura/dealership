@@ -50,7 +50,14 @@ function IconCar({ size = 20 }: { size?: number }) {
 // ─── Helper ─────────────────────────────────────────────────────────────────────
 
 function tempoEmEstoque(dataCompra: string): string {
-  const dias = Math.floor((Date.now() - new Date(dataCompra).getTime()) / 86_400_000);
+  // data_compra é DATE (YYYY-MM-DD). new Date("YYYY-MM-DD") interpreta como UTC
+  // midnight e pode gerar off-by-one em fusos negativos. Construímos a data como
+  // local para garantir comparação no mesmo calendário do usuário.
+  const [ano, mes, dia] = dataCompra.split("-").map(Number);
+  const compra = new Date(ano, mes - 1, dia);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dias = Math.round((hoje.getTime() - compra.getTime()) / 86_400_000);
   return dias === 0 ? "Hoje" : dias === 1 ? "1 dia" : `${dias} dias`;
 }
 

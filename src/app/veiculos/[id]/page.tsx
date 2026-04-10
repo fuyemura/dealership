@@ -1,4 +1,4 @@
-﻿import { notFound, redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { VeiculoForm } from "../_components/veiculo-form";
 import type { Dominios, QrCodeInfo } from "../_components/veiculo-form";

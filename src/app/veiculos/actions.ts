@@ -120,7 +120,14 @@ function validarDados(data: VeiculoFormData): ActionResult {
   if (!data.data_compra)
     return { error: "Data de compra é obrigatória." };
 
-  if (new Date(data.data_compra) > new Date())
+  // Compara apenas a parte calendário (YYYY-MM-DD) para evitar off-by-one de timezone.
+  // new Date("YYYY-MM-DD") interpreta como UTC midnight; construir a data local
+  // garante que "hoje" seja avaliado no fuso do servidor, não em UTC.
+  const [dcAno, dcMes, dcDia] = data.data_compra.split("-").map(Number);
+  const dataCompraLocal = new Date(dcAno, dcMes - 1, dcDia);
+  const hojeLocal = new Date();
+  hojeLocal.setHours(0, 0, 0, 0);
+  if (dataCompraLocal > hojeLocal)
     return { error: "Data de compra não pode ser futura." };
 
   if (data.preco_compra <= 0)

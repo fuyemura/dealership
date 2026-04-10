@@ -1,4 +1,4 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { VeiculoForm } from "../_components/veiculo-form";
 import type { Dominios } from "../_components/veiculo-form";
