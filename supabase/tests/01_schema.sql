@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- 01_schema.sql
 -- Verifica a existência do schema dealership e de todas as suas tabelas.
 --
@@ -7,7 +7,7 @@
 -- =============================================================================
 
 BEGIN;
-SELECT plan(16);
+SELECT plan(18);
 
 -- Schema
 SELECT has_schema('dealership', 'Schema dealership deve existir');
@@ -17,10 +17,12 @@ SELECT has_table('dealership', 'empresa',              'Tabela empresa deve exis
 SELECT has_table('dealership', 'usuario',              'Tabela usuario deve existir');
 SELECT has_table('dealership', 'localizacao',          'Tabela localizacao deve existir');
 SELECT has_table('dealership', 'dominio',              'Tabela dominio deve existir');
+SELECT has_table('dealership', 'veiculo_marca',        'Tabela veiculo_marca deve existir');
+SELECT has_table('dealership', 'veiculo_modelo',       'Tabela veiculo_modelo deve existir');
 SELECT has_table('dealership', 'cliente',              'Tabela cliente deve existir');
 SELECT has_table('dealership', 'veiculo',              'Tabela veiculo deve existir');
 SELECT has_table('dealership', 'veiculo_arquivo',      'Tabela veiculo_arquivo deve existir');
-SELECT has_table('dealership', 'qr_code',              'Tabela qr_code deve existir');
+SELECT has_table('dealership', 'veiculo_qr_code',              'Tabela veiculo_qr_code deve existir');
 SELECT has_table('dealership', 'plano',                'Tabela plano deve existir');
 SELECT has_table('dealership', 'assinatura',           'Tabela assinatura deve existir');
 SELECT has_table('dealership', 'assinatura_historico', 'Tabela assinatura_historico deve existir');

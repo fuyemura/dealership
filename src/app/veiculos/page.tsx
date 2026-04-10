@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { gerarQrCode } from "./actions";
@@ -47,6 +47,13 @@ function IconCar({ size = 20 }: { size?: number }) {
   );
 }
 
+// ─── Helper ─────────────────────────────────────────────────────────────────────
+
+function tempoEmEstoque(dataCompra: string): string {
+  const dias = Math.floor((Date.now() - new Date(dataCompra).getTime()) / 86_400_000);
+  return dias === 0 ? "Hoje" : dias === 1 ? "1 dia" : `${dias} dias`;
+}
+
 // ─── Badge de situação ────────────────────────────────────────────────────────
 
 function BadgeSituacao({ situacao }: { situacao: string }) {
@@ -92,19 +99,19 @@ export default async function VeiculosPage() {
     .from("veiculo")
     .select(
       `id, placa, cor_veiculo, ano_fabricacao, ano_modelo, quilometragem, preco_venda,
-       criado_em,
-       marca:dominio!marca_veiculo_id(nome_dominio),
-       modelo:dominio!modelo_veiculo_id(nome_dominio),
+       criado_em, data_compra,
+       marca:veiculo_marca!marca_veiculo_id(nome_dominio:nome),
+       modelo:veiculo_modelo!modelo_veiculo_id(nome_dominio:nome),
        situacao:dominio!situacao_veiculo_id(nome_dominio),
-       qr_code(url_publica, token_publica, total_visualizacoes)`
+       veiculo_qr_code(url_publica, token_publica, total_visualizacoes)`
     )
     .eq("empresa_id", usuario.empresa_id)
-    .order("criado_em", { ascending: false });
+    .order("data_compra", { ascending: true });
 
   const total = veiculos?.length ?? 0;
 
   return (
-    <div className="w-full">
+    <>
       {/* ── Cabeçalho ─────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
@@ -128,33 +135,31 @@ export default async function VeiculosPage() {
 
       {/* ── Lista vazia ───────────────────────────────────────────────────── */}
       {total === 0 && (
-        <div className="bg-white rounded-2xl border border-brand-gray-mid/30 p-12 flex flex-col items-center gap-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-brand-gray-soft flex items-center justify-center text-brand-gray-text">
-            <IconCar size={24} />
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-brand-gray-soft flex items-center justify-center mb-4 text-brand-gray-text">
+            <IconCar size={22} />
           </div>
-          <div>
-            <p className="text-sm font-medium text-brand-black">
-              Nenhum veículo cadastrado ainda
-            </p>
-            <p className="text-sm text-brand-gray-text mt-1">
-              Clique em &quot;Novo Veículo&quot; para começar.
-            </p>
-          </div>
+          <h2 className="font-display text-base font-semibold text-brand-black mb-1">
+            Nenhum veículo cadastrado
+          </h2>
+          <p className="text-sm text-brand-gray-text max-w-xs mb-6">
+            Cadastre o primeiro veículo da empresa para começar.
+          </p>
           <Link
             href="/veiculos/novo"
-            className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors mt-2"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors"
           >
             <IconPlus size={16} />
             Novo Veículo
           </Link>
-        </div>
+        </section>
       )}
 
       {/* ── Tabela de veículos ────────────────────────────────────────────── */}
       {total > 0 && (
-        <div className="bg-white rounded-2xl border border-brand-gray-mid/30 overflow-hidden">
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 overflow-hidden">
           {/* Header da tabela — visível apenas em desktop */}
-          <div className="hidden md:grid md:grid-cols-[1fr_1.5fr_1fr_1fr_188px] gap-4 px-6 py-3 border-b border-brand-gray-mid/20 bg-brand-gray-soft/50">
+          <div className="hidden md:grid md:grid-cols-[1fr_1.5fr_1fr_168px_120px_188px] gap-4 px-6 py-3 border-b border-brand-gray-mid/20 bg-brand-gray-soft/50">
             <span className="text-xs font-semibold uppercase tracking-wide text-brand-gray-text">
               Placa / Veículo
             </span>
@@ -163,6 +168,9 @@ export default async function VeiculosPage() {
             </span>
             <span className="text-xs font-semibold uppercase tracking-wide text-brand-gray-text">
               Ano · Km
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-brand-gray-text whitespace-nowrap">
+              Tempo em Estoque
             </span>
             <span className="text-xs font-semibold uppercase tracking-wide text-brand-gray-text">
               Situação
@@ -183,13 +191,12 @@ export default async function VeiculosPage() {
               const situacao = (
                 v.situacao as unknown as { nome_dominio: string } | null
               )?.nome_dominio ?? "—";
-              const qrExistente = (
-                v.qr_code as unknown as {
-                  url_publica: string;
-                  token_publica: string;
-                  total_visualizacoes: number;
-                } | null
-              ) ?? null;
+              const qrRaw = v.veiculo_qr_code as unknown as {
+                url_publica: string;
+                token_publica: string;
+                total_visualizacoes: number;
+              }[] | null;
+              const qrExistente = Array.isArray(qrRaw) ? (qrRaw[0] ?? null) : null;
 
               const kmFormatado = new Intl.NumberFormat("pt-BR").format(
                 v.quilometragem
@@ -212,8 +219,8 @@ export default async function VeiculosPage() {
                     aria-label={`Editar veículo ${v.placa}`}
                   />
 
-                  {/* Desktop: mesma grade de 5 colunas do cabeçalho */}
-                  <div className="hidden md:grid md:grid-cols-[1fr_1.5fr_1fr_1fr_188px] gap-4 items-center px-6 py-4">
+                  {/* Desktop: mesma grade de 6 colunas do cabeçalho */}
+                  <div className="hidden md:grid md:grid-cols-[1fr_1.5fr_1fr_168px_120px_188px] gap-4 items-center px-6 py-4">
                     {/* Placa */}
                     <div className="relative z-10 flex flex-col gap-0.5">
                       <span className="text-sm font-semibold text-brand-black font-mono tracking-widest">
@@ -241,6 +248,13 @@ export default async function VeiculosPage() {
                       </span>
                       <span className="text-xs text-brand-gray-text">
                         {kmFormatado} km
+                      </span>
+                    </div>
+
+                    {/* Tempo em Estoque */}
+                    <div className="relative z-10">
+                      <span className="text-xs tabular-nums text-brand-gray-text">
+                        {tempoEmEstoque(v.data_compra as string)}
                       </span>
                     </div>
 
@@ -281,6 +295,9 @@ export default async function VeiculosPage() {
                         <span className="text-xs text-brand-gray-text">
                           {v.ano_fabricacao}/{v.ano_modelo} · {kmFormatado} km
                         </span>
+                        <span className="text-xs text-brand-gray-text">
+                          {tempoEmEstoque(v.data_compra as string)} em estoque
+                        </span>
                         {precoFormatado && (
                           <span className="text-xs font-medium text-brand-black">
                             {precoFormatado}
@@ -301,8 +318,8 @@ export default async function VeiculosPage() {
               );
             })}
           </ul>
-        </div>
+        </section>
       )}
-    </div>
+    </>
   );
 }

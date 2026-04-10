@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import type { QrCodeResult } from "../actions";
 
@@ -124,15 +124,37 @@ function QrCodeModal({
   onClose: () => void;
 }) {
   const [copiado, setCopiado] = useState(false);
+  const [qrErro, setQrErro] = useState(false);
+  const fecharRef = useRef<HTMLButtonElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
     qrCode.url_publica
   )}`;
+
+  // Captura foco no botão de fechar e escuta a tecla Escape
+  useEffect(() => {
+    fecharRef.current?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  // Limpa o timer de "Copiado!" ao desmontar
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const copiar = async () => {
     try {
       await navigator.clipboard.writeText(qrCode.url_publica);
       setCopiado(true);
-      setTimeout(() => setCopiado(false), 2500);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopiado(false), 2500);
     } catch {
       /* navegador sem permissão */
     }
@@ -163,6 +185,7 @@ function QrCodeModal({
             <button
               type="button"
               onClick={onClose}
+              ref={fecharRef}
               className="text-brand-gray-text hover:text-brand-black transition-colors p-1"
               aria-label="Fechar"
             >
@@ -171,14 +194,31 @@ function QrCodeModal({
           </div>
 
           {/* QR Code */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={qrUrl}
-            alt={`QR Code do veículo ${placa}`}
-            width={200}
-            height={200}
-            className="rounded-xl border border-brand-gray-mid/30"
-          />
+          {qrErro ? (
+            <div className="w-[200px] h-[200px] rounded-xl border border-brand-gray-mid/30 bg-brand-gray-soft flex flex-col items-center justify-center gap-2 px-4 text-center">
+              <p className="text-xs text-brand-gray-text">
+                Não foi possível carregar o QR Code.
+              </p>
+              <a
+                href={qrCode.url_publica}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium text-brand-black underline"
+              >
+                Abrir link
+              </a>
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={qrUrl}
+              alt={`QR Code do veículo ${placa}`}
+              width={200}
+              height={200}
+              onError={() => setQrErro(true)}
+              className="rounded-xl border border-brand-gray-mid/30"
+            />
+          )}
 
           {/* Placa (visível na impressão) */}
           <p className="hidden print:block text-center font-bold text-lg">{placa}</p>

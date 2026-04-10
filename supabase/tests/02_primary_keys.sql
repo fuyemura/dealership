@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- 02_primary_keys.sql
 -- Verifica Primary Keys: existência da constraint e que a coluna 'id' é a PK
 -- em todas as 15 tabelas do schema dealership.
@@ -7,7 +7,7 @@
 -- =============================================================================
 
 BEGIN;
-SELECT plan(30);
+SELECT plan(34);
 
 -- empresa
 SELECT has_pk  ('dealership', 'empresa',              'empresa deve ter PK');
@@ -25,6 +25,14 @@ SELECT col_is_pk('dealership', 'localizacao', 'id',   'localizacao.id é a PK');
 SELECT has_pk  ('dealership', 'dominio',              'dominio deve ter PK');
 SELECT col_is_pk('dealership', 'dominio', 'id',       'dominio.id é a PK');
 
+-- veiculo_marca
+SELECT has_pk  ('dealership', 'veiculo_marca',        'veiculo_marca deve ter PK');
+SELECT col_is_pk('dealership', 'veiculo_marca', 'id', 'veiculo_marca.id é a PK');
+
+-- veiculo_modelo
+SELECT has_pk  ('dealership', 'veiculo_modelo',        'veiculo_modelo deve ter PK');
+SELECT col_is_pk('dealership', 'veiculo_modelo', 'id', 'veiculo_modelo.id é a PK');
+
 -- cliente
 SELECT has_pk  ('dealership', 'cliente',              'cliente deve ter PK');
 SELECT col_is_pk('dealership', 'cliente', 'id',       'cliente.id é a PK');
@@ -37,9 +45,9 @@ SELECT col_is_pk('dealership', 'veiculo', 'id',       'veiculo.id é a PK');
 SELECT has_pk  ('dealership', 'veiculo_arquivo',       'veiculo_arquivo deve ter PK');
 SELECT col_is_pk('dealership', 'veiculo_arquivo', 'id', 'veiculo_arquivo.id é a PK');
 
--- qr_code
-SELECT has_pk  ('dealership', 'qr_code',              'qr_code deve ter PK');
-SELECT col_is_pk('dealership', 'qr_code', 'id',       'qr_code.id é a PK');
+-- veiculo_qr_code
+SELECT has_pk  ('dealership', 'veiculo_qr_code',              'veiculo_qr_code deve ter PK');
+SELECT col_is_pk('dealership', 'veiculo_qr_code', 'id',       'veiculo_qr_code.id é a PK');
 
 -- plano
 SELECT has_pk  ('dealership', 'plano',                'plano deve ter PK');

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { formatTelefone as formatarTelefone, formatCnpj as formatarCnpj, formatCep as formatarCep } from "@/lib/utils/formatters";
+import { consultarCep } from "@/lib/utils/cep";
 import type { ActionResult, EmpresaPayload } from "../actions";
 
 // ─── Estados brasileiros ─────────────────────────────────────────────────────
@@ -296,25 +297,15 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
     setCepNotFound(false);
     setCepNetworkError(false);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`, {
-        signal: controller.signal,
-      });
-      if (!res.ok) throw new Error("Falha na requisição");
-      const data: {
-        erro?: true;
-        logradouro?: string;
-        bairro?: string;
-        localidade?: string;
-        uf?: string;
-      } = await res.json();
-      if (data.erro) {
+      const result = await consultarCep(digits, controller.signal);
+      if (!result) {
         setCepNotFound(true);
         return;
       }
-      if (data.logradouro) setValue("logradouro", data.logradouro, { shouldDirty: true });
-      if (data.bairro) setValue("bairro", data.bairro, { shouldDirty: true });
-      if (data.localidade) setValue("cidade", data.localidade, { shouldDirty: true });
-      if (data.uf) setValue("estado", data.uf, { shouldDirty: true });
+      if (result.logradouro) setValue("logradouro", result.logradouro, { shouldDirty: true });
+      if (result.bairro)     setValue("bairro",     result.bairro,     { shouldDirty: true });
+      if (result.cidade)     setValue("cidade",     result.cidade,     { shouldDirty: true });
+      if (result.estado)     setValue("estado",     result.estado,     { shouldDirty: true });
     } catch (err) {
       if ((err as Error).name !== "AbortError") setCepNetworkError(true);
     } finally {

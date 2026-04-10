@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+﻿import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CustosVeiculo } from "./_components/custos-veiculo";
 import {
@@ -45,8 +45,8 @@ export default async function CustosVeiculoPage({
       .from("veiculo")
       .select(
         `id, placa, preco_compra,
-         marca:dominio!marca_veiculo_id(nome_dominio),
-         modelo:dominio!modelo_veiculo_id(nome_dominio)`
+         marca:veiculo_marca!marca_veiculo_id(nome_dominio:nome),
+         modelo:veiculo_modelo!modelo_veiculo_id(nome_dominio:nome)`
       )
       .eq("id", id)
       .eq("empresa_id", empresaId)

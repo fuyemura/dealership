@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Uyemura Tech — Schema dealership — v8 final
 -- Nomenclatura conforme README-DB.md § 9
 --   UK  → uk_<tabela>_<coluna>
@@ -166,6 +166,47 @@ ALTER TABLE dealership.cliente ADD CONSTRAINT uk_cliente_empresa_id_cpf UNIQUE (
 
 -- -----------------------------------------------------------------------------
 
+CREATE TABLE dealership.veiculo_marca (
+    id        UUID         NOT NULL DEFAULT gen_random_uuid(),
+    nome      VARCHAR(100) NOT NULL,
+    criado_em TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_veiculo_marca_nome ON dealership.veiculo_marca (nome);
+
+COMMENT ON TABLE  dealership.veiculo_marca           IS 'Catálogo de marcas de veículos.';
+COMMENT ON COLUMN dealership.veiculo_marca.id        IS 'Chave primária (PK).';
+COMMENT ON COLUMN dealership.veiculo_marca.nome      IS 'Nome da marca (ex: Toyota, Honda).';
+COMMENT ON COLUMN dealership.veiculo_marca.criado_em IS 'Data e hora de criação do registro na tabela.';
+
+ALTER TABLE dealership.veiculo_marca ADD PRIMARY KEY (id);
+ALTER TABLE dealership.veiculo_marca ADD CONSTRAINT uk_veiculo_marca_nome UNIQUE (nome);
+
+
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE dealership.veiculo_modelo (
+    id        UUID         NOT NULL DEFAULT gen_random_uuid(),
+    marca_id  UUID         NOT NULL,
+    nome      VARCHAR(100) NOT NULL,
+    criado_em TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_veiculo_modelo_marca_id ON dealership.veiculo_modelo (marca_id);
+CREATE INDEX idx_veiculo_modelo_nome      ON dealership.veiculo_modelo (nome);
+
+COMMENT ON TABLE  dealership.veiculo_modelo           IS 'Catálogo de modelos de veículos, hierarquicamente vinculado à marca.';
+COMMENT ON COLUMN dealership.veiculo_modelo.id        IS 'Chave primária (PK).';
+COMMENT ON COLUMN dealership.veiculo_modelo.marca_id  IS 'Chave estrangeira (FK) para veiculo_marca.';
+COMMENT ON COLUMN dealership.veiculo_modelo.nome      IS 'Nome do modelo (ex: Corolla, Civic).';
+COMMENT ON COLUMN dealership.veiculo_modelo.criado_em IS 'Data e hora de criação do registro na tabela.';
+
+ALTER TABLE dealership.veiculo_modelo ADD PRIMARY KEY (id);
+ALTER TABLE dealership.veiculo_modelo ADD CONSTRAINT uk_veiculo_modelo_marca_id_nome UNIQUE (marca_id, nome);
+
+
+-- -----------------------------------------------------------------------------
+
 CREATE TABLE dealership.veiculo (
     id                     UUID          NOT NULL DEFAULT gen_random_uuid(),
     empresa_id             UUID          NOT NULL,
@@ -213,8 +254,8 @@ COMMENT ON COLUMN dealership.veiculo.id                       IS 'Chave primári
 COMMENT ON COLUMN dealership.veiculo.empresa_id               IS 'Chave estrangeira (FK) de identificação da empresa.';
 COMMENT ON COLUMN dealership.veiculo.placa                    IS 'Número da placa do veículo.';
 COMMENT ON COLUMN dealership.veiculo.renavam                  IS 'Código do RENAVAM.';
-COMMENT ON COLUMN dealership.veiculo.marca_veiculo_id         IS 'Chave estrangeira (FK) para dominio — grupo: marca.';
-COMMENT ON COLUMN dealership.veiculo.modelo_veiculo_id        IS 'Chave estrangeira (FK) para dominio — grupo: modelo.';
+COMMENT ON COLUMN dealership.veiculo.marca_veiculo_id         IS 'Chave estrangeira (FK) para veiculo_marca.';
+COMMENT ON COLUMN dealership.veiculo.modelo_veiculo_id        IS 'Chave estrangeira (FK) para veiculo_modelo.';
 COMMENT ON COLUMN dealership.veiculo.combustivel_veiculo_id   IS 'Chave estrangeira (FK) para dominio — grupo: combustivel.';
 COMMENT ON COLUMN dealership.veiculo.numero_chassi            IS 'Número do chassi do veículo.';
 COMMENT ON COLUMN dealership.veiculo.ano_modelo               IS 'Ano modelo do veículo.';
@@ -284,7 +325,7 @@ ALTER TABLE dealership.veiculo_arquivo ADD PRIMARY KEY (id);
 
 -- -----------------------------------------------------------------------------
 
-CREATE TABLE dealership.qr_code (
+CREATE TABLE dealership.veiculo_qr_code (
     id                  UUID         NOT NULL DEFAULT gen_random_uuid(),
     veiculo_id          UUID         NOT NULL,
     url_publica         VARCHAR(255) NOT NULL,
@@ -293,18 +334,18 @@ CREATE TABLE dealership.qr_code (
     criado_em           TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_qr_code_veiculo_id ON dealership.qr_code (veiculo_id);
+CREATE INDEX idx_veiculo_qr_code_veiculo_id ON dealership.veiculo_qr_code (veiculo_id);
 
-COMMENT ON TABLE  dealership.qr_code                       IS 'Cadastro dos QR Codes gerados para os veículos.';
-COMMENT ON COLUMN dealership.qr_code.id                    IS 'Chave primária (PK) de identificação do QR Code.';
-COMMENT ON COLUMN dealership.qr_code.veiculo_id            IS 'Chave estrangeira (FK) de identificação do veículo.';
-COMMENT ON COLUMN dealership.qr_code.url_publica           IS 'URL pública associada ao QR Code.';
-COMMENT ON COLUMN dealership.qr_code.token_publica         IS 'Token único e específico do QR Code.';
-COMMENT ON COLUMN dealership.qr_code.total_visualizacoes   IS 'Quantidade total de visualizações do QR Code.';
-COMMENT ON COLUMN dealership.qr_code.criado_em             IS 'Data e hora de criação do registro na tabela.';
+COMMENT ON TABLE  dealership.veiculo_qr_code                       IS 'Cadastro dos QR Codes gerados para os veículos.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.id                    IS 'Chave primária (PK) de identificação do QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.veiculo_id            IS 'Chave estrangeira (FK) de identificação do veículo.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.url_publica           IS 'URL pública associada ao QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.token_publica         IS 'Token único e específico do QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.total_visualizacoes   IS 'Quantidade total de visualizações do QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.criado_em             IS 'Data e hora de criação do registro na tabela.';
 
-ALTER TABLE dealership.qr_code ADD PRIMARY KEY (id);
-ALTER TABLE dealership.qr_code ADD CONSTRAINT uk_qr_code_token_publica UNIQUE (token_publica);
+ALTER TABLE dealership.veiculo_qr_code ADD PRIMARY KEY (id);
+ALTER TABLE dealership.veiculo_qr_code ADD CONSTRAINT uk_veiculo_qr_code_token_publica UNIQUE (token_publica);
 
 
 -- -----------------------------------------------------------------------------
@@ -674,6 +715,11 @@ ALTER TABLE dealership.usuario
     ADD CONSTRAINT fk_usuario_papel_usuario_id
     FOREIGN KEY (papel_usuario_id) REFERENCES dealership.dominio (id);
 
+-- veiculo_modelo
+ALTER TABLE dealership.veiculo_modelo
+    ADD CONSTRAINT fk_veiculo_modelo_marca_id
+    FOREIGN KEY (marca_id) REFERENCES dealership.veiculo_marca (id);
+
 -- cliente
 ALTER TABLE dealership.cliente
     ADD CONSTRAINT fk_cliente_empresa_id
@@ -690,11 +736,11 @@ ALTER TABLE dealership.veiculo
 
 ALTER TABLE dealership.veiculo
     ADD CONSTRAINT fk_veiculo_marca_veiculo_id
-    FOREIGN KEY (marca_veiculo_id) REFERENCES dealership.dominio (id);
+    FOREIGN KEY (marca_veiculo_id) REFERENCES dealership.veiculo_marca (id);
 
 ALTER TABLE dealership.veiculo
     ADD CONSTRAINT fk_veiculo_modelo_veiculo_id
-    FOREIGN KEY (modelo_veiculo_id) REFERENCES dealership.dominio (id);
+    FOREIGN KEY (modelo_veiculo_id) REFERENCES dealership.veiculo_modelo (id);
 
 ALTER TABLE dealership.veiculo
     ADD CONSTRAINT fk_veiculo_combustivel_veiculo_id
@@ -745,9 +791,9 @@ ALTER TABLE dealership.veiculo_arquivo
     ADD CONSTRAINT fk_veiculo_arquivo_criado_por
     FOREIGN KEY (criado_por) REFERENCES dealership.usuario (id);
 
--- qr_code
-ALTER TABLE dealership.qr_code
-    ADD CONSTRAINT fk_qr_code_veiculo_id
+-- veiculo_qr_code
+ALTER TABLE dealership.veiculo_qr_code
+    ADD CONSTRAINT fk_veiculo_qr_code_veiculo_id
     FOREIGN KEY (veiculo_id) REFERENCES dealership.veiculo (id);
 
 -- assinatura

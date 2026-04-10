@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { consultarPlaca } from "@/lib/utils/placa";
 
 // Proxy server-side para consulta de dados de veículo por placa.
-// Configure a variável de ambiente WDAPI_TOKEN para habilitar a integração.
-// API utilizada: https://wdapi2.com.br/{PLACA}/{TOKEN}
+// Para trocar de provedor, edite apenas src/lib/utils/placa.ts.
+// Configure a variável de ambiente PLACA_API_TOKEN para habilitar a integração.
 
-const WDAPI_TOKEN = process.env.WDAPI_TOKEN;
+const PLACA_API_TOKEN = process.env.PLACA_API_TOKEN ?? process.env.WDAPI_TOKEN;
 
 const PLACA_REGEX = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
 
@@ -42,49 +43,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!WDAPI_TOKEN) {
+  if (!PLACA_API_TOKEN) {
     // Serviço não configurado — retorna apenas a placa para preenchimento manual
     return NextResponse.json({ placa, configurado: false });
   }
 
-  try {
-    const res = await fetch(`https://wdapi2.com.br/${placa}/${WDAPI_TOKEN}`, {
-      cache: "no-store",
-    });
+  const resultado = await consultarPlaca(placa, PLACA_API_TOKEN);
 
-    if (res.status === 404) {
-      return NextResponse.json(
-        { error: "Veículo não encontrado para esta placa." },
-        { status: 404 }
-      );
-    }
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "Erro ao consultar a placa. Tente novamente." },
-        { status: 502 }
-      );
-    }
-
-    const raw = await res.json();
-
-    return NextResponse.json({
-      placa,
-      configurado: true,
-      marca: raw.MARCA ?? null,
-      modelo: raw.MODELO ?? null,
-      ano_fabricacao: raw.ano ? Number(raw.ano) : null,
-      ano_modelo: raw.anoModelo ? Number(raw.anoModelo) : null,
-      cor: raw.cor ?? null,
-      combustivel: raw.combustivel ?? null,
-      renavam: raw.RENAVAM ?? null,
-      chassi: raw.CHASSI ?? null,
-      valor_fipe: raw.valor ?? null,
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Erro ao consultar a placa. Verifique sua conexão e tente novamente." },
-      { status: 500 }
-    );
+  if (!resultado.ok) {
+    return NextResponse.json({ error: resultado.error }, { status: resultado.status });
   }
+
+  return NextResponse.json({ placa, configurado: true, ...resultado.data });
 }

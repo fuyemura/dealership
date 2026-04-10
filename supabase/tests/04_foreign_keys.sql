@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- 04_foreign_keys.sql
 -- Verifica que todas as FK declaradas existem e apontam para as tabelas e
 -- colunas corretas. Total: 38 FKs.
@@ -8,7 +8,7 @@
 -- =============================================================================
 
 BEGIN;
-SELECT plan(38);
+SELECT plan(39);
 
 -- =============================================================================
 -- empresa (1 FK)
@@ -58,6 +58,17 @@ SELECT fk_ok(
 );
 
 -- =============================================================================
+-- veiculo_modelo (1 FK)
+-- =============================================================================
+
+-- fk_veiculo_modelo_marca_id → veiculo_marca.id
+SELECT fk_ok(
+    'dealership', 'veiculo_modelo',  ARRAY['marca_id'],
+    'dealership', 'veiculo_marca',   ARRAY['id'],
+    'fk_veiculo_modelo_marca_id: veiculo_modelo.marca_id → veiculo_marca.id'
+);
+
+-- =============================================================================
 -- veiculo (11 FKs)
 -- =============================================================================
 
@@ -68,18 +79,18 @@ SELECT fk_ok(
     'fk_veiculo_empresa_id: veiculo.empresa_id → empresa.id'
 );
 
--- fk_veiculo_marca_veiculo_id → dominio.id
+-- fk_veiculo_marca_veiculo_id → veiculo_marca.id
 SELECT fk_ok(
-    'dealership', 'veiculo',  ARRAY['marca_veiculo_id'],
-    'dealership', 'dominio',  ARRAY['id'],
-    'fk_veiculo_marca_veiculo_id: veiculo.marca_veiculo_id → dominio.id'
+    'dealership', 'veiculo',       ARRAY['marca_veiculo_id'],
+    'dealership', 'veiculo_marca', ARRAY['id'],
+    'fk_veiculo_marca_veiculo_id: veiculo.marca_veiculo_id → veiculo_marca.id'
 );
 
--- fk_veiculo_modelo_veiculo_id → dominio.id
+-- fk_veiculo_modelo_veiculo_id → veiculo_modelo.id
 SELECT fk_ok(
-    'dealership', 'veiculo',  ARRAY['modelo_veiculo_id'],
-    'dealership', 'dominio',  ARRAY['id'],
-    'fk_veiculo_modelo_veiculo_id: veiculo.modelo_veiculo_id → dominio.id'
+    'dealership', 'veiculo',        ARRAY['modelo_veiculo_id'],
+    'dealership', 'veiculo_modelo', ARRAY['id'],
+    'fk_veiculo_modelo_veiculo_id: veiculo.modelo_veiculo_id → veiculo_modelo.id'
 );
 
 -- fk_veiculo_combustivel_veiculo_id → dominio.id
@@ -171,14 +182,14 @@ SELECT fk_ok(
 );
 
 -- =============================================================================
--- qr_code (1 FK)
+-- veiculo_qr_code (1 FK)
 -- =============================================================================
 
--- fk_qr_code_veiculo_id → veiculo.id
+-- fk_veiculo_qr_code_veiculo_id → veiculo.id
 SELECT fk_ok(
-    'dealership', 'qr_code',  ARRAY['veiculo_id'],
+    'dealership', 'veiculo_qr_code',  ARRAY['veiculo_id'],
     'dealership', 'veiculo',  ARRAY['id'],
-    'fk_qr_code_veiculo_id: qr_code.veiculo_id → veiculo.id'
+    'fk_veiculo_qr_code_veiculo_id: veiculo_qr_code.veiculo_id → veiculo.id'
 );
 
 -- =============================================================================

@@ -1,8 +1,9 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ActionResult = { error: string } | undefined;
 
@@ -59,7 +60,28 @@ async function getUsuarioAutorizado() {
 }
 
 // ─── Validação server-side ────────────────────────────────────────────────────
+// Verifica se uma placa já existe no estoque da empresa
+export async function verificarPlacaExistente(
+  placa: string
+): Promise<ActionResult> {
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
+  const placaNormalizada = placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+  const { data } = await supabase
+    .schema("dealership")
+    .from("veiculo")
+    .select("id")
+    .eq("placa", placaNormalizada)
+    .eq("empresa_id", usuarioAtual.empresa_id)
+    .maybeSingle();
+
+  if (data) {
+    return {
+      error: `A placa ${placaNormalizada} já está cadastrada no seu estoque.`,
+    };
+  }
+}
 const PLACA_REGEX = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
 
 function validarDados(data: VeiculoFormData): ActionResult {
@@ -98,6 +120,9 @@ function validarDados(data: VeiculoFormData): ActionResult {
   if (!data.data_compra)
     return { error: "Data de compra é obrigatória." };
 
+  if (new Date(data.data_compra) > new Date())
+    return { error: "Data de compra não pode ser futura." };
+
   if (data.preco_compra <= 0)
     return { error: "Preço de compra inválido." };
 
@@ -107,16 +132,41 @@ function validarDados(data: VeiculoFormData): ActionResult {
 
 // ─── Criar veículo ────────────────────────────────────────────────────────────
 
+// Helper: busca o ID de "Vendido" e valida campos obrigatórios condicionalmente
+async function validarCamposVenda(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  data: VeiculoFormData
+): Promise<ActionResult> {
+  const { data: situacaoVendido } = await supabase
+    .schema("dealership")
+    .from("dominio")
+    .select("id")
+    .eq("grupo_dominio", "situacao_veiculo")
+    .ilike("nome_dominio", "vendido")
+    .maybeSingle();
+
+  if (!situacaoVendido || data.situacao_veiculo_id !== situacaoVendido.id) return;
+
+  if (!data.preco_venda || data.preco_venda <= 0)
+    return { error: "Informe o preço de venda." };
+  if (!data.data_venda)
+    return { error: "Informe a data de venda." };
+}
+
 export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult> {
   const validationError = validarDados(data);
   if (validationError) return validationError;
 
   const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
+  // Validação condicional: campos de venda obrigatórios quando situação = Vendido
+  const vendaError = await validarCamposVenda(supabase, data);
+  if (vendaError) return vendaError;
+
   const placa = data.placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   const renavam = data.renavam.replace(/\D/g, "");
 
-  const { error } = await supabase
+  const { data: novoVeiculo, error } = await supabase
     .schema("dealership")
     .from("veiculo")
     .insert({
@@ -146,7 +196,9 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
       descricao: data.descricao?.trim() || null,
       criado_por: usuarioAtual.id,
       atualizado_por: usuarioAtual.id,
-    });
+    })
+    .select("id")
+    .single();
 
   if (error) {
     if (error.code === "23505") {
@@ -159,7 +211,7 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
   }
 
   revalidatePath("/veiculos");
-  redirect("/veiculos");
+  redirect(`/veiculos/${novoVeiculo!.id}?novo=1`);
 }
 
 // ─── Atualizar veículo ────────────────────────────────────────────────────────
@@ -172,6 +224,10 @@ export async function atualizarVeiculo(
   if (validationError) return validationError;
 
   const { supabase, usuarioAtual } = await getUsuarioAutorizado();
+
+  // Validação condicional: campos de venda obrigatórios quando situação = Vendido
+  const vendaError = await validarCamposVenda(supabase, data);
+  if (vendaError) return vendaError;
 
   const placa = data.placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   const renavam = data.renavam.replace(/\D/g, "");
@@ -233,6 +289,70 @@ export async function excluirVeiculo(id: string): Promise<ActionResult> {
     return { error: "Apenas administradores podem excluir veículos." };
   }
 
+  // Verifica posse do veículo antes de qualquer exclusão
+  const { data: veiculo } = await supabase
+    .schema("dealership")
+    .from("veiculo")
+    .select("id")
+    .eq("id", id)
+    .eq("empresa_id", usuarioAtual.empresa_id)
+    .single();
+
+  if (!veiculo) {
+    return { error: "Veículo não encontrado." };
+  }
+
+  const adminClient = createAdminClient();
+
+  // 1. Remove arquivos do Storage e os registros de veiculo_arquivo
+  const { data: arquivos } = await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .select("caminho_storage")
+    .eq("veiculo_id", id)
+    .eq("empresa_id", usuarioAtual.empresa_id);
+
+  if (arquivos && arquivos.length > 0) {
+    const caminhos = arquivos.map((a) => a.caminho_storage);
+    await adminClient.storage.from(BUCKET).remove(caminhos);
+
+    const { error: erroArquivos } = await supabase
+      .schema("dealership")
+      .from("veiculo_arquivo")
+      .delete()
+      .eq("veiculo_id", id);
+
+    if (erroArquivos) {
+      console.error("[excluirVeiculo] Erro ao excluir veiculo_arquivo:", erroArquivos.message);
+      return { error: "Erro ao excluir o veículo. Tente novamente." };
+    }
+  }
+
+  // 2. Remove registros de veiculo_manutencao
+  const { error: erroManutencao } = await supabase
+    .schema("dealership")
+    .from("veiculo_manutencao")
+    .delete()
+    .eq("veiculo_id", id);
+
+  if (erroManutencao) {
+    console.error("[excluirVeiculo] Erro ao excluir veiculo_manutencao:", erroManutencao.message);
+    return { error: "Erro ao excluir o veículo. Tente novamente." };
+  }
+
+  // 3. Remove o QR Code
+  const { error: erroQrCode } = await supabase
+    .schema("dealership")
+    .from("veiculo_qr_code")
+    .delete()
+    .eq("veiculo_id", id);
+
+  if (erroQrCode) {
+    console.error("[excluirVeiculo] Erro ao excluir veiculo_qr_code:", erroQrCode.message);
+    return { error: "Erro ao excluir o veículo. Tente novamente." };
+  }
+
+  // 4. Remove o veículo
   const { error } = await supabase
     .schema("dealership")
     .from("veiculo")
@@ -241,6 +361,7 @@ export async function excluirVeiculo(id: string): Promise<ActionResult> {
     .eq("empresa_id", usuarioAtual.empresa_id);
 
   if (error) {
+    console.error("[excluirVeiculo] Erro ao excluir veiculo:", error.message);
     return { error: "Erro ao excluir o veículo. Tente novamente." };
   }
 
@@ -271,7 +392,7 @@ export async function gerarQrCode(veiculoId: string): Promise<QrCodeResult> {
   // Verifica se já existe um QR Code
   const { data: existente } = await supabase
     .schema("dealership")
-    .from("qr_code")
+    .from("veiculo_qr_code")
     .select("url_publica, token_publica, total_visualizacoes")
     .eq("veiculo_id", veiculoId)
     .maybeSingle();
@@ -292,7 +413,7 @@ export async function gerarQrCode(veiculoId: string): Promise<QrCodeResult> {
 
   const { error } = await supabase
     .schema("dealership")
-    .from("qr_code")
+    .from("veiculo_qr_code")
     .insert({
       veiculo_id: veiculoId,
       url_publica: urlPublica,
@@ -309,3 +430,237 @@ export async function gerarQrCode(veiculoId: string): Promise<QrCodeResult> {
     total_visualizacoes: 0,
   };
 }
+
+// ─── Upload de arquivo (foto ou laudo) ───────────────────────────────────────
+
+const BUCKET = "veiculos";
+const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
+const TIPO_LAUDO = ["application/pdf"]; // array para facilitar adição futura de formatos
+const MAX_SIZE_FOTO = 5 * 1024 * 1024;  // 5 MB
+const MAX_SIZE_LAUDO = 10 * 1024 * 1024; // 10 MB
+
+export async function uploadArquivoVeiculo(
+  veiculoId: string,
+  tipo: "foto" | "laudo",
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
+
+  // Verifica posse do veículo
+  const { data: veiculo } = await supabase
+    .schema("dealership")
+    .from("veiculo")
+    .select("id")
+    .eq("id", veiculoId)
+    .eq("empresa_id", usuarioAtual.empresa_id)
+    .single();
+  if (!veiculo) return { error: "Veículo não encontrado." };
+
+  const file = formData.get("arquivo") as File | null;
+  if (!file || file.size === 0) return { error: "Nenhum arquivo selecionado." };
+
+  const isFoto = tipo === "foto";
+  const tiposAceitos = isFoto ? TIPOS_FOTO : TIPO_LAUDO;
+  const maxSize = isFoto ? MAX_SIZE_FOTO : MAX_SIZE_LAUDO;
+
+  if (!tiposAceitos.includes(file.type))
+    return { error: isFoto ? "Formato inválido. Use JPEG, PNG ou WebP." : "Formato inválido. Use PDF." };
+  if (file.size > maxSize)
+    return { error: isFoto ? "Foto deve ter no máximo 5 MB." : "Laudo deve ter no máximo 10 MB." };
+
+  // Resolve tipo_arquivo_id no domínio
+  const { data: tipoArquivo } = await supabase
+    .schema("dealership")
+    .from("dominio")
+    .select("id")
+    .eq("grupo_dominio", "tipo_arquivo_veiculo")
+    .eq("nome_dominio", tipo)
+    .single();
+  if (!tipoArquivo) return { error: "Tipo de arquivo não configurado." };
+
+  const adminClient = createAdminClient();
+
+  // Se for laudo: remove o arquivo anterior antes de inserir o novo
+  if (!isFoto) {
+    const { data: laudoAnterior } = await supabase
+      .schema("dealership")
+      .from("veiculo_arquivo")
+      .select("id, caminho_storage")
+      .eq("veiculo_id", veiculoId)
+      .eq("tipo_arquivo_id", tipoArquivo.id)
+      .maybeSingle();
+
+    if (laudoAnterior) {
+      await adminClient.storage.from(BUCKET).remove([laudoAnterior.caminho_storage]);
+      await supabase
+        .schema("dealership")
+        .from("veiculo_arquivo")
+        .delete()
+        .eq("id", laudoAnterior.id);
+    }
+  }
+
+  // Faz upload para o Storage
+  // Extão derivada do content-type validado — deterministic, imune a nomes de arquivo maliciosos
+  const EXT_MAP: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "application/pdf": "pdf",
+  };
+  const ext = EXT_MAP[file.type];
+  const uuid = crypto.randomUUID();
+  const subpasta = isFoto ? "fotos" : "laudo";
+  const caminho = `${usuarioAtual.empresa_id}/${veiculoId}/${subpasta}/${uuid}.${ext}`;
+
+  const { error: storageError } = await adminClient.storage
+    .from(BUCKET)
+    .upload(caminho, file, { contentType: file.type, upsert: false });
+
+  if (storageError) return { error: "Erro ao salvar o arquivo. Tente novamente." };
+
+  const { data: { publicUrl } } = adminClient.storage.from(BUCKET).getPublicUrl(caminho);
+
+  // Define ordem e se é principal (primeira foto = principal)
+  let ordemExibicao = 0;
+  let arquivoPrincipal = false;
+  if (isFoto) {
+    const { count } = await supabase
+      .schema("dealership")
+      .from("veiculo_arquivo")
+      .select("id", { count: "exact", head: true })
+      .eq("veiculo_id", veiculoId)
+      .eq("tipo_arquivo_id", tipoArquivo.id);
+    ordemExibicao = count ?? 0;
+    // Nota: count + arquivoPrincipal é não-atômico. Para eliminar a race condition,
+    // adicione uma constraint UNIQUE parcial no banco (WHERE arquivo_principal = true).
+    arquivoPrincipal = ordemExibicao === 0;
+  }
+
+  // Insere registro no banco
+  const { error: dbError } = await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .insert({
+      veiculo_id: veiculoId,
+      empresa_id: usuarioAtual.empresa_id,
+      tipo_arquivo_id: tipoArquivo.id,
+      url_arquivo: publicUrl,
+      caminho_storage: caminho,
+      tamanho_arquivo: file.size,
+      arquivo_principal: arquivoPrincipal,
+      ordem_exibicao: ordemExibicao,
+      criado_por: usuarioAtual.id,
+    });
+
+  if (dbError) {
+    // Rollback: remove o arquivo do storage se o insert falhar
+    await adminClient.storage.from(BUCKET).remove([caminho]);
+    return { error: "Erro ao registrar o arquivo. Tente novamente." };
+  }
+
+  revalidatePath(`/veiculos/${veiculoId}`);
+  revalidatePath("/veiculos");
+}
+
+// ─── Excluir arquivo ──────────────────────────────────────────────────────────
+
+export async function excluirArquivoVeiculo(
+  veiculoId: string,
+  arquivoId: string
+): Promise<ActionResult> {
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
+
+  const { data: arquivo } = await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .select("id, caminho_storage, arquivo_principal, tipo_arquivo_id")
+    .eq("id", arquivoId)
+    .eq("veiculo_id", veiculoId)
+    .eq("empresa_id", usuarioAtual.empresa_id)
+    .single();
+
+  if (!arquivo) return { error: "Arquivo não encontrado." };
+
+  const adminClient = createAdminClient();
+  const { error: storageRemoveError } = await adminClient.storage.from(BUCKET).remove([arquivo.caminho_storage]);
+  if (storageRemoveError) {
+    // Arquivo já pode não existir no bucket; prosseguimos removendo o registro
+    console.warn(`[excluirArquivoVeiculo] Falha ao remover do Storage: ${arquivo.caminho_storage}`, storageRemoveError.message);
+  }
+
+  const { error: deleteError } = await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .delete()
+    .eq("id", arquivoId);
+
+  if (deleteError) {
+    return { error: "Erro ao excluir o arquivo. Tente novamente." };
+  }
+
+  // Se era a foto principal, promove a próxima foto
+  if (arquivo.arquivo_principal) {
+    const { data: proxima } = await supabase
+      .schema("dealership")
+      .from("veiculo_arquivo")
+      .select("id")
+      .eq("veiculo_id", veiculoId)
+      .eq("empresa_id", usuarioAtual.empresa_id)
+      .eq("tipo_arquivo_id", arquivo.tipo_arquivo_id)
+      .order("ordem_exibicao", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (proxima) {
+      await supabase
+        .schema("dealership")
+        .from("veiculo_arquivo")
+        .update({ arquivo_principal: true })
+        .eq("id", proxima.id);
+    }
+  }
+
+  revalidatePath(`/veiculos/${veiculoId}`);
+  revalidatePath("/veiculos");
+}
+
+// ─── Definir foto principal ───────────────────────────────────────────────────
+
+export async function definirFotoPrincipal(
+  veiculoId: string,
+  arquivoId: string
+): Promise<ActionResult> {
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
+
+  const { data: arquivo } = await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .select("tipo_arquivo_id")
+    .eq("id", arquivoId)
+    .eq("veiculo_id", veiculoId)
+    .eq("empresa_id", usuarioAtual.empresa_id)
+    .single();
+
+  if (!arquivo) return { error: "Arquivo não encontrado." };
+
+  // Remove o principal de todas as fotos deste veículo
+  await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .update({ arquivo_principal: false })
+    .eq("veiculo_id", veiculoId)
+    .eq("empresa_id", usuarioAtual.empresa_id)
+    .eq("tipo_arquivo_id", arquivo.tipo_arquivo_id);
+
+  // Define esta foto como principal
+  await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .update({ arquivo_principal: true })
+    .eq("id", arquivoId);
+
+  revalidatePath(`/veiculos/${veiculoId}`);
+  revalidatePath("/veiculos");
+}
+

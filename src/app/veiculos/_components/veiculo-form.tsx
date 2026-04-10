@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type {
@@ -18,9 +18,15 @@ export interface Dominio {
   nome_dominio: string;
 }
 
+export interface ModeloVeiculo {
+  id: string;
+  marca_id: string | null;
+  nome_dominio: string;
+}
+
 export interface Dominios {
   marcas: Dominio[];
-  modelos: Dominio[];
+  modelos: ModeloVeiculo[];
   combustiveis: Dominio[];
   cambios: Dominio[];
   direcoes: Dominio[];
@@ -63,8 +69,8 @@ export interface QrCodeInfo {
 export interface VeiculoFormProps {
   dominios: Dominios;
   salvarAction: (data: VeiculoFormData) => Promise<ActionResult>;
-  excluirAction?: () => Promise<ActionResult>;
   gerarQrCodeAction?: () => Promise<QrCodeResult>;
+  verificarPlacaAction?: (placa: string) => Promise<ActionResult>;
   initialData?: VeiculoInicial;
   qrCodeInicial?: QrCodeInfo | null;
 }
@@ -73,7 +79,7 @@ export interface VeiculoFormProps {
 
 const PLACA_RE = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
 
-const schema = z.object({
+const baseSchema = z.object({
   placa: z
     .string()
     .transform((v) => v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())
@@ -115,7 +121,9 @@ const schema = z.object({
   vidro_eletrico: z.boolean(),
   trava_eletrica: z.boolean(),
   laudo_aprovado: z.boolean(),
-  data_compra: z.string().min(1, "Data de compra é obrigatória."),
+  data_compra: z.string()
+    .min(1, "Data de compra é obrigatória.")
+    .refine((v) => new Date(v) <= new Date(), "Data de compra não pode ser futura."),
   preco_compra: z.coerce.number().positive("Informe um preço de compra válido."),
   preco_venda: z.coerce.number().min(0).optional().nullable(),
   data_venda: z.string().optional().nullable(),
@@ -123,7 +131,28 @@ const schema = z.object({
   descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof baseSchema>;
+
+// Adiciona validação condicional: preço e data de venda obrigatórios quando situação = Vendido
+function buildVeiculoSchema(vendidoId: string) {
+  return baseSchema.superRefine((data, ctx) => {
+    if (!vendidoId || data.situacao_veiculo_id !== vendidoId) return;
+    if (!data.preco_venda || data.preco_venda <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe o preço de venda.",
+        path: ["preco_venda"],
+      });
+    }
+    if (!data.data_venda) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a data de venda.",
+        path: ["data_venda"],
+      });
+    }
+  });
+}
 
 // ─── Ícones inline ────────────────────────────────────────────────────────────
 
@@ -213,6 +242,69 @@ function FieldError({ msg }: { msg?: string }) {
     <p role="alert" className="text-xs text-red-500 mt-1">
       {msg}
     </p>
+  );
+}
+
+// ─── Campo monetário ─────────────────────────────────────────────────────────
+
+function formatarMoeda(valor: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(valor);
+}
+
+function parsearMoeda(str: string): number | null {
+  // "1.234,56" → 1234.56 | "1234,56" → 1234.56 | "1234.56" → 1234.56
+  const semMilhar = str.replace(/\./g, "");
+  const comPonto = semMilhar.replace(",", ".");
+  const num = parseFloat(comPonto);
+  return isNaN(num) ? null : Math.round(num * 100) / 100;
+}
+
+interface CurrencyInputProps {
+  id: string;
+  value: number | null | undefined;
+  onChange: (value: number | null) => void;
+  onBlur?: () => void;
+  disabled?: boolean;
+  hasError?: boolean;
+}
+
+function CurrencyInput({ id, value, onChange, onBlur, disabled, hasError }: CurrencyInputProps) {
+  const [display, setDisplay] = useState(() =>
+    value != null && value > 0 ? formatarMoeda(value) : ""
+  );
+
+  useEffect(() => {
+    setDisplay(value != null && value > 0 ? formatarMoeda(value) : "");
+  }, [value]);
+
+  const borderCls = hasError
+    ? "border-red-300 focus-within:border-red-400 focus-within:ring-red-100"
+    : "border-brand-gray-mid/60 focus-within:border-brand-black/40 focus-within:ring-brand-black/10";
+
+  return (
+    <div
+      className={`flex items-center w-full rounded-xl border px-4 py-2.5 bg-white transition-colors focus-within:ring-2 ${borderCls}`}
+    >
+      <input
+        id={id}
+        type="text"
+        inputMode="decimal"
+        value={display}
+        onChange={(e) => setDisplay(e.target.value)}
+        onBlur={() => {
+          const parsed = parsearMoeda(display);
+          onChange(parsed);
+          setDisplay(parsed != null ? formatarMoeda(parsed) : "");
+          onBlur?.();
+        }}
+        disabled={disabled}
+        placeholder="0,00"
+        className="flex-1 outline-none bg-transparent text-sm text-brand-black placeholder:text-brand-gray-text/40 min-w-0 disabled:cursor-not-allowed"
+      />
+    </div>
   );
 }
 
@@ -367,6 +459,7 @@ function QrCodeModal({ qrCode, placa, onClose }: QrModalProps) {
 
 interface PlacaStepProps {
   onNext: (placa: string, dadosApi: ApiDadosVeiculo | null) => void;
+  verificarPlacaAction?: (placa: string) => Promise<ActionResult>;
 }
 
 interface ApiDadosVeiculo {
@@ -382,7 +475,7 @@ interface ApiDadosVeiculo {
   valor_fipe?: string | null;
 }
 
-function PlacaStep({ onNext }: PlacaStepProps) {
+function PlacaStep({ onNext, verificarPlacaAction }: PlacaStepProps) {
   const [placa, setPlaca] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -408,25 +501,30 @@ function PlacaStep({ onNext }: PlacaStepProps) {
     setErro(null);
 
     try {
-      const res = await fetch("/api/consulta-placa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placa: normalizada }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          // Veículo não encontrado, mas a placa pode ainda ser cadastrada
-          onNext(normalizada, null);
+      // Verifica se a placa já existe no estoque da empresa
+      if (verificarPlacaAction) {
+        const duplicada = await verificarPlacaAction(normalizada);
+        if (duplicada?.error) {
+          setErro(duplicada.error);
           return;
         }
-        setErro(json?.error ?? "Erro ao consultar a placa.");
-        return;
       }
 
-      onNext(normalizada, json as ApiDadosVeiculo);
+      // TODO: reativar consulta automática por placa quando o provedor estiver configurado
+      // const res = await fetch("/api/consulta-placa", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ placa: normalizada }),
+      // });
+      // const json = await res.json();
+      // if (!res.ok) {
+      //   if (res.status === 404) { onNext(normalizada, null); return; }
+      //   setErro(json?.error ?? "Erro ao consultar a placa.");
+      //   return;
+      // }
+      // onNext(normalizada, json as ApiDadosVeiculo);
+
+      onNext(normalizada, null);
     } catch {
       setErro("Erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
@@ -542,22 +640,27 @@ function PlacaStep({ onNext }: PlacaStepProps) {
 export function VeiculoForm({
   dominios,
   salvarAction,
-  excluirAction,
   gerarQrCodeAction,
+  verificarPlacaAction,
   initialData,
   qrCodeInicial,
 }: VeiculoFormProps) {
   const isEditing = !!initialData;
+
+  // ID da situação "Vendido" derivado dos domínios (estável durante o ciclo de vida)
+  const vendidoId = useMemo(
+    () => dominios.situacoes.find((s) => s.nome_dominio.toLowerCase() === "vendido")?.id ?? "",
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+  const schema = useMemo(() => buildVeiculoSchema(vendidoId), [vendidoId]);
 
   // Etapa do fluxo de criação
   const [step, setStep] = useState<"placa" | "form">(isEditing ? "form" : "placa");
 
   // Estado do formulário
   const [serverError, setServerError] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [valorFipe, setValorFipe] = useState<string | null>(null);
 
   // QR Code
@@ -573,6 +676,7 @@ export function VeiculoForm({
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -585,7 +689,10 @@ export function VeiculoForm({
       combustivel_veiculo_id: initialData?.combustivel_veiculo_id ?? "",
       cambio_veiculo_id: initialData?.cambio_veiculo_id ?? "",
       direcao_veiculo_id: initialData?.direcao_veiculo_id ?? "",
-      situacao_veiculo_id: initialData?.situacao_veiculo_id ?? "",
+      situacao_veiculo_id: initialData?.situacao_veiculo_id ??
+        (dominios.situacoes.find(
+          (s) => s.nome_dominio.toLowerCase() === "disponível"
+        )?.id ?? ""),
       ano_fabricacao: initialData?.ano_fabricacao,
       ano_modelo: initialData?.ano_modelo,
       cor_veiculo: initialData?.cor_veiculo ?? "",
@@ -605,6 +712,16 @@ export function VeiculoForm({
 
   const descricaoValue = watch("descricao") ?? "";
   const placaValue = watch("placa") ?? initialData?.placa ?? "";
+  const marcaIdSelecionada = watch("marca_veiculo_id");
+  const situacaoSelecionadaId = watch("situacao_veiculo_id");
+  const isVendido = !!vendidoId && situacaoSelecionadaId === vendidoId;
+
+  const modelosFiltrados =
+    marcaIdSelecionada
+      ? dominios.modelos.filter(
+          (m) => m.marca_id === marcaIdSelecionada || m.marca_id === null
+        )
+      : dominios.modelos;
 
   // ── Callback da etapa de placa ──────────────────────────────────────────────
 
@@ -690,20 +807,6 @@ export function VeiculoForm({
     }
   };
 
-  // ── Excluir ─────────────────────────────────────────────────────────────────
-
-  const handleDelete = async () => {
-    if (!excluirAction) return;
-    setDeleteError(null);
-    setIsDeleting(true);
-    const result = await excluirAction();
-    if (result?.error) {
-      setDeleteError(result.error);
-      setConfirmingDelete(false);
-      setIsDeleting(false);
-    }
-  };
-
   // ── QR Code ─────────────────────────────────────────────────────────────────
 
   const handleQrCode = async () => {
@@ -727,7 +830,7 @@ export function VeiculoForm({
   // ── Etapa de placa ──────────────────────────────────────────────────────────
 
   if (step === "placa") {
-    return <PlacaStep onNext={handlePlacaNext} />;
+    return <PlacaStep onNext={handlePlacaNext} verificarPlacaAction={verificarPlacaAction} />;
   }
 
   // ── Formulário completo ─────────────────────────────────────────────────────
@@ -898,6 +1001,10 @@ export function VeiculoForm({
               <select
                 id="marca_veiculo_id"
                 {...register("marca_veiculo_id")}
+                onChange={(e) => {
+                  setValue("marca_veiculo_id", e.target.value, { shouldValidate: true });
+                  setValue("modelo_veiculo_id", "");
+                }}
                 disabled={isSaving}
                 className={`${inputCls(!!errors.marca_veiculo_id)} cursor-pointer`}
               >
@@ -919,11 +1026,13 @@ export function VeiculoForm({
               <select
                 id="modelo_veiculo_id"
                 {...register("modelo_veiculo_id")}
-                disabled={isSaving}
+                disabled={isSaving || !marcaIdSelecionada}
                 className={`${inputCls(!!errors.modelo_veiculo_id)} cursor-pointer`}
               >
-                <option value="">Selecione o modelo</option>
-                {dominios.modelos.map((d) => (
+                <option value="">
+                  {marcaIdSelecionada ? "Selecione o modelo" : "Selecione a marca primeiro"}
+                </option>
+                {modelosFiltrados.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.nome_dominio}
                   </option>
@@ -1121,8 +1230,8 @@ export function VeiculoForm({
               <select
                 id="situacao_veiculo_id"
                 {...register("situacao_veiculo_id")}
-                disabled={isSaving}
-                className={`${inputCls(!!errors.situacao_veiculo_id)} cursor-pointer`}
+                disabled={isSaving || !isEditing}
+                className={`${inputCls(!!errors.situacao_veiculo_id)} ${!isEditing ? "bg-brand-gray-soft text-brand-gray-text cursor-not-allowed" : "cursor-pointer"}`}
               >
                 <option value="">Selecione a situação</option>
                 {dominios.situacoes.map((d) => (
@@ -1131,6 +1240,11 @@ export function VeiculoForm({
                   </option>
                 ))}
               </select>
+              {!isEditing && (
+                <p className="text-xs text-brand-gray-text/70">
+                  Todo veículo entra no estoque como <strong>Disponível</strong>.
+                </p>
+              )}
               <FieldError msg={errors.situacao_veiculo_id?.message} />
             </div>
 
@@ -1142,6 +1256,7 @@ export function VeiculoForm({
               <input
                 id="data_compra"
                 type="date"
+                max={new Date().toISOString().split("T")[0]}
                 {...register("data_compra")}
                 disabled={isSaving}
                 className={inputCls(!!errors.data_compra)}
@@ -1154,64 +1269,79 @@ export function VeiculoForm({
               <label htmlFor="preco_compra" className={labelCls}>
                 Preço de Compra (R$) <span className="text-red-500 font-normal">*</span>
               </label>
-              <input
-                id="preco_compra"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0,00"
-                {...register("preco_compra")}
-                disabled={isSaving}
-                className={inputCls(!!errors.preco_compra)}
+              <Controller
+                control={control}
+                name="preco_compra"
+                render={({ field }) => (
+                  <CurrencyInput
+                    id="preco_compra"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    disabled={isSaving}
+                    hasError={!!errors.preco_compra}
+                  />
+                )}
               />
               <FieldError msg={errors.preco_compra?.message} />
             </div>
 
-            {/* Preço de Venda */}
-            <div className="space-y-1.5">
-              <label htmlFor="preco_venda" className={labelCls}>
-                Preço de Venda (R$)
-              </label>
-              <input
-                id="preco_venda"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0,00"
-                {...register("preco_venda")}
-                disabled={isSaving}
-                className={inputCls(!!errors.preco_venda)}
-              />
-              <FieldError msg={errors.preco_venda?.message} />
-            </div>
+            {/* Preço de Venda — apenas quando situação = Vendido */}
+            {isEditing && isVendido && (
+              <div className="space-y-1.5">
+                <label htmlFor="preco_venda" className={labelCls}>
+                  Preço de Venda (R$) <span className="text-red-500 font-normal">*</span>
+                </label>
+                <Controller
+                  control={control}
+                  name="preco_venda"
+                  render={({ field }) => (
+                    <CurrencyInput
+                      id="preco_venda"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      disabled={isSaving}
+                      hasError={!!errors.preco_venda}
+                    />
+                  )}
+                />
+                <FieldError msg={errors.preco_venda?.message} />
+              </div>
+            )}
 
-            {/* Data de Venda */}
-            <div className="space-y-1.5">
-              <label htmlFor="data_venda" className={labelCls}>
-                Data de Venda
-              </label>
-              <input
-                id="data_venda"
-                type="date"
-                {...register("data_venda")}
-                disabled={isSaving}
-                className={inputCls(!!errors.data_venda)}
-              />
-            </div>
+            {/* Data de Venda — apenas quando situação = Vendido */}
+            {isEditing && isVendido && (
+              <div className="space-y-1.5">
+                <label htmlFor="data_venda" className={labelCls}>
+                  Data de Venda <span className="text-red-500 font-normal">*</span>
+                </label>
+                <input
+                  id="data_venda"
+                  type="date"
+                  {...register("data_venda")}
+                  disabled={isSaving}
+                  className={inputCls(!!errors.data_venda)}
+                />
+                <FieldError msg={errors.data_venda?.message} />
+              </div>
+            )}
 
-            {/* Data de Entrega */}
-            <div className="space-y-1.5">
-              <label htmlFor="data_entrega" className={labelCls}>
-                Data de Entrega
-              </label>
-              <input
-                id="data_entrega"
-                type="date"
-                {...register("data_entrega")}
-                disabled={isSaving}
-                className={inputCls(!!errors.data_entrega)}
-              />
-            </div>
+            {/* Data de Entrega — apenas quando situação = Vendido */}
+            {isEditing && isVendido && (
+              <div className="space-y-1.5">
+                <label htmlFor="data_entrega" className={labelCls}>
+                  Data de Entrega
+                </label>
+                <input
+                  id="data_entrega"
+                  type="date"
+                  {...register("data_entrega")}
+                  disabled={isSaving}
+                  className={inputCls(!!errors.data_entrega)}
+                />
+              </div>
+            )}
           </div>
         </section>
 
@@ -1246,61 +1376,6 @@ export function VeiculoForm({
             <FieldError msg={errors.descricao?.message} />
           </div>
         </section>
-
-        {/* ── Zona de perigo (exclusão) ─────────────────────────────────────── */}
-        {isEditing && excluirAction && (
-          <section className="bg-white rounded-2xl border border-red-100 p-6 sm:p-8 print:hidden">
-            <SectionHeader title="Zona de Perigo" />
-            {deleteError && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-4">
-                {deleteError}
-              </div>
-            )}
-            {!confirmingDelete ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-brand-black">
-                    Excluir veículo
-                  </p>
-                  <p className="text-xs text-brand-gray-text mt-0.5">
-                    Esta ação não pode ser desfeita. Todos os dados serão removidos.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingDelete(true)}
-                  className="rounded-full border border-red-200 text-red-600 text-sm font-medium px-5 py-2.5 hover:bg-red-50 transition-colors"
-                >
-                  Excluir
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm text-brand-black">
-                  Tem certeza? Esta ação é <strong>irreversível</strong>.
-                </p>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingDelete(false)}
-                    disabled={isDeleting}
-                    className="rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-4 py-2 hover:bg-brand-gray-soft transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="rounded-full bg-red-600 text-white text-sm font-medium px-4 py-2 hover:bg-red-700 transition-colors disabled:opacity-50"
-                  >
-                    {isDeleting ? "Excluindo..." : "Confirmar Exclusão"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
 
         {/* ── Barra de ações ───────────────────────────────────────────────── */}
         <div className="flex items-center justify-end gap-3 print:hidden">

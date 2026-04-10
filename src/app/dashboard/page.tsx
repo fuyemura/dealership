@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/sign-out-button";
@@ -16,20 +16,9 @@ const statusConfig: Record<string, { label: string; color: StatusBadgeColor }> =
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function tempoRelativo(dateStr: string): string {
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  const diffH = Math.floor(diffMs / 3_600_000);
-  const diffD = Math.floor(diffMs / 86_400_000);
-  if (diffH < 1) return "agora mesmo";
-  if (diffH < 24) return `há ${diffH}h`;
-  if (diffD === 1) return "há 1 dia";
-  return `há ${diffD} dias`;
-}
-
-function determinaAcao(vendidoEm: string | null, criadoEm: string, atualizadoEm: string): string {
-  if (vendidoEm) return "Vendido";
-  const diff = new Date(atualizadoEm).getTime() - new Date(criadoEm).getTime();
-  return diff < 60_000 ? "Cadastrado" : "Atualizado";
+function tempoEmEstoque(dataCompra: string): string {
+  const dias = Math.floor((Date.now() - new Date(dataCompra).getTime()) / 86_400_000);
+  return dias === 0 ? "Hoje" : dias === 1 ? "1 dia" : `${dias} dias`;
 }
 
 // ─── Logo ────────────────────────────────────────────────────────────────────
@@ -217,8 +206,9 @@ export default async function DashboardPage() {
           criado_em,
           atualizado_em,
           data_venda,
-          marca:dominio!marca_veiculo_id(nome_dominio),
-          modelo:dominio!modelo_veiculo_id(nome_dominio),
+          data_compra,
+          marca:veiculo_marca!marca_veiculo_id(nome_dominio:nome),
+          modelo:veiculo_modelo!modelo_veiculo_id(nome_dominio:nome),
           situacao:dominio!situacao_veiculo_id(nome_dominio)
         `)
         .eq("empresa_id", empresaId)
@@ -250,7 +240,7 @@ export default async function DashboardPage() {
   if (vehicleIds.length > 0) {
     const { data: qrCodes } = await supabase
       .schema("dealership")
-      .from("qr_code")
+      .from("veiculo_qr_code")
       .select("total_visualizacoes")
       .in("veiculo_id", vehicleIds);
     qrGerados = qrCodes?.length ?? 0;
@@ -277,7 +267,9 @@ export default async function DashboardPage() {
   const situacaoAssinatura =
     (assinaturaData?.situacao as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "—";
 
-  const atividadeRecente = lista.slice(0, 5);
+  const atividadeRecente = [...lista]
+    .sort((a, b) => new Date(a.data_compra as string).getTime() - new Date(b.data_compra as string).getTime())
+    .slice(0, 5);
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-gray-soft">
@@ -485,7 +477,7 @@ export default async function DashboardPage() {
         {/* ── 4. Atividade Recente ─────────────────────────────────────────── */}
         <section className="bg-white rounded-2xl border border-brand-gray-mid/30 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gray-mid/20">
-            <h2 className="section-label mb-0">Atividade Recente</h2>
+            <h2 className="section-label mb-0">Maior Tempo em Estoque</h2>
             <Link
               href="/veiculos"
               className="inline-flex items-center gap-1 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity"
@@ -499,7 +491,7 @@ export default async function DashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-gray-mid/20">
-                  {["Placa", "Veículo", "Ano", "Ação", "Status", ""].map((col) => (
+                  {["Placa", "Veículo", "Ano", "Tempo em Estoque", "Situação", ""].map((col) => (
                     <th key={col}
                       className="px-6 py-3 text-left text-xs font-semibold text-brand-gray-text uppercase tracking-wide whitespace-nowrap">
                       {col}
@@ -520,8 +512,7 @@ export default async function DashboardPage() {
                   const marcaNome = (v.marca as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
                   const modeloNome = (v.modelo as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
                   const s = statusConfig[situacaoNome] ?? { label: situacaoNome, color: "gray" as StatusBadgeColor };
-                  const acao = determinaAcao(v.data_venda as string | null, v.criado_em as string, v.atualizado_em as string);
-                  const tempo = tempoRelativo(v.atualizado_em as string);
+                  const diasEstoque = tempoEmEstoque(v.data_compra as string);
                   return (
                     <tr key={v.placa} className="hover:bg-brand-gray-soft/50 transition-colors">
                       <td className="px-6 py-3.5 font-mono text-xs font-semibold text-brand-black tracking-wider">
@@ -532,8 +523,9 @@ export default async function DashboardPage() {
                       </td>
                       <td className="px-6 py-3.5 text-brand-gray-text">{v.ano_modelo}</td>
                       <td className="px-6 py-3.5 whitespace-nowrap">
-                        <span className="text-xs text-brand-gray-text">{acao}</span>
-                        <span className="text-xs text-brand-gray-text/60 ml-1.5">{tempo}</span>
+                        <span className="text-xs tabular-nums text-brand-gray-text">
+                          {diasEstoque}
+                        </span>
                       </td>
                       <td className="px-6 py-3.5">
                         <StatusBadge label={s.label} color={s.color} />
@@ -565,8 +557,7 @@ export default async function DashboardPage() {
               const marcaNome = (v.marca as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
               const modeloNome = (v.modelo as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
               const s = statusConfig[situacaoNome] ?? { label: situacaoNome, color: "gray" as StatusBadgeColor };
-              const acao = determinaAcao(v.data_venda as string | null, v.criado_em as string, v.atualizado_em as string);
-              const tempo = tempoRelativo(v.atualizado_em as string);
+              const diasEstoque = tempoEmEstoque(v.data_compra as string);
               return (
                 <div key={v.placa} className="px-5 py-4 flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-0.5 min-w-0">
@@ -577,7 +568,7 @@ export default async function DashboardPage() {
                       {marcaNome} {modeloNome}
                     </span>
                     <span className="text-xs text-brand-gray-text">
-                      {acao} · {tempo}
+                      {diasEstoque} em estoque
                     </span>
                   </div>
                   <StatusBadge label={s.label} color={s.color} />

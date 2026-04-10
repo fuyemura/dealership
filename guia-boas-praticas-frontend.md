@@ -1,4 +1,4 @@
-# Guia de Boas Práticas: Frontend Web com Next.js, TypeScript, Tailwind CSS e Shadcn/ui
+﻿# Guia de Boas Práticas: Frontend Web com Next.js, TypeScript, Tailwind CSS e Shadcn/ui
 
 > Stack: **TypeScript · Next.js 14+ (App Router) · React · Tailwind CSS · Shadcn/ui · Supabase · Vercel**
 
@@ -244,7 +244,7 @@ export type Veiculo    = Tables['veiculo']['Row']
 export type VeiculoFoto = Tables['veiculo_foto']['Row']
 export type Localizacao = Tables['localizacao']['Row']
 export type Dominio    = Tables['dominio']['Row']
-export type QrCode     = Tables['qr_code']['Row']
+export type QrCode     = Tables['veiculo_qr_code']['Row']
 
 // Tipos para Insert e Update
 export type VeiculoInsert = Tables['veiculo']['Insert']
@@ -269,8 +269,8 @@ A tabela `dominio` centraliza enumerações do sistema. Defina constantes TypeSc
 ```typescript
 // src/types/domain.types.ts
 export const GRUPO_DOMINIO = {
-  MARCA_VEICULO:      'MARCA_VEICULO',
-  MODELO_VEICULO:     'MODELO_VEICULO',
+  veiculo_marca:      'veiculo_marca',
+  veiculo_modelo:     'veiculo_modelo',
   COMBUSTIVEL:        'COMBUSTIVEL',
   CAMBIO:             'CAMBIO',
   SITUACAO_VEICULO:   'SITUACAO_VEICULO',
