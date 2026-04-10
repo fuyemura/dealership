@@ -238,13 +238,15 @@ import type { Database } from './database.types'
 // Aliases de tabelas
 type Tables = Database['dealership']['Tables']
 
-export type Empresa    = Tables['empresa']['Row']
-export type Usuario    = Tables['usuario']['Row']
-export type Veiculo    = Tables['veiculo']['Row']
-export type VeiculoFoto = Tables['veiculo_foto']['Row']
-export type Localizacao = Tables['localizacao']['Row']
-export type Dominio    = Tables['dominio']['Row']
-export type QrCode     = Tables['veiculo_qr_code']['Row']
+export type Empresa       = Tables['empresa']['Row']
+export type Usuario       = Tables['usuario']['Row']
+export type Veiculo       = Tables['veiculo']['Row']
+export type VeiculoArquivo = Tables['veiculo_arquivo']['Row']
+export type VeiculoMarca  = Tables['veiculo_marca']['Row']   // tabela dedicada
+export type VeiculoModelo = Tables['veiculo_modelo']['Row']  // tabela dedicada
+export type Localizacao   = Tables['localizacao']['Row']
+export type Dominio       = Tables['dominio']['Row']          // apenas enums (combustivel, cambio…)
+export type QrCode        = Tables['veiculo_qr_code']['Row']
 
 // Tipos para Insert e Update
 export type VeiculoInsert = Tables['veiculo']['Insert']
@@ -252,13 +254,15 @@ export type VeiculoUpdate = Tables['veiculo']['Update']
 export type UsuarioInsert = Tables['usuario']['Insert']
 
 // Tipos compostos para queries com joins
+// marca e modelo vêm de tabelas próprias; os demais atributos enumerados (combustivel,
+// cambio, situacao) continuam sendo joins na tabela dominio.
 export type VeiculoComDetalhes = Veiculo & {
-  marca: Pick<Dominio, 'id' | 'nome_dominio'>
-  modelo: Pick<Dominio, 'id' | 'nome_dominio'>
+  marca:       Pick<VeiculoMarca,  'id' | 'nome'>     // join em veiculo_marca
+  modelo:      Pick<VeiculoModelo, 'id' | 'nome'>     // join em veiculo_modelo
   combustivel: Pick<Dominio, 'id' | 'nome_dominio'>
-  cambio: Pick<Dominio, 'id' | 'nome_dominio'>
-  situacao: Pick<Dominio, 'id' | 'nome_dominio'>
-  fotos: VeiculoFoto[]
+  cambio:      Pick<Dominio, 'id' | 'nome_dominio'>
+  situacao:    Pick<Dominio, 'id' | 'nome_dominio'>
+  arquivos:    VeiculoArquivo[]
 }
 ```
 
@@ -268,13 +272,19 @@ A tabela `dominio` centraliza enumerações do sistema. Defina constantes TypeSc
 
 ```typescript
 // src/types/domain.types.ts
+//
+// ⚠️  veiculo_marca e veiculo_modelo NÃO são grupos de dominio —
+//     possuem tabelas próprias (veiculo_marca, veiculo_modelo).
+//     Use VeiculoMarca / VeiculoModelo para tipar esses dados.
 export const GRUPO_DOMINIO = {
-  veiculo_marca:      'veiculo_marca',
-  veiculo_modelo:     'veiculo_modelo',
-  COMBUSTIVEL:        'COMBUSTIVEL',
-  CAMBIO:             'CAMBIO',
-  SITUACAO_VEICULO:   'SITUACAO_VEICULO',
-  PAPEL_USUARIO:      'PAPEL_USUARIO',
+  COMBUSTIVEL:        'combustivel',
+  CAMBIO:             'cambio',
+  TIPO_DIRECAO:       'tipo_direcao',
+  SITUACAO_VEICULO:   'situacao_veiculo',
+  TIPO_ARQUIVO_VEICULO: 'tipo_arquivo_veiculo',
+  PAPEL_USUARIO:      'papel_usuario',
+  SITUACAO_ASSINATURA: 'situacao_assinatura',
+  CICLO_COBRANCA:     'ciclo_cobranca',
 } as const
 
 export type GrupoDominio = typeof GRUPO_DOMINIO[keyof typeof GRUPO_DOMINIO]
@@ -337,9 +347,9 @@ export default async function VeiculosPage() {
     .from('veiculo')
     .select(`
       *,
-      marca:marca_veiculo_id(id, nome_dominio),
-      modelo:modelo_veiculo_id(id, nome_dominio),
-      fotos:veiculo_foto(*)
+      marca:veiculo_marca!marca_veiculo_id(id, nome),
+      modelo:veiculo_modelo!modelo_veiculo_id(id, nome),
+      fotos:veiculo_arquivo(*)
     `)
 
   return <VeiculoListClient veiculos={veiculos ?? []} />

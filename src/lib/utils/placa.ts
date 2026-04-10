@@ -90,6 +90,11 @@ export async function consultarPlaca(
     return { ok: false, status: 502, error: "Erro ao consultar a placa. Tente novamente." };
   }
 
-  const raw: Record<string, unknown> = await res.json();
+  let raw: Record<string, unknown>;
+  try {
+    raw = await res.json();
+  } catch {
+    return { ok: false, status: 502, error: "Resposta inválida do provedor de consulta de placa." };
+  }
   return { ok: true, data: normalizarResposta(raw) };
 }

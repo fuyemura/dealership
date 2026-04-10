@@ -1,0 +1,4 @@
+id,nome_plano,descricao_plano,preco_mensal,preco_anual,limite_veiculos,limite_usuarios,limite_fotos_veiculo,tem_qr_code,tem_relatorios,tem_suporte_prioritario,plano_ativo,criado_em,atualizado_em
+ffffffff-0001-0000-0000-000000000001,Essencial,Ideal para revendas com até 30 veículos iniciando a digitalização. Inclui QR Code exclusivo por veículo e ficha pública mobile-first.,97.00,null,30,3,5,true,false,false,true,2026-03-19 21:14:16+00,2026-04-10 15:14:52+00
+ffffffff-0001-0000-0000-000000000002,Profissional,"Para revendas em crescimento com até 100 veículos. Inclui QR Code, ficha pública e acesso a relatórios de desempenho.",197.00,null,100,10,15,true,true,false,true,2026-03-19 21:14:16+00,2026-04-10 15:14:52+00
+ffffffff-0001-0000-0000-000000000003,Premium,"Solução completa para redes multiunidade: veículos e usuários ilimitados, QR Code, relatórios e suporte prioritário.",397.00,null,-1,-1,30,true,true,true,true,2026-03-19 21:14:16+00,2026-04-10 15:14:52+00
