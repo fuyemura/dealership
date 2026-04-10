@@ -1,0 +1,283 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 900" width="1440" height="900" fill="none">
+  <rect width="1440" height="900" fill="#fff"></rect>
+  <g opacity="100%">
+    <rect x="0.5" y="0.5" width="1439" height="899" fill="#f8f9fa" stroke="#e5e7eb" stroke-width="1" rx="12" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+  </g>
+  <g opacity="100%">
+    <text x="31" y="49.5" font-family="Open Sans" font-size="30" fill="#030303" letter-spacing="0" font-weight="700" font-style="normal">
+      <tspan x="576">Registro de Veículo</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <text x="20" y="94" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Placa</text>
+  </g>
+  <g opacity="100%">
+    <text x="20" y="185" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Marca</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="20.5" y="196.5" width="249" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="28.5" y="223" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Mitsubishi</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="247.5" y="210">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="20" y="279" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Modelo</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="20.5" y="290.5" width="349" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="28.5" y="317" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>L200 Triton Sport HPE-S 2.4</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="347.5" y="304">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="729" y="94" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Tipo de Veículo</text>
+  </g>
+  <g opacity="100%">
+    <text x="729" y="191" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Ano de Fabricação</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="729.5" y="202.5" width="149" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="737.5" y="229" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>1997</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="856.5" y="216">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M12 5.83 15.17 9l1.41-1.41L12 3 7.41 7.59 8.83 9 12 5.83zm0 12.34L8.83 15l-1.41 1.41L12 21l4.59-4.59L15.17 15 12 18.17z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="952" y="94" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Ano do Modelo</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="952.5" y="105.5" width="149" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="960.5" y="132" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>1998</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="1079.5" y="119">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M12 5.83 15.17 9l1.41-1.41L12 3 7.41 7.59 8.83 9 12 5.83zm0 12.34L8.83 15l-1.41 1.41L12 21l4.59-4.59L15.17 15 12 18.17z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="729" y="282" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Cor</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="729.5" y="293.5" width="149" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="737.5" y="320" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Laranja</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <text x="952" y="282" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Tipo de Combustível</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="952.5" y="293.5" width="149" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="960.5" y="320" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Gasolina</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="1079.5" y="307">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="952" y="373" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Transmissão</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="952.5" y="384.5" width="149" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="960.5" y="411" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Automático</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="1079.5" y="398">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="21" y="461" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Número do Chassi</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="21.5" y="475.5" width="249" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="29.5" y="502" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>
+        <span>9BG116GW04C400001</span>
+      </tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <text x="20" y="370" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">RENAVAM</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="20.5" y="381.5" width="249" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="28.5" y="408" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>12345678901</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <text x="729" y="373" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Quilometragem</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="729.5" y="384.5" width="128" height="41" fill="#fcfcfc" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="737.5" y="411" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal" mask="url(#mask_gajk801gag)">
+      <tspan>Digite a Quilometragem</tspan>
+    </text>
+    <g mask="url(#mask_gajk801gag)">
+      <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="918.5" y="398">
+        <path d="M0 0h24v24H0z" fill="none"></path>
+        <path d="M12 5.83 15.17 9l1.41-1.41L12 3 7.41 7.59 8.83 9 12 5.83zm0 12.34L8.83 15l-1.41 1.41L12 21l4.59-4.59L15.17 15 12 18.17z"></path>
+      </svg>
+    </g>
+    <defs>
+      <mask id="mask_gajk801gag">
+        <rect x="729.5" y="384.5" width="128" height="41" fill="white"></rect>
+      </mask>
+    </defs>
+  </g>
+  <g opacity="100%">
+    <text x="952" y="187" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Número de Portas</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="952.5" y="199.5" width="99" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="960.5" y="226" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>4</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="1029.5" y="213">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M12 5.83 15.17 9l1.41-1.41L12 3 7.41 7.59 8.83 9 12 5.83zm0 12.34L8.83 15l-1.41 1.41L12 21l4.59-4.59L15.17 15 12 18.17z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="21" y="555" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Valor de Venda</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="21.5" y="569.5" width="349" height="41" fill="#fcfcfc" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="29.5" y="596" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Digite o valor de venda</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <text x="729" y="464" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Comentários</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="729.5" y="478.5" width="675" height="116" fill="#fcfcfc" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="737.5" y="542.5" font-family="Open Sans" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Digite qualquer nota adicional</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <text x="728" y="633" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Upload de Fotos do Veículo</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="728.5" y="645.5" width="675" height="99" fill="#fcfcfc" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="736.5" y="701" font-family="Open Sans" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan></tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="1185.5" y="769.5" width="101" height="41" fill="#fff" stroke="#d2d2d7" stroke-width="1" rx="20.5"></rect>
+    <text x="1202.5" y="796" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="600" font-style="normal">
+      <tspan>Cancelar</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="728.5" y="769.5" width="126" height="41" fill="#fff" stroke="#d2d2d7" stroke-width="1" rx="20.5"></rect>
+    <text x="744.5" y="796" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="600" font-style="normal">
+      <tspan>Upload Foto</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="1312" y="769" width="92" height="42" fill="#030303" stroke="#e5e7eb" stroke-width="0" rx="21"></rect>
+    <text x="1334.5" y="796" font-family="Open Sans" font-size="16" fill="#fff" letter-spacing="0" font-weight="600" font-style="normal">
+      <tspan>Salvar</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="729.5" y="104.5" width="149" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="737.5" y="131" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Carro</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="856.5" y="118">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <text x="20" y="649" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Valor da Tabela FIPE</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="20.5" y="663.5" width="349" height="41" fill="#fcfcfc" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="28.5" y="690" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Digite o valor da tabela FIPE</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <text x="20" y="743" font-family="Open Sans" font-size="16" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Status</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="20.5" y="749.5" width="349" height="41" fill="#fcfcfc" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="28.5" y="776" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Digite o Stauts (ex: em negociação)</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#000" x="347.5" y="763">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <rect></rect>
+  <g opacity="100%">
+    <rect x="-1" y="832" width="1440" height="68" fill="#fff" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+    <rect x="-1" y="832" width="1440" height="1" fill="#e5e7eb"></rect>
+  </g>
+  <g opacity="100%">
+    <text x="31" y="869.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">© 2025 Uyemura Tech. Todos os direitos reservados.</text>
+  </g>
+  <g opacity="100%">
+    <text x="987" y="869.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Política de Privacidade</text>
+  </g>
+  <g opacity="100%">
+    <text x="1315" y="869.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Contate-Nos</text>
+  </g>
+  <g opacity="100%">
+    <text x="1165" y="869.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Termos de Serviço</text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_8_0_2_00000029)" x="21.5" y="107.5" width="149" height="41" fill="#fdffc8" rx="6" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="29.5" y="134" font-family="Open Sans" font-size="16" fill="#000" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>EAD2343</tspan>
+    </text>
+  </g>
+  <defs>
+    <filter id="filter_dshadow_6_0_4_0000001a" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="bg-fix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="alpha"></feColorMatrix>
+      <feOffset dx="0" dy="4"></feOffset>
+      <feGaussianBlur stdDeviation="3"></feGaussianBlur>
+      <feComposite in2="alpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"></feColorMatrix>
+      <feBlend mode="normal" in2="bg-fix" result="bg-fix-filter_dshadow_6_0_4_0000001a"></feBlend>
+      <feBlend in="SourceGraphic" in2="bg-fix-filter_dshadow_6_0_4_0000001a" result="shape"></feBlend>
+    </filter>
+    <filter id="filter_dshadow_8_0_2_00000029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="bg-fix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="alpha"></feColorMatrix>
+      <feOffset dx="0" dy="2"></feOffset>
+      <feGaussianBlur stdDeviation="4"></feGaussianBlur>
+      <feComposite in2="alpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0"></feColorMatrix>
+      <feBlend mode="normal" in2="bg-fix" result="bg-fix-filter_dshadow_8_0_2_00000029"></feBlend>
+      <feBlend in="SourceGraphic" in2="bg-fix-filter_dshadow_8_0_2_00000029" result="shape"></feBlend>
+    </filter>
+    <style id="google">@import url(https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&amp;display=swap);
+</style>
+    <style id="brand"></style>
+  </defs>
+</svg>

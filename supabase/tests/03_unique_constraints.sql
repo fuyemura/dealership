@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- 03_unique_constraints.sql
 -- Verifica constraints UNIQUE declaradas no schema dealership.
 -- Cobre constraints simples e compostas (multi-coluna).
@@ -72,12 +72,12 @@ SELECT col_is_unique(
 );
 
 -- -----------------------------------------------------------------------------
--- qr_code
--- uk_qr_code_token_publica: token de acesso único
+-- veiculo_qr_code
+-- uk_veiculo_qr_code_token_publica: token de acesso único
 -- -----------------------------------------------------------------------------
 SELECT col_is_unique(
-    'dealership', 'qr_code', 'token_publica',
-    'uk_qr_code_token_publica: qr_code.token_publica deve ser único'
+    'dealership', 'veiculo_qr_code', 'token_publica',
+    'uk_veiculo_qr_code_token_publica: veiculo_qr_code.token_publica deve ser único'
 );
 
 -- -----------------------------------------------------------------------------

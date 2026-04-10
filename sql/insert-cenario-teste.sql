@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Uyemura Tech — Massa de Dados para Teste
 -- Schema: dealership
 -- 3 empresas | 3 usuários por empresa (9 total) | 60 veículos distribuídos
@@ -15,34 +15,45 @@ INSERT INTO dealership.localizacao (id, cep, logradouro, numero_logradouro, comp
 
 
 -- =============================================================================
--- 2. DOMÍNIOS (enum store)
+-- 2. MARCAS E MODELOS DE VEÍCULOS
 -- =============================================================================
 
--- grupo: marca
-INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-('aaaaaaaa-0001-0000-0000-000000000001', 'marca', 'Toyota'),
-('aaaaaaaa-0001-0000-0000-000000000002', 'marca', 'Honda'),
-('aaaaaaaa-0001-0000-0000-000000000003', 'marca', 'Volkswagen'),
-('aaaaaaaa-0001-0000-0000-000000000004', 'marca', 'Chevrolet'),
-('aaaaaaaa-0001-0000-0000-000000000005', 'marca', 'Hyundai'),
-('aaaaaaaa-0001-0000-0000-000000000006', 'marca', 'Fiat'),
-('aaaaaaaa-0001-0000-0000-000000000007', 'marca', 'Ford'),
-('aaaaaaaa-0001-0000-0000-000000000008', 'marca', 'Nissan')
-ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
+INSERT INTO dealership.veiculo_marca (id, nome) VALUES
+('aaaaaaaa-0001-0000-0000-000000000001', 'Toyota'),
+('aaaaaaaa-0001-0000-0000-000000000002', 'Honda'),
+('aaaaaaaa-0001-0000-0000-000000000003', 'Volkswagen'),
+('aaaaaaaa-0001-0000-0000-000000000004', 'Chevrolet'),
+('aaaaaaaa-0001-0000-0000-000000000005', 'Hyundai'),
+('aaaaaaaa-0001-0000-0000-000000000006', 'Fiat'),
+('aaaaaaaa-0001-0000-0000-000000000007', 'Ford'),
+('aaaaaaaa-0001-0000-0000-000000000008', 'Nissan')
+ON CONFLICT (nome) DO NOTHING;
 
--- grupo: modelo
-INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
-('aaaaaaaa-0002-0000-0000-000000000001', 'modelo', 'Corolla'),
-('aaaaaaaa-0002-0000-0000-000000000002', 'modelo', 'Civic'),
-('aaaaaaaa-0002-0000-0000-000000000003', 'modelo', 'Gol'),
-('aaaaaaaa-0002-0000-0000-000000000004', 'modelo', 'Onix'),
-('aaaaaaaa-0002-0000-0000-000000000005', 'modelo', 'HB20'),
-('aaaaaaaa-0002-0000-0000-000000000006', 'modelo', 'Argo'),
-('aaaaaaaa-0002-0000-0000-000000000007', 'modelo', 'Ka'),
-('aaaaaaaa-0002-0000-0000-000000000008', 'modelo', 'Kicks'),
-('aaaaaaaa-0002-0000-0000-000000000009', 'modelo', 'Polo'),
-('aaaaaaaa-0002-0000-0000-000000000010', 'modelo', 'Hilux')
-ON CONFLICT (grupo_dominio, nome_dominio) DO NOTHING;
+INSERT INTO dealership.veiculo_modelo (id, marca_id, nome) VALUES
+-- Toyota
+('aaaaaaaa-0002-0000-0000-000000000001', 'aaaaaaaa-0001-0000-0000-000000000001', 'Corolla'),
+('aaaaaaaa-0002-0000-0000-000000000010', 'aaaaaaaa-0001-0000-0000-000000000001', 'Hilux'),
+-- Honda
+('aaaaaaaa-0002-0000-0000-000000000002', 'aaaaaaaa-0001-0000-0000-000000000002', 'Civic'),
+-- Volkswagen
+('aaaaaaaa-0002-0000-0000-000000000003', 'aaaaaaaa-0001-0000-0000-000000000003', 'Gol'),
+('aaaaaaaa-0002-0000-0000-000000000009', 'aaaaaaaa-0001-0000-0000-000000000003', 'Polo'),
+-- Chevrolet
+('aaaaaaaa-0002-0000-0000-000000000004', 'aaaaaaaa-0001-0000-0000-000000000004', 'Onix'),
+-- Hyundai
+('aaaaaaaa-0002-0000-0000-000000000005', 'aaaaaaaa-0001-0000-0000-000000000005', 'HB20'),
+-- Fiat
+('aaaaaaaa-0002-0000-0000-000000000006', 'aaaaaaaa-0001-0000-0000-000000000006', 'Argo'),
+-- Ford
+('aaaaaaaa-0002-0000-0000-000000000007', 'aaaaaaaa-0001-0000-0000-000000000007', 'Ka'),
+-- Nissan
+('aaaaaaaa-0002-0000-0000-000000000008', 'aaaaaaaa-0001-0000-0000-000000000008', 'Kicks')
+ON CONFLICT (marca_id, nome) DO NOTHING;
+
+
+-- =============================================================================
+-- 2. DOMÍNIOS (enum store) — apenas grupos não migrados para tabelas dedicadas
+-- =============================================================================
 
 -- grupo: combustivel
 INSERT INTO dealership.dominio (id, grupo_dominio, nome_dominio) VALUES
@@ -469,7 +480,7 @@ INSERT INTO dealership.veiculo (id, empresa_id, placa, renavam, marca_veiculo_id
 -- 7. QR CODES (1 por veículo — amostra dos 60)
 -- =============================================================================
 
-INSERT INTO dealership.qr_code (id, veiculo_id, url_publica, token_publica, total_visualizacoes, criado_em) VALUES
+INSERT INTO dealership.veiculo_qr_code (id, veiculo_id, url_publica, token_publica, total_visualizacoes, criado_em) VALUES
 -- AutoElite
 ('ffffffff-0001-0000-0000-000000000001','eeeeeeee-0001-0000-0000-000000000001','https://app.uyemura.tech/v/ae-001','TK-AE-001-abc123',42, NOW()),
 ('ffffffff-0001-0000-0000-000000000002','eeeeeeee-0001-0000-0000-000000000002','https://app.uyemura.tech/v/ae-002','TK-AE-002-def456',18, NOW()),
@@ -561,7 +572,7 @@ INSERT INTO dealership.assinatura (id, empresa_id, plano_id, situacao_assinatura
 --  usuario         →   9 registros (3 por empresa)
 --  cliente         →   6 registros (2 por empresa)
 --  veiculo         →  60 registros (20 por empresa)
---  qr_code         →  15 registros (5 por empresa — amostra)
+--  veiculo_qr_code         →  15 registros (5 por empresa — amostra)
 --  plano           →   3 registros
 --  assinatura      →   3 registros (1 por empresa)
 -- =============================================================================

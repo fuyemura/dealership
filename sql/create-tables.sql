@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Uyemura Tech — Schema dealership — v8 final
 -- Nomenclatura conforme README-DB.md § 9
 --   UK  → uk_<tabela>_<coluna>
@@ -284,7 +284,7 @@ ALTER TABLE dealership.veiculo_arquivo ADD PRIMARY KEY (id);
 
 -- -----------------------------------------------------------------------------
 
-CREATE TABLE dealership.qr_code (
+CREATE TABLE dealership.veiculo_qr_code (
     id                  UUID         NOT NULL DEFAULT gen_random_uuid(),
     veiculo_id          UUID         NOT NULL,
     url_publica         VARCHAR(255) NOT NULL,
@@ -293,18 +293,18 @@ CREATE TABLE dealership.qr_code (
     criado_em           TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_qr_code_veiculo_id ON dealership.qr_code (veiculo_id);
+CREATE INDEX idx_veiculo_qr_code_veiculo_id ON dealership.veiculo_qr_code (veiculo_id);
 
-COMMENT ON TABLE  dealership.qr_code                       IS 'Cadastro dos QR Codes gerados para os veículos.';
-COMMENT ON COLUMN dealership.qr_code.id                    IS 'Chave primária (PK) de identificação do QR Code.';
-COMMENT ON COLUMN dealership.qr_code.veiculo_id            IS 'Chave estrangeira (FK) de identificação do veículo.';
-COMMENT ON COLUMN dealership.qr_code.url_publica           IS 'URL pública associada ao QR Code.';
-COMMENT ON COLUMN dealership.qr_code.token_publica         IS 'Token único e específico do QR Code.';
-COMMENT ON COLUMN dealership.qr_code.total_visualizacoes   IS 'Quantidade total de visualizações do QR Code.';
-COMMENT ON COLUMN dealership.qr_code.criado_em             IS 'Data e hora de criação do registro na tabela.';
+COMMENT ON TABLE  dealership.veiculo_qr_code                       IS 'Cadastro dos QR Codes gerados para os veículos.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.id                    IS 'Chave primária (PK) de identificação do QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.veiculo_id            IS 'Chave estrangeira (FK) de identificação do veículo.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.url_publica           IS 'URL pública associada ao QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.token_publica         IS 'Token único e específico do QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.total_visualizacoes   IS 'Quantidade total de visualizações do QR Code.';
+COMMENT ON COLUMN dealership.veiculo_qr_code.criado_em             IS 'Data e hora de criação do registro na tabela.';
 
-ALTER TABLE dealership.qr_code ADD PRIMARY KEY (id);
-ALTER TABLE dealership.qr_code ADD CONSTRAINT uk_qr_code_token_publica UNIQUE (token_publica);
+ALTER TABLE dealership.veiculo_qr_code ADD PRIMARY KEY (id);
+ALTER TABLE dealership.veiculo_qr_code ADD CONSTRAINT uk_veiculo_qr_code_token_publica UNIQUE (token_publica);
 
 
 -- -----------------------------------------------------------------------------
@@ -694,9 +694,9 @@ ALTER TABLE dealership.veiculo_arquivo
     ADD CONSTRAINT fk_veiculo_arquivo_criado_por
     FOREIGN KEY (criado_por) REFERENCES dealership.usuario (id);
 
--- qr_code
-ALTER TABLE dealership.qr_code
-    ADD CONSTRAINT fk_qr_code_veiculo_id
+-- veiculo_qr_code
+ALTER TABLE dealership.veiculo_qr_code
+    ADD CONSTRAINT fk_veiculo_qr_code_veiculo_id
     FOREIGN KEY (veiculo_id) REFERENCES dealership.veiculo (id);
 
 -- assinatura

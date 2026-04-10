@@ -1,4 +1,4 @@
--- ---------------------------------------------------------------------------
+﻿-- ---------------------------------------------------------------------------
 -- HELPER: resolve empresa_id do usuário autenticado
 -- Centraliza a subquery para todas as policies
 -- ---------------------------------------------------------------------------
@@ -51,6 +51,16 @@ WITH CHECK (
 ALTER TABLE dealership.dominio ENABLE ROW LEVEL SECURITY;
 CREATE POLICY dominio_leitura_autenticada
 ON dealership.dominio FOR SELECT
+USING (auth.role() = 'authenticated');
+
+ALTER TABLE dealership.veiculo_marca ENABLE ROW LEVEL SECURITY;
+CREATE POLICY veiculo_marca_leitura_autenticada
+ON dealership.veiculo_marca FOR SELECT
+USING (auth.role() = 'authenticated');
+
+ALTER TABLE dealership.veiculo_modelo ENABLE ROW LEVEL SECURITY;
+CREATE POLICY veiculo_modelo_leitura_autenticada
+ON dealership.veiculo_modelo FOR SELECT
 USING (auth.role() = 'authenticated');
 
 ALTER TABLE dealership.plano ENABLE ROW LEVEL SECURITY;
@@ -112,10 +122,10 @@ ON dealership.veiculo_arquivo FOR ALL
 USING (empresa_id = dealership.get_empresa_id_do_usuario())
 WITH CHECK (empresa_id = dealership.get_empresa_id_do_usuario());
 
--- qr_code (sem empresa_id próprio — isolamento via veiculo)
-ALTER TABLE dealership.qr_code ENABLE ROW LEVEL SECURITY;
-CREATE POLICY qr_code_empresa_isolada
-ON dealership.qr_code FOR ALL
+-- veiculo_qr_code (sem empresa_id próprio — isolamento via veiculo)
+ALTER TABLE dealership.veiculo_qr_code ENABLE ROW LEVEL SECURITY;
+CREATE POLICY veiculo_qr_code_empresa_isolada
+ON dealership.veiculo_qr_code FOR ALL
 USING (
   veiculo_id IN (
     SELECT id FROM dealership.veiculo
@@ -139,6 +149,67 @@ CREATE POLICY assinatura_empresa_isolada_update
 ON dealership.assinatura FOR UPDATE
 USING (empresa_id = dealership.get_empresa_id_do_usuario())
 WITH CHECK (empresa_id = dealership.get_empresa_id_do_usuario());
+
+-- assinatura_historico (somente leitura via client — INSERT apenas via trigger/service role)
+ALTER TABLE dealership.assinatura_historico ENABLE ROW LEVEL SECURITY;
+CREATE POLICY assinatura_historico_empresa_isolada_select
+ON dealership.assinatura_historico FOR SELECT
+USING (empresa_id = dealership.get_empresa_id_do_usuario());
+
+
+-- =============================================================================
+-- [E] STORAGE — bucket 'veiculos' (fotos e laudo técnico dos veículos)
+-- =============================================================================
+-- O upload/delete real é feito via adminClient (service role) nas Server Actions,
+-- mas as policies abaixo protegem o bucket contra acesso direto pela API.
+
+-- Leitura pública: necessário para as <img> carregarem sem autenticação
+CREATE POLICY "veiculos_leitura_publica"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'veiculos');
+
+-- Upload: usuário autenticado, somente no prefixo da própria empresa
+-- Estrutura do path: {empresa_id}/{veiculo_id}/{fotos|laudo}/{uuid}.{ext}
+CREATE POLICY "veiculos_upload_autenticado"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'veiculos'
+  AND (storage.foldername(name))[1] = (
+    SELECT empresa_id::text
+    FROM dealership.usuario
+    WHERE auth_id = auth.uid()
+    LIMIT 1
+  )
+);
+
+-- Update: mesma restrição de empresa
+CREATE POLICY "veiculos_update_autenticado"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'veiculos'
+  AND (storage.foldername(name))[1] = (
+    SELECT empresa_id::text
+    FROM dealership.usuario
+    WHERE auth_id = auth.uid()
+    LIMIT 1
+  )
+);
+
+-- Delete: necessário para excluir fotos e laudo
+CREATE POLICY "veiculos_delete_autenticado"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'veiculos'
+  AND (storage.foldername(name))[1] = (
+    SELECT empresa_id::text
+    FROM dealership.usuario
+    WHERE auth_id = auth.uid()
+    LIMIT 1
+  )
+);
 
 -- fatura (somente leitura via client — escrita via service role)
 ALTER TABLE dealership.fatura ENABLE ROW LEVEL SECURITY;

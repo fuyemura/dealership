@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Funções transacionais — schema dealership
 -- =============================================================================
 
@@ -92,3 +92,27 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION dealership.atualizar_empresa_completa TO authenticated;
+
+
+-- -----------------------------------------------------------------------------
+-- incrementar_visualizacao
+--
+-- Incremento atômico do contador de visualizações do QR Code.
+-- Evita race condition da sequência read → write feita no app.
+--
+-- SECURITY DEFINER: executada como o owner do schema, necessário pois a tabela
+-- veiculo_qr_code não tem policy de UPDATE para usuários anônimos (acesso público).
+-- SET search_path = '' previne search_path injection.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION dealership.incrementar_visualizacao(p_qr_id UUID)
+RETURNS VOID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  UPDATE dealership.veiculo_qr_code
+  SET total_visualizacoes = total_visualizacoes + 1
+  WHERE id = p_qr_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION dealership.incrementar_visualizacao TO anon, authenticated;
