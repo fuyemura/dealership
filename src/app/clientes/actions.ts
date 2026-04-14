@@ -2,36 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
+import { PAPEIS } from "@/lib/auth/roles";
 import { validarCpf, sanitizarCpf } from "@/lib/utils/validators";
 
 export type ActionResult = { error: string } | undefined;
-
-// ─── Helper interno ───────────────────────────────────────────────────────────
-
-async function getUsuarioAutorizado() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuarioAtual } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuarioAtual?.empresa_id) redirect("/login");
-
-  const papel =
-    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
-
-  return { supabase, usuarioAtual, papel };
-}
 
 // ─── Validação server-side ────────────────────────────────────────────────────
 
@@ -141,7 +116,7 @@ export async function atualizarCliente(
 export async function excluirCliente(id: string): Promise<ActionResult> {
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
-  if (papel !== "administrador") {
+  if (papel !== PAPEIS.ADMINISTRADOR) {
     return { error: "Apenas administradores podem excluir clientes." };
   }
 

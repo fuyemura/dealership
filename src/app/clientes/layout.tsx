@@ -48,8 +48,9 @@ export default async function ClientesLayout({
     .toUpperCase();
 
   const papel = usuario.papel as unknown as { nome_dominio: string } | null;
-  const isAdmin = papel?.nome_dominio === "administrador";
-  const temAcessoConfig = isAdmin || papel?.nome_dominio === "gerente";
+  const papelNome = papel?.nome_dominio?.toLowerCase() ?? "";
+  const isAdmin = papelNome === "administrador";
+  const temAcessoConfig = isAdmin || papelNome === "gerente";
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-gray-soft">

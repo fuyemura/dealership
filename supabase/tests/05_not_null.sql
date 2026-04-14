@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- 05_not_null.sql
 -- Verifica estruturalmente, via catálogo do PostgreSQL, que todas as colunas
 -- obrigatórias (NOT NULL) estão corretamente definidas em cada tabela.
@@ -100,12 +100,12 @@ SELECT col_not_null('dealership', 'veiculo_arquivo', 'ordem_exibicao',    'veicu
 SELECT col_not_null('dealership', 'veiculo_arquivo', 'criado_por',        'veiculo_arquivo.criado_por NOT NULL');
 
 -- =============================================================================
--- qr_code (4 colunas NOT NULL)
+-- veiculo_qr_code (4 colunas NOT NULL)
 -- =============================================================================
-SELECT col_not_null('dealership', 'qr_code', 'veiculo_id',          'qr_code.veiculo_id NOT NULL');
-SELECT col_not_null('dealership', 'qr_code', 'url_publica',         'qr_code.url_publica NOT NULL');
-SELECT col_not_null('dealership', 'qr_code', 'token_publica',       'qr_code.token_publica NOT NULL');
-SELECT col_not_null('dealership', 'qr_code', 'total_visualizacoes', 'qr_code.total_visualizacoes NOT NULL (DEFAULT 0)');
+SELECT col_not_null('dealership', 'veiculo_qr_code', 'veiculo_id',          'veiculo_qr_code.veiculo_id NOT NULL');
+SELECT col_not_null('dealership', 'veiculo_qr_code', 'url_publica',         'veiculo_qr_code.url_publica NOT NULL');
+SELECT col_not_null('dealership', 'veiculo_qr_code', 'token_publica',       'veiculo_qr_code.token_publica NOT NULL');
+SELECT col_not_null('dealership', 'veiculo_qr_code', 'total_visualizacoes', 'veiculo_qr_code.total_visualizacoes NOT NULL (DEFAULT 0)');
 
 -- =============================================================================
 -- plano (9 colunas NOT NULL)

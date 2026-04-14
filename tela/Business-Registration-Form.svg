@@ -1,0 +1,273 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 900" width="1440" height="900" fill="none">
+  <rect width="1440" height="900" fill="#fff"></rect>
+  <g opacity="100%">
+    <rect x="0" y="0" width="1440" height="900" fill="#f8f9fa" stroke="#e5e7eb" stroke-width="0" rx="0" filter="url(#filter_dshadow_0_0_0_00000014)"></rect>
+  </g>
+  <g opacity="100%" mask="url(#mask_vquuq15t0n)">
+    <text x="56" y="56.5" font-family="Poppins" font-size="42" fill="#030303" letter-spacing="0" font-weight="600" font-style="normal">
+      <tspan x="498">Registro Empresarial</tspan>
+    </text>
+    <defs>
+      <mask id="mask_vquuq15t0n">
+        <rect x="56" y="16" width="1328" height="50" fill="white"></rect>
+      </mask>
+    </defs>
+  </g>
+  <g opacity="100%">
+    <rect x="20" y="94" width="700" height="280" fill="#fff" stroke="#e5e7eb" stroke-width="0" rx="12" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+  </g>
+  <g opacity="100%" mask="url(#mask_7plidrvkxh)">
+    <text x="34" y="124" font-family="Poppins" font-size="20" fill="#030303" letter-spacing="0" font-weight="700" font-style="normal">Informações da Empresa</text>
+    <defs>
+      <mask id="mask_7plidrvkxh">
+        <rect x="34" y="103" width="265" height="27" fill="white"></rect>
+      </mask>
+    </defs>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="34.5" y="213.5" width="339" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="42.5" y="242" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Nome Legal (Razão Social)</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="34.5" y="282.5" width="339" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="42.5" y="311" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Nome Fantasia</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="34.5" y="146.5" width="339" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="42.5" y="175" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>CNPJ</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="435.5" y="213.5" width="260" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="443.5" y="242" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Inscrição Estadual</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="435.5" y="146.5" width="260" height="48" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="443.5" y="176" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Inscrição Municipal</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="435.5" y="280.5" width="260" height="48" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="443.5" y="310" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Tipo de Pessoa Jurídica</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#94a3b8" x="673.5" y="297.5">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <rect x="20" y="392" width="700" height="250" fill="#fff" stroke="#e5e7eb" stroke-width="0" rx="12" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+  </g>
+  <g opacity="100%" mask="url(#mask_xczzqoby0n)">
+    <text x="44" y="428" font-family="Poppins" font-size="20" fill="#030303" letter-spacing="0" font-weight="700" font-style="normal">Endereço Comercial</text>
+    <defs>
+      <mask id="mask_xczzqoby0n">
+        <rect x="44" y="407" width="227" height="25" fill="white"></rect>
+      </mask>
+    </defs>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="44.5" y="452.5" width="169" height="42" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="52.5" y="479" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>CEP</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="303.5" y="452.5" width="388" height="42" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="311.5" y="479" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Logradouro</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="303.5" y="515.5" width="149" height="42" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="311.5" y="542" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Número</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="473.5" y="515.5" width="218" height="42" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="481.5" y="542" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Complemento</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="44.5" y="515.5" width="205" height="42" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="52.5" y="542" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Bairro</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="44.5" y="573.5" width="205" height="42" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="52.5" y="600" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Cidade</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="303.5" y="572.5" width="149" height="42" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="311.5" y="599" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Estado (UF)</tspan>
+    </text>
+    <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 24 24" fill="#94a3b8" x="430.5" y="586.5">
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+    </svg>
+  </g>
+  <g opacity="100%">
+    <rect x="740" y="282" width="680" height="170" fill="#fff" stroke="#e5e7eb" stroke-width="0" rx="12" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+  </g>
+  <g opacity="100%" mask="url(#mask_lvbnvhtp3p)">
+    <text x="752" y="317" font-family="Poppins" font-size="20" fill="#030303" letter-spacing="0" font-weight="700" font-style="normal">Detalhes de Contato</text>
+    <defs>
+      <mask id="mask_lvbnvhtp3p">
+        <rect x="752" y="296" width="239" height="27" fill="white"></rect>
+      </mask>
+    </defs>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="752.5" y="328.5" width="289" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="760.5" y="357" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Telefone Principal</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="1110.5" y="328.5" width="289" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="1118.5" y="357" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Telefone Secundário</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="752.5" y="395.5" width="647" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="760.5" y="424" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Email da Empresa</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect x="740" y="94" width="680" height="168" fill="#fff" stroke="#e5e7eb" stroke-width="0" rx="12" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+  </g>
+  <g opacity="100%" mask="url(#mask_12ey3ii1c8)">
+    <text x="756" y="124" font-family="Poppins" font-size="20" fill="#030303" letter-spacing="0" font-weight="700" font-style="normal">Representante Legal</text>
+    <defs>
+      <mask id="mask_12ey3ii1c8">
+        <rect x="756" y="103" width="239" height="27" fill="white"></rect>
+      </mask>
+    </defs>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="756.5" y="135.5" width="388" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="764.5" y="164" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Nome Completo</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="1165.5" y="135.5" width="219" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="1173.5" y="164" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>CPF</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="756.5" y="202.5" width="388" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="764.5" y="231" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Cargo</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="1165.5" y="202.5" width="224" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="1173.5" y="231" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Telefone ou WhatsApp</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect x="740" y="472" width="680" height="170" fill="#fff" stroke="#e5e7eb" stroke-width="0" rx="12" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+  </g>
+  <g opacity="100%" mask="url(#mask_z76s0smzc)">
+    <text x="752" y="503" font-family="Poppins" font-size="20" fill="#030303" letter-spacing="0" font-weight="700" font-style="normal">Acesso à Plataforma</text>
+    <defs>
+      <mask id="mask_z76s0smzc">
+        <rect x="752" y="482" width="220" height="27" fill="white"></rect>
+      </mask>
+    </defs>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="752.5" y="514.5" width="647" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="760.5" y="543" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>E-mail do usuário</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="752.5" y="581.5" width="289" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="760.5" y="610" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Senha</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="1110.5" y="581.5" width="289" height="46" fill="#fcfcfc" rx="12" stroke="#d2d2d7" stroke-width="1"></rect>
+    <text x="1118.5" y="610" font-family="Poppins" font-size="16" fill="#94a3b8" letter-spacing="0" font-weight="500" font-style="normal">
+      <tspan>Confirmar Senha</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="1203.5" y="662.5" width="107" height="39" fill="#fff" stroke="#d2d2d7" stroke-width="1" rx="12"></rect>
+    <text x="1219.5" y="687.5" font-family="Poppins" font-size="16" fill="#030303" letter-spacing="0" font-weight="600" font-style="normal">
+      <tspan>Cancelar</tspan>
+    </text>
+  </g>
+  <g opacity="100%">
+    <rect filter="url(#filter_dshadow_0_0_0_00000014)" x="1331" y="662" width="89" height="40" fill="#030303" stroke="#e5e7eb" stroke-width="0" rx="12"></rect>
+    <text x="1349.5" y="687.5" font-family="Poppins" font-size="16" fill="#fff" letter-spacing="0" font-weight="600" font-style="normal">
+      <tspan>Salvar</tspan>
+    </text>
+  </g>
+  <rect></rect>
+  <g opacity="100%">
+    <rect x="0" y="837" width="1440" height="68" fill="#fff" filter="url(#filter_dshadow_6_0_4_0000001a)"></rect>
+    <rect x="0" y="837" width="1440" height="1" fill="#e5e7eb"></rect>
+  </g>
+  <g opacity="100%">
+    <text x="32" y="874.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">© 2025 Uyemura Tech. Todos os direitos reservados.</text>
+  </g>
+  <g opacity="100%">
+    <text x="988" y="874.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Política de Privacidade</text>
+  </g>
+  <g opacity="100%">
+    <text x="1316" y="874.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Contate-Nos</text>
+  </g>
+  <g opacity="100%">
+    <text x="1166" y="874.5" font-family="Open Sans" font-size="14" fill="#030303" letter-spacing="0" font-weight="normal" font-style="normal">Termos de Serviço</text>
+  </g>
+  <defs>
+    <filter id="filter_dshadow_0_0_0_00000014" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="bg-fix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="alpha"></feColorMatrix>
+      <feOffset dx="0" dy="0"></feOffset>
+      <feGaussianBlur stdDeviation="0"></feGaussianBlur>
+      <feComposite in2="alpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"></feColorMatrix>
+      <feBlend mode="normal" in2="bg-fix" result="bg-fix-filter_dshadow_0_0_0_00000014"></feBlend>
+      <feBlend in="SourceGraphic" in2="bg-fix-filter_dshadow_0_0_0_00000014" result="shape"></feBlend>
+    </filter>
+    <filter id="filter_dshadow_6_0_4_0000001a" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="bg-fix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="alpha"></feColorMatrix>
+      <feOffset dx="0" dy="4"></feOffset>
+      <feGaussianBlur stdDeviation="3"></feGaussianBlur>
+      <feComposite in2="alpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"></feColorMatrix>
+      <feBlend mode="normal" in2="bg-fix" result="bg-fix-filter_dshadow_6_0_4_0000001a"></feBlend>
+      <feBlend in="SourceGraphic" in2="bg-fix-filter_dshadow_6_0_4_0000001a" result="shape"></feBlend>
+    </filter>
+    <style id="google">@import url(https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap);
+@import url(https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&amp;display=swap);
+</style>
+    <style id="brand"></style>
+  </defs>
+</svg>

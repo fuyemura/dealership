@@ -34,7 +34,11 @@ export function formatCep(raw: string): string {
 }
 
 export function formatData(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("pt-BR", {
+  // Aceita "YYYY-MM-DD" e ISO timestamps "YYYY-MM-DDTHH:mm:ss...".
+  // new Date("YYYY-MM-DD") interpreta como UTC midnight, gerando off-by-one
+  // em fusos negativos (Brasil). Constrói a data local explícita.
+  const [ano, mes, dia] = dateStr.split("T")[0].split("-").map(Number);
+  return new Date(ano, mes - 1, dia).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",

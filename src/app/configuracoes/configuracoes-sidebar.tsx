@@ -3,14 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const navItems = [
-  { label: "Usuários",      href: "/configuracoes/usuarios"   },
-  { label: "Empresa",       href: "/configuracoes/empresa"    },
-  { label: "Tipos de Custo", href: "/configuracoes/custos"   },
-  { label: "Assinatura",    href: "/configuracoes/assinatura" },
+const allNavItems = [
+  { label: "Usuários",       href: "/configuracoes/usuarios",   adminOnly: true  },
+  { label: "Empresa",        href: "/configuracoes/empresa",    adminOnly: true  },
+  { label: "Tipos de Custo", href: "/configuracoes/custos",    adminOnly: false },
+  { label: "Assinatura",     href: "/configuracoes/assinatura", adminOnly: false },
 ];
 
-export default function ConfiguracoesSidebar({ mobile = false }: { mobile?: boolean }) {
+export default function ConfiguracoesSidebar({
+  mobile = false,
+  isAdmin = false,
+}: {
+  mobile?: boolean;
+  isAdmin?: boolean;
+}) {
+  const navItems = allNavItems.filter((item) => !item.adminOnly || isAdmin);
   const pathname = usePathname();
 
   if (mobile) {

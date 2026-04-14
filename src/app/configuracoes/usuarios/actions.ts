@@ -29,7 +29,7 @@ async function getAdminAutorizado() {
 
   const papel =
     (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
+      ?.nome_dominio?.toLowerCase() ?? "";
 
   // Somente administradores gerenciam usuários
   if (papel !== "administrador") redirect("/dashboard");
@@ -63,6 +63,11 @@ export async function convidarUsuario(
   const { supabase, usuarioAtual } = await getAdminAutorizado();
   const adminClient = createAdminClient();
   const cpfSanitizado = sanitizarCpf(cpf);
+
+  if (!process.env.NEXT_PUBLIC_APP_URL) {
+    console.error("[convidarUsuario] NEXT_PUBLIC_APP_URL não configurada");
+    return { error: "Configuração do servidor incompleta. Contate o suporte." };
+  }
 
   // Verificar duplicidade de CPF na empresa
   const { data: cpfExistente } = await supabase

@@ -112,7 +112,7 @@ export default async function UsuariosPage() {
   // Somente administradores podem gerenciar usuários
   const papelAtual = (
     usuarioAtual.papel as unknown as { nome_dominio: string } | null
-  )?.nome_dominio;
+  )?.nome_dominio?.toLowerCase();
   if (papelAtual !== "administrador") redirect("/dashboard");
 
   const empresaId = usuarioAtual.empresa_id;

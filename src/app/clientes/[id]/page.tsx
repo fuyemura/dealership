@@ -28,7 +28,7 @@ export default async function EditarClientePage({
 
   const isAdmin =
     (usuario.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio === "administrador";
+      ?.nome_dominio?.toLowerCase() === "administrador";
 
   const { data: cliente } = await supabase
     .schema("dealership")

@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- 06_integridade_referencial.sql
 -- Testa o comportamento em tempo de execução do banco de dados:
 --   • Bloco A: FK violations (INSERT com FK inválida deve falhar com 23503)
@@ -157,14 +157,14 @@ SELECT throws_ok(
     'FK A4: veiculo_arquivo.veiculo_id deve rejeitar veiculo inexistente'
 );
 
--- A5. qr_code.veiculo_id aponta para veiculo inexistente
+-- A5. veiculo_qr_code.veiculo_id aponta para veiculo inexistente
 SELECT throws_ok(
-    $$INSERT INTO dealership.qr_code
+    $$INSERT INTO dealership.veiculo_qr_code
         (veiculo_id, url_publica, token_publica)
       VALUES (gen_random_uuid(),
               'https://qr.example.com/abc123', 'token_fk_a5_test')$$,
     '23503', NULL,
-    'FK A5: qr_code.veiculo_id deve rejeitar veiculo inexistente'
+    'FK A5: veiculo_qr_code.veiculo_id deve rejeitar veiculo inexistente'
 );
 
 -- A6. assinatura.empresa_id aponta para empresa inexistente
