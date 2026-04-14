@@ -22,7 +22,7 @@ export default async function NovoUsuarioPage() {
 
   const papel =
     (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
+      ?.nome_dominio?.toLowerCase() ?? "";
 
   // Somente administradores podem convidar usuários
   if (papel !== "administrador") redirect("/dashboard");

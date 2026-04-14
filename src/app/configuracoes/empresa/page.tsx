@@ -29,7 +29,7 @@ export default async function EmpresaPage({
 
   const papel =
     (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
+      ?.nome_dominio?.toLowerCase() ?? "";
 
   if (papel !== "administrador") redirect("/dashboard");
 

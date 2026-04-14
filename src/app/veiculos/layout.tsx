@@ -48,9 +48,10 @@ export default async function VeiculosLayout({
     .toUpperCase();
 
   const papel = usuario.papel as unknown as { nome_dominio: string } | null;
+  const papelNome = papel?.nome_dominio?.toLowerCase() ?? "";
   const temAcessoConfig =
-    papel?.nome_dominio === "administrador" ||
-    papel?.nome_dominio === "gerente";
+    papelNome === "administrador" ||
+    papelNome === "gerente";
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-gray-soft">

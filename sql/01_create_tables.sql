@@ -208,37 +208,39 @@ ALTER TABLE dealership.veiculo_modelo ADD CONSTRAINT uk_veiculo_modelo_marca_id_
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE dealership.veiculo (
-    id                     UUID          NOT NULL DEFAULT gen_random_uuid(),
-    empresa_id             UUID          NOT NULL,
-    placa                  VARCHAR(10)   NOT NULL,
-    renavam                VARCHAR(11)   NOT NULL,
-    marca_veiculo_id       UUID          NOT NULL,
-    modelo_veiculo_id      UUID          NOT NULL,
-    combustivel_veiculo_id UUID          NOT NULL,
-    numero_chassi          VARCHAR(20)   NOT NULL,
-    ano_modelo             INTEGER       NOT NULL,
-    ano_fabricacao         INTEGER       NOT NULL,
-    cor_veiculo            VARCHAR(20)   NOT NULL,
-    direcao_veiculo_id     UUID          NOT NULL,
-    vidro_eletrico         BOOLEAN       NOT NULL,
-    cambio_veiculo_id      UUID          NOT NULL,
-    trava_eletrica         BOOLEAN       NOT NULL,
-    quantidade_portas      SMALLINT      NOT NULL,
-    quilometragem          INTEGER       NOT NULL,
-    data_compra            DATE          NOT NULL,
-    preco_compra           DECIMAL(10,2) NOT NULL,
-    descricao              VARCHAR(1000) NULL,
-    situacao_veiculo_id    UUID          NOT NULL,
-    data_venda             DATE          NULL,
-    preco_venda            DECIMAL(10,2) NULL,
-    data_entrega           DATE          NULL,
-    laudo_aprovado         BOOLEAN       NOT NULL,
-    vendido_para           UUID          NULL,
-    vendido_por            UUID          NULL,
-    criado_por             UUID          NOT NULL,
-    atualizado_por         UUID          NOT NULL,
-    criado_em              TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    atualizado_em          TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+    id                        UUID          NOT NULL DEFAULT gen_random_uuid(),
+    empresa_id                UUID          NOT NULL,
+    placa                     VARCHAR(10)   NOT NULL,
+    renavam                   VARCHAR(11)   NOT NULL,
+    marca_veiculo_id          UUID          NOT NULL,
+    modelo_veiculo_id         UUID          NOT NULL,
+    combustivel_veiculo_id    UUID          NOT NULL,
+    numero_chassi             VARCHAR(20)   NOT NULL,
+    ano_modelo                INTEGER       NOT NULL,
+    ano_fabricacao            INTEGER       NOT NULL,
+    cor_veiculo               VARCHAR(20)   NOT NULL,
+    direcao_veiculo_id        UUID          NOT NULL,
+    vidro_eletrico            BOOLEAN       NOT NULL,
+    cambio_veiculo_id         UUID          NOT NULL,
+    trava_eletrica            BOOLEAN       NOT NULL,
+    quantidade_portas         SMALLINT      NOT NULL,
+    quilometragem             INTEGER       NOT NULL,
+    data_compra               DATE          NOT NULL,
+    preco_compra              DECIMAL(10,2) NOT NULL,
+    descricao                 VARCHAR(1000) NULL,
+    situacao_veiculo_id       UUID          NOT NULL,
+    data_venda                DATE          NULL,
+    preco_venda               DECIMAL(10,2) NULL,
+    data_entrega              DATE          NULL,
+    quantidade_dias_garantia  INTEGER       NULL DEFAULT 90,
+    data_fim_garantia         DATE          NULL,
+    laudo_aprovado            BOOLEAN       NOT NULL,
+    vendido_para              UUID          NULL,
+    vendido_por               UUID          NULL,
+    criado_por                UUID          NOT NULL,
+    atualizado_por            UUID          NOT NULL,
+    criado_em                 TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    atualizado_em             TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_veiculo_empresa_id             ON dealership.veiculo (empresa_id);
@@ -274,6 +276,8 @@ COMMENT ON COLUMN dealership.veiculo.situacao_veiculo_id      IS 'Chave estrange
 COMMENT ON COLUMN dealership.veiculo.data_venda               IS 'Data da venda do veículo.';
 COMMENT ON COLUMN dealership.veiculo.preco_venda              IS 'Preço de venda do veículo.';
 COMMENT ON COLUMN dealership.veiculo.data_entrega             IS 'Data da entrega do veículo ao comprador.';
+COMMENT ON COLUMN dealership.veiculo.quantidade_dias_garantia IS 'Quantidade de dias em que o veículo está coberto por garantia após a venda.';
+COMMENT ON COLUMN dealership.veiculo.data_fim_garantia        IS 'Data final da cobertura de garantia do veículo.';
 COMMENT ON COLUMN dealership.veiculo.laudo_aprovado           IS 'Indica se o laudo de vistoria do veículo foi aprovado.';
 COMMENT ON COLUMN dealership.veiculo.vendido_para             IS 'Chave estrangeira (FK) do cliente para quem o veículo foi vendido.';
 COMMENT ON COLUMN dealership.veiculo.vendido_por              IS 'Chave estrangeira (FK) do usuário que efetuou a venda.';
@@ -482,50 +486,6 @@ COMMENT ON COLUMN dealership.assinatura_historico.registrado_em            IS 'D
 
 ALTER TABLE dealership.assinatura_historico ADD PRIMARY KEY (id);
 
--- Função e trigger: grava o estado anterior de assinatura antes de cada UPDATE
-CREATE OR REPLACE FUNCTION dealership.registrar_historico_assinatura()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO dealership.assinatura_historico (
-        assinatura_id,
-        empresa_id,
-        plano_id,
-        situacao_assinatura_id,
-        ciclo_cobranca_id,
-        data_inicio,
-        data_fim,
-        data_cancelamento,
-        motivo_cancelamento,
-        trial_ativo,
-        data_fim_trial,
-        gateway_cliente_id,
-        gateway_assinatura_id,
-        criado_em,
-        atualizado_em
-    ) VALUES (
-        OLD.id,
-        OLD.empresa_id,
-        OLD.plano_id,
-        OLD.situacao_assinatura_id,
-        OLD.ciclo_cobranca_id,
-        OLD.data_inicio,
-        OLD.data_fim,
-        OLD.data_cancelamento,
-        OLD.motivo_cancelamento,
-        OLD.trial_ativo,
-        OLD.data_fim_trial,
-        OLD.gateway_cliente_id,
-        OLD.gateway_assinatura_id,
-        OLD.criado_em,
-        OLD.atualizado_em
-    );
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_assinatura_historico
-    BEFORE UPDATE ON dealership.assinatura
-    FOR EACH ROW EXECUTE FUNCTION dealership.registrar_historico_assinatura();
 
 
 -- -----------------------------------------------------------------------------

@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { veiculoBaseSchema, buildVeiculoSchema, PLACA_RE } from "@/lib/schemas/veiculo";
 import type {
   ActionResult,
   VeiculoFormData,
   QrCodeResult,
 } from "../actions";
+import { QrCodeModal, type QrCodeInfo } from "./qr-code-modal";
+export type { QrCodeInfo } from "./qr-code-modal";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -60,12 +63,6 @@ export interface VeiculoInicial {
   descricao: string | null;
 }
 
-export interface QrCodeInfo {
-  url_publica: string;
-  token_publica: string;
-  total_visualizacoes: number;
-}
-
 export interface VeiculoFormProps {
   dominios: Dominios;
   salvarAction: (data: VeiculoFormData) => Promise<ActionResult>;
@@ -76,83 +73,12 @@ export interface VeiculoFormProps {
 }
 
 // ─── Schema Zod ───────────────────────────────────────────────────────────────
+// Schema importado de @/lib/schemas/veiculo — fonte única de verdade.
+// buildVeiculoSchema adiciona validação condicional de campos de venda.
 
-const PLACA_RE = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
-
-const baseSchema = z.object({
-  placa: z
-    .string()
-    .transform((v) => v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())
-    .pipe(z.string().regex(PLACA_RE, "Placa inválida. Formato: ABC1234 ou ABC1D23.")),
-  renavam: z
-    .string()
-    .transform((v) => v.replace(/\D/g, ""))
-    .pipe(z.string().length(11, "RENAVAM deve ter 11 dígitos.")),
-  numero_chassi: z
-    .string()
-    .min(1, "Chassi é obrigatório.")
-    .max(20, "Máximo 20 caracteres."),
-  marca_veiculo_id: z.string().min(1, "Selecione a marca."),
-  modelo_veiculo_id: z.string().min(1, "Selecione o modelo."),
-  combustivel_veiculo_id: z.string().min(1, "Selecione o combustível."),
-  cambio_veiculo_id: z.string().min(1, "Selecione a transmissão."),
-  direcao_veiculo_id: z.string().min(1, "Selecione a direção."),
-  situacao_veiculo_id: z.string().min(1, "Selecione a situação."),
-  ano_fabricacao: z.coerce
-    .number()
-    .int()
-    .min(1900, "Ano inválido.")
-    .max(new Date().getFullYear() + 1, "Ano inválido."),
-  ano_modelo: z.coerce
-    .number()
-    .int()
-    .min(1900, "Ano inválido.")
-    .max(new Date().getFullYear() + 2, "Ano inválido."),
-  cor_veiculo: z
-    .string()
-    .min(1, "Cor é obrigatória.")
-    .max(20, "Máximo 20 caracteres."),
-  quantidade_portas: z.coerce
-    .number()
-    .int()
-    .min(1, "Mínimo 1 porta.")
-    .max(10, "Máximo 10 portas."),
-  quilometragem: z.coerce.number().int().min(0, "Quilometragem inválida."),
-  vidro_eletrico: z.boolean(),
-  trava_eletrica: z.boolean(),
-  laudo_aprovado: z.boolean(),
-  data_compra: z.string()
-    .min(1, "Data de compra é obrigatória.")
-    .refine((v) => new Date(v) <= new Date(), "Data de compra não pode ser futura."),
-  preco_compra: z.coerce.number().positive("Informe um preço de compra válido."),
-  preco_venda: z.coerce.number().min(0).optional().nullable(),
-  data_venda: z.string().optional().nullable(),
-  data_entrega: z.string().optional().nullable(),
-  descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
-});
+const baseSchema = veiculoBaseSchema;
 
 type FormValues = z.infer<typeof baseSchema>;
-
-// Adiciona validação condicional: preço e data de venda obrigatórios quando situação = Vendido
-function buildVeiculoSchema(vendidoId: string) {
-  return baseSchema.superRefine((data, ctx) => {
-    if (!vendidoId || data.situacao_veiculo_id !== vendidoId) return;
-    if (!data.preco_venda || data.preco_venda <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Informe o preço de venda.",
-        path: ["preco_venda"],
-      });
-    }
-    if (!data.data_venda) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Informe a data de venda.",
-        path: ["data_venda"],
-      });
-    }
-  });
-}
 
 // ─── Ícones inline ────────────────────────────────────────────────────────────
 
@@ -183,25 +109,6 @@ function IconPrint({ size = 16 }: { size?: number }) {
       <polyline points="6 9 6 2 18 2 18 9" />
       <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
       <rect x="6" y="14" width="12" height="8" />
-    </svg>
-  );
-}
-
-function IconCopy({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="9" y="9" width="13" height="13" rx="2" />
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-  );
-}
-
-function IconX({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
@@ -328,131 +235,6 @@ function matchId(value: string | null | undefined, list: Dominio[]): string {
       lower.includes(d.nome_dominio.toLowerCase())
   );
   return partial?.id ?? "";
-}
-
-// ─── Modal QR Code ────────────────────────────────────────────────────────────
-
-interface QrModalProps {
-  qrCode: QrCodeInfo;
-  placa: string;
-  onClose: () => void;
-}
-
-function QrCodeModal({ qrCode, placa, onClose }: QrModalProps) {
-  const [copiado, setCopiado] = useState(false);
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-    qrCode.url_publica
-  )}`;
-
-  const copiar = async () => {
-    try {
-      await navigator.clipboard.writeText(qrCode.url_publica);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2500);
-    } catch {
-      /* navegador sem permissão */
-    }
-  };
-
-  const imprimir = () => window.print();
-
-  return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/40 z-40 print:hidden"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="QR Code do veículo"
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 print:static print:inset-auto print:z-auto print:p-0"
-      >
-        <div className="bg-white rounded-2xl border border-brand-gray-mid/30 p-8 w-full max-w-sm shadow-lg flex flex-col items-center gap-6 print:shadow-none print:border-none print:p-0">
-          {/* Título + fechar */}
-          <div className="flex items-center justify-between w-full print:hidden">
-            <h3 className="font-display text-lg font-bold text-brand-black">
-              QR Code — {placa}
-            </h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-brand-gray-text hover:text-brand-black transition-colors p-1"
-              aria-label="Fechar"
-            >
-              <IconX size={16} />
-            </button>
-          </div>
-
-          {/* QR Code */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={qrUrl}
-            alt={`QR Code do veículo ${placa}`}
-            width={200}
-            height={200}
-            className="rounded-xl border border-brand-gray-mid/30"
-          />
-
-          {/* Placa (visível na impressão) */}
-          <p className="hidden print:block text-center font-bold text-lg">{placa}</p>
-
-          {/* URL */}
-          <div className="w-full print:hidden">
-            <p className="text-xs text-brand-gray-text mb-1.5">Link público</p>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                readOnly
-                value={qrCode.url_publica}
-                className="flex-1 rounded-xl border border-brand-gray-mid/60 bg-brand-gray-soft px-3 py-2 text-xs text-brand-gray-text outline-none"
-              />
-              <button
-                type="button"
-                onClick={copiar}
-                className="flex-shrink-0 rounded-xl border border-brand-gray-mid/60 px-3 py-2 text-xs font-medium text-brand-black hover:bg-brand-gray-soft transition-colors flex items-center gap-1.5"
-              >
-                <IconCopy size={13} />
-                {copiado ? "Copiado!" : "Copiar"}
-              </button>
-            </div>
-          </div>
-
-          {/* Visualizações */}
-          <p className="text-xs text-brand-gray-text print:hidden">
-            {qrCode.total_visualizacoes === 0
-              ? "Nenhuma visualização ainda."
-              : `${qrCode.total_visualizacoes} visualização${
-                  qrCode.total_visualizacoes !== 1 ? "ões" : ""
-                } até agora.`}
-          </p>
-
-          {/* Ações */}
-          <div className="flex items-center gap-3 w-full print:hidden">
-            <button
-              type="button"
-              onClick={imprimir}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-5 py-2.5 hover:bg-brand-gray-soft transition-colors"
-            >
-              <IconPrint size={15} />
-              Imprimir
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-full bg-brand-black text-brand-white text-sm font-medium px-5 py-2.5 hover:bg-brand-black/85 transition-colors"
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
 }
 
 // ─── Etapa 1: Entrada de placa ────────────────────────────────────────────────

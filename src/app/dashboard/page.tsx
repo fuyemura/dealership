@@ -193,8 +193,9 @@ export default async function DashboardPage() {
   if (!empresaId) redirect("/login");
 
   const papel = usuario?.papel as unknown as { nome_dominio: string } | null;
-  const isAdmin = papel?.nome_dominio === "administrador";
-  const temAcessoConfig = isAdmin || papel?.nome_dominio === "gerente";
+  const papelNome = papel?.nome_dominio?.toLowerCase() ?? "";
+  const isAdmin = papelNome === "administrador";
+  const temAcessoConfig = isAdmin || papelNome === "gerente";
 
   const { data: veiculos } = await supabase
       .schema("dealership")

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+﻿import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { VeiculoForm } from "../_components/veiculo-form";
 import type { Dominios, QrCodeInfo } from "../_components/veiculo-form";
@@ -41,7 +41,7 @@ export default async function EditarVeiculoPage({
 
   const isAdmin =
     (usuario.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio === "administrador";
+      ?.nome_dominio?.toLowerCase() === "administrador";
 
   // Carrega veículo, marcas, modelos, domínios, QR code e arquivos em paralelo
   const [
@@ -150,12 +150,12 @@ export default async function EditarVeiculoPage({
   const todosArquivos = (arquivosData ?? []) as unknown as ArquivoRaw[];
 
   const fotos: ArquivoVeiculo[] = todosArquivos
-    .filter((a) => a.tipo_arquivo?.nome_dominio === "foto")
+    .filter((a) => a.tipo_arquivo?.nome_dominio?.toLowerCase() === "foto")
     .map(({ id: aid, url_arquivo, arquivo_principal, ordem_exibicao, tamanho_arquivo }) => ({
       id: aid, url_arquivo, arquivo_principal, ordem_exibicao, tamanho_arquivo,
     }));
 
-  const laudoRaw = todosArquivos.find((a) => a.tipo_arquivo?.nome_dominio === "laudo") ?? null;
+  const laudoRaw = todosArquivos.find((a) => a.tipo_arquivo?.nome_dominio?.toLowerCase() === "laudo") ?? null;
   const laudo: ArquivoVeiculo | null = laudoRaw
     ? { id: laudoRaw.id, url_arquivo: laudoRaw.url_arquivo, arquivo_principal: laudoRaw.arquivo_principal, ordem_exibicao: laudoRaw.ordem_exibicao, tamanho_arquivo: laudoRaw.tamanho_arquivo }
     : null;

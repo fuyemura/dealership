@@ -2,62 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
+import { PAPEIS } from "@/lib/auth/roles";
+import type { VeiculoFormData } from "@/lib/schemas/veiculo";
 
 export type ActionResult = { error: string } | undefined;
+export type { VeiculoFormData } from "@/lib/schemas/veiculo";
 
-export interface VeiculoFormData {
-  placa: string;
-  renavam: string;
-  numero_chassi: string;
-  marca_veiculo_id: string;
-  modelo_veiculo_id: string;
-  combustivel_veiculo_id: string;
-  cambio_veiculo_id: string;
-  direcao_veiculo_id: string;
-  situacao_veiculo_id: string;
-  ano_fabricacao: number;
-  ano_modelo: number;
-  cor_veiculo: string;
-  quantidade_portas: number;
-  quilometragem: number;
-  vidro_eletrico: boolean;
-  trava_eletrica: boolean;
-  laudo_aprovado: boolean;
-  data_compra: string;
-  preco_compra: number;
-  preco_venda: number | null;
-  data_venda: string | null;
-  data_entrega: string | null;
-  descricao: string | null;
-}
-
-// ─── Helper interno ───────────────────────────────────────────────────────────
-
-async function getUsuarioAutorizado() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuarioAtual } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuarioAtual?.empresa_id) redirect("/login");
-
-  const papel =
-    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
-
-  return { supabase, usuarioAtual, papel };
-}
+// Tipo utilitário local para o cliente Supabase retornado pelo guard
+type SupabaseClient = Awaited<ReturnType<typeof import("@/lib/supabase/server").createClient>>;
 
 // ─── Validação server-side ────────────────────────────────────────────────────
 // Verifica se uma placa já existe no estoque da empresa
@@ -141,7 +95,7 @@ function validarDados(data: VeiculoFormData): ActionResult {
 
 // Helper: busca o ID de "Vendido" e valida campos obrigatórios condicionalmente
 async function validarCamposVenda(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: SupabaseClient,
   data: VeiculoFormData
 ): Promise<ActionResult> {
   const { data: situacaoVendido } = await supabase
@@ -209,9 +163,9 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
 
   if (error) {
     if (error.code === "23505") {
-      if (error.message.includes("placa"))
+      if (error.details.includes("placa"))
         return { error: "Já existe um veículo com esta placa cadastrado." };
-      if (error.message.includes("chassi"))
+      if (error.details.includes("chassi"))
         return { error: "Já existe um veículo com este número de chassi." };
     }
     return { error: "Erro ao cadastrar o veículo. Tente novamente." };
@@ -274,9 +228,9 @@ export async function atualizarVeiculo(
 
   if (error) {
     if (error.code === "23505") {
-      if (error.message.includes("placa"))
+      if (error.details.includes("placa"))
         return { error: "Já existe um veículo com esta placa cadastrado." };
-      if (error.message.includes("chassi"))
+      if (error.details.includes("chassi"))
         return { error: "Já existe um veículo com este número de chassi." };
     }
     return { error: "Erro ao atualizar o veículo. Tente novamente." };
@@ -292,84 +246,40 @@ export async function atualizarVeiculo(
 export async function excluirVeiculo(id: string): Promise<ActionResult> {
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
-  if (papel !== "administrador") {
+  if (papel !== PAPEIS.ADMINISTRADOR) {
     return { error: "Apenas administradores podem excluir veículos." };
   }
 
-  // Verifica posse do veículo antes de qualquer exclusão
-  const { data: veiculo } = await supabase
+  // Exclui atomicamente todos os registros DB via RPC e retorna caminhos de Storage.
+  // A exclusão do Storage ocorre após a transação DB para garantir consistência:
+  // se o Storage falhar, o DB já está limpo (arquivos ficam órfãos, não o contrário).
+  const { data: caminhos, error: rpcError } = await supabase
     .schema("dealership")
-    .from("veiculo")
-    .select("id")
-    .eq("id", id)
-    .eq("empresa_id", usuarioAtual.empresa_id)
-    .single();
+    .rpc("excluir_veiculo", {
+      p_veiculo_id: id,
+      p_empresa_id: usuarioAtual.empresa_id,
+    });
 
-  if (!veiculo) {
-    return { error: "Veículo não encontrado." };
-  }
-
-  const adminClient = createAdminClient();
-
-  // 1. Remove arquivos do Storage e os registros de veiculo_arquivo
-  const { data: arquivos } = await supabase
-    .schema("dealership")
-    .from("veiculo_arquivo")
-    .select("caminho_storage")
-    .eq("veiculo_id", id)
-    .eq("empresa_id", usuarioAtual.empresa_id);
-
-  if (arquivos && arquivos.length > 0) {
-    const caminhos = arquivos.map((a) => a.caminho_storage);
-    await adminClient.storage.from(BUCKET).remove(caminhos);
-
-    const { error: erroArquivos } = await supabase
-      .schema("dealership")
-      .from("veiculo_arquivo")
-      .delete()
-      .eq("veiculo_id", id);
-
-    if (erroArquivos) {
-      console.error("[excluirVeiculo] Erro ao excluir veiculo_arquivo:", erroArquivos.message);
-      return { error: "Erro ao excluir o veículo. Tente novamente." };
+  if (rpcError) {
+    if (rpcError.message.includes("veiculo_nao_encontrado")) {
+      return { error: "Veículo não encontrado." };
     }
-  }
-
-  // 2. Remove registros de veiculo_manutencao
-  const { error: erroManutencao } = await supabase
-    .schema("dealership")
-    .from("veiculo_manutencao")
-    .delete()
-    .eq("veiculo_id", id);
-
-  if (erroManutencao) {
-    console.error("[excluirVeiculo] Erro ao excluir veiculo_manutencao:", erroManutencao.message);
+    console.error("[excluirVeiculo] RPC error:", rpcError.message);
     return { error: "Erro ao excluir o veículo. Tente novamente." };
   }
 
-  // 3. Remove o QR Code
-  const { error: erroQrCode } = await supabase
-    .schema("dealership")
-    .from("veiculo_qr_code")
-    .delete()
-    .eq("veiculo_id", id);
-
-  if (erroQrCode) {
-    console.error("[excluirVeiculo] Erro ao excluir veiculo_qr_code:", erroQrCode.message);
-    return { error: "Erro ao excluir o veículo. Tente novamente." };
-  }
-
-  // 4. Remove o veículo
-  const { error } = await supabase
-    .schema("dealership")
-    .from("veiculo")
-    .delete()
-    .eq("id", id)
-    .eq("empresa_id", usuarioAtual.empresa_id);
-
-  if (error) {
-    console.error("[excluirVeiculo] Erro ao excluir veiculo:", error.message);
-    return { error: "Erro ao excluir o veículo. Tente novamente." };
+  // Remove arquivos do Storage (best-effort: DB já está limpo)
+  if (caminhos && (caminhos as string[]).length > 0) {
+    const adminClient = createAdminClient();
+    const { error: storageError } = await adminClient.storage
+      .from(BUCKET)
+      .remove(caminhos as string[]);
+    if (storageError) {
+      console.warn(
+        "[excluirVeiculo] Falha ao remover arquivos do Storage (DB já limpo):",
+        storageError.message
+      );
+    }
   }
 
   revalidatePath("/veiculos");
@@ -429,8 +339,6 @@ export async function gerarQrCode(veiculoId: string): Promise<QrCodeResult> {
 
   if (error) return { error: "Erro ao gerar o QR Code. Tente novamente." };
 
-  revalidatePath(`/veiculos/${veiculoId}`);
-
   return {
     url_publica: urlPublica,
     token_publica: token,
@@ -476,12 +384,14 @@ export async function uploadArquivoVeiculo(
     return { error: isFoto ? "Foto deve ter no máximo 5 MB." : "Laudo deve ter no máximo 10 MB." };
 
   // Resolve tipo_arquivo_id no domínio
+  // O banco armazena com inicial maiúscula: 'Foto', 'Laudo'
+  const nomeNoBanco = tipo.charAt(0).toUpperCase() + tipo.slice(1);
   const { data: tipoArquivo } = await supabase
     .schema("dealership")
     .from("dominio")
     .select("id")
     .eq("grupo_dominio", "tipo_arquivo_veiculo")
-    .eq("nome_dominio", tipo)
+    .eq("nome_dominio", nomeNoBanco)
     .single();
   if (!tipoArquivo) return { error: "Tipo de arquivo não configurado." };
 

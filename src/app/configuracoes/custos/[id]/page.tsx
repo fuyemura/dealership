@@ -26,7 +26,7 @@ export default async function EditarCustoPage({ params }: Props) {
 
   const papel =
     (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
+      ?.nome_dominio?.toLowerCase() ?? "";
   if (papel === "usuario") redirect("/dashboard");
 
   const isAdmin = papel === "administrador";

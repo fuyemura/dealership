@@ -50,7 +50,7 @@ export default async function ConfiguracoesLayout({
 
   const papel = usuario.papel as unknown as { nome_dominio: string } | null;
   const papelNome = papel?.nome_dominio ?? "";
-  const temAcesso = papelNome === "administrador" || papelNome === "gerente";
+  const temAcesso = papelNome.toLowerCase() === "administrador" || papelNome.toLowerCase() === "gerente";
 
   if (!temAcesso) {
     return (
@@ -169,14 +169,14 @@ export default async function ConfiguracoesLayout({
       <div className="flex flex-1 overflow-x-hidden">
         {/* Desktop sidebar */}
         <aside className="hidden md:flex flex-col w-52 lg:w-60 shrink-0 border-r border-brand-gray-mid/40 bg-white">
-          <ConfiguracoesSidebar />
+          <ConfiguracoesSidebar isAdmin={papelNome.toLowerCase() === "administrador"} />
         </aside>
 
         {/* Content column */}
         <div className="flex-1 min-w-0 flex flex-col">
           {/* Mobile tabs */}
           <div className="md:hidden border-b border-brand-gray-mid/40 bg-white overflow-x-auto">
-            <ConfiguracoesSidebar mobile />
+            <ConfiguracoesSidebar mobile isAdmin={papelNome.toLowerCase() === "administrador"} />
           </div>
 
           {/* Page content */}

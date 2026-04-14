@@ -139,8 +139,17 @@ function RedefinirSenhaContent() {
       // Redireciona para o login após 3 segundos
       if (redirectTimer.current) clearTimeout(redirectTimer.current);
       redirectTimer.current = setTimeout(() => router.push("/login"), 3000);
-    } catch {
-      setErro("Não foi possível redefinir a senha. Solicite um novo link.");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message.toLowerCase() : "";
+
+      if (msg.includes("different from the old password") || msg.includes("same password")) {
+        setErro("A nova senha deve ser diferente da senha atual.");
+      } else if (msg.includes("session") || msg.includes("token") || msg.includes("expired")) {
+        setErro("Sessão expirada. Solicite um novo link de redefinição.");
+      } else {
+        setErro("Não foi possível redefinir a senha. Solicite um novo link.");
+      }
     } finally {
       setLoading(false);
     }

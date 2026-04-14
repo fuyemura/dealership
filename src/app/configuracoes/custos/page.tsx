@@ -77,7 +77,7 @@ export default async function CustosPage() {
   // Somente administradores e gerentes podem gerenciar tipos de custo
   const papelAtual = (
     usuarioAtual.papel as unknown as { nome_dominio: string } | null
-  )?.nome_dominio;
+  )?.nome_dominio?.toLowerCase();
   if (papelAtual === "usuario") redirect("/dashboard");
 
   const empresaId = usuarioAtual.empresa_id;

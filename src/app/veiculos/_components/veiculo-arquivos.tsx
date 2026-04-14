@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type { ActionResult } from "../actions";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -226,6 +227,7 @@ export function VeiculoArquivos({
   const [settingPrincipalId, setSettingPrincipalId] = useState<string | null>(null);
 
   const [, startTransition] = useTransition();
+  const router = useRouter();
 
   // ── Upload de fotos ─────────────────────────────────────────────────────────
 
@@ -256,6 +258,7 @@ export function VeiculoArquivos({
 
     setUploadingFoto(false);
     setFotoUploadProgress(null);
+    router.refresh();
   };
 
   // ── Upload de laudo ─────────────────────────────────────────────────────────
@@ -268,6 +271,7 @@ export function VeiculoArquivos({
     const result = await uploadLaudoAction(fd);
     setUploadingLaudo(false);
     if (result?.error) setErroLaudo(result.error);
+    else router.refresh();
   };
 
   // ── Excluir ─────────────────────────────────────────────────────────────────
@@ -279,6 +283,7 @@ export function VeiculoArquivos({
       const result = await excluirArquivoAction(arquivoId);
       setDeletingId(null);
       if (result?.error) setErroAcao(result.error);
+      else router.refresh();
     });
   };
 
@@ -291,6 +296,7 @@ export function VeiculoArquivos({
       const result = await principalAction(arquivoId);
       setSettingPrincipalId(null);
       if (result?.error) setErroAcao(result.error);
+      else router.refresh();
     });
   };
 

@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Uyemura Tech — Massa de Dados para Teste
 -- Schema: dealership
 -- 3 empresas | 3 usuários por empresa (9 total) | 60 veículos distribuídos
@@ -83,7 +83,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'fuyemura@hotmail.com',
   '11122233344',
   'Flávio Cavalcante Uyemura',
-  'aaaaaaaa-0007-0000-0000-000000000001', -- administrador
+  'e30a4a55-9399-4c27-8245-2d0a9b5478d5', -- administrador
   NOW() - INTERVAL '1 hour',
   NOW(), NOW()
 ),
@@ -94,7 +94,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'carlos.silva@autoelite.com.br',
   '22233344455',
   'Carlos Silva',
-  'aaaaaaaa-0007-0000-0000-000000000002', -- gerente
+  'a7493f23-8b81-45ef-bfda-0fd37bc53980', -- gerente
   NOW() - INTERVAL '2 hours',
   NOW(), NOW()
 ),
@@ -105,7 +105,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'ana.costa@autoelite.com.br',
   '33344455566',
   'Ana Costa',
-  'aaaaaaaa-0007-0000-0000-000000000003', -- usuario
+  'd1546f6b-99c3-4c6c-b3c4-4b6380affefd', -- usuario
   NOW() - INTERVAL '3 days',
   NOW(), NOW()
 );
@@ -119,7 +119,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'yasmingazal@gmail.com',
   '44455566677',
   'Yasmin Gazal',
-  'aaaaaaaa-0007-0000-0000-000000000001', -- administrador
+  'e30a4a55-9399-4c27-8245-2d0a9b5478d5', -- administrador
   NOW() - INTERVAL '30 minutes',
   NOW(), NOW()
 ),
@@ -130,7 +130,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'pedro.lima@cariocamotors.com.br',
   '55566677788',
   'Pedro Lima',
-  'aaaaaaaa-0007-0000-0000-000000000002', -- gerente
+  'a7493f23-8b81-45ef-bfda-0fd37bc53980', -- gerente
   NOW() - INTERVAL '1 day',
   NOW(), NOW()
 ),
@@ -141,7 +141,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'juliana.santos@cariocamotors.com.br',
   '66677788899',
   'Juliana Santos',
-  'aaaaaaaa-0007-0000-0000-000000000003', -- usuario
+  'd1546f6b-99c3-4c6c-b3c4-4b6380affefd', -- usuario
   NOW() - INTERVAL '5 days',
   NOW(), NOW()
 );
@@ -155,7 +155,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'doduyemura@gmail.com',
   '77788899900',
   'Douglas Cardoso Uyemura',
-  'aaaaaaaa-0007-0000-0000-000000000001', -- administrador
+  'e30a4a55-9399-4c27-8245-2d0a9b5478d5', -- administrador
   NOW() - INTERVAL '2 hours',
   NOW(), NOW()
 ),
@@ -166,7 +166,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'patricia.rocha@sulpremium.com.br',
   '88899900011',
   'Patrícia Rocha',
-  'aaaaaaaa-0007-0000-0000-000000000002', -- gerente
+  'a7493f23-8b81-45ef-bfda-0fd37bc53980', -- gerente
   NOW() - INTERVAL '4 hours',
   NOW(), NOW()
 ),
@@ -177,7 +177,7 @@ INSERT INTO dealership.usuario (id, empresa_id, auth_id, email_usuario, cpf, nom
   'lucas.ferreira@sulpremium.com.br',
   '99900011122',
   'Lucas Ferreira',
-  'aaaaaaaa-0007-0000-0000-000000000003', -- usuario
+  'd1546f6b-99c3-4c6c-b3c4-4b6380affefd', -- usuario
   NOW() - INTERVAL '2 days',
   NOW(), NOW()
 );
@@ -201,17 +201,10 @@ INSERT INTO dealership.cliente (id, empresa_id, cpf, nome_cliente, telefone_clie
 
 -- =============================================================================
 -- 6. VEÍCULOS
--- Distribuição: AutoElite 20 | Carioca Motors 20 | Sul Premium 20 = 60 total
+-- Distribuição: AutoElite 5 | Carioca Motors 5 | Sul Premium 5 = 15 total
 --
--- Referências rápidas:
---   marca:       Toyota=0001 | Honda=0002 | VW=0003 | Chevrolet=0004
---                Hyundai=0005 | Fiat=0006 | Ford=0007 | Nissan=0008
---   modelo:      Corolla=0001 | Civic=0002 | Gol=0003 | Onix=0004
---                HB20=0005 | Argo=0006 | Ka=0007 | Kicks=0008 | Polo=0009 | Hilux=0010
---   combustivel: Gasolina=0001 | Flex=0002 | Etanol=0003 | Diesel=0004 | Elétrico=0005 | Híbrido=0006
---   cambio:      Manual=0001 | Automático=0002 | CVT=0003 | Automatizado=0004
---   direcao:     Hidráulica=0001 | Elétrica=0002 | Manual=0003
---   situacao:    Disponível=0001 | Reservado=0002 | Vendido=0003 | Em Manutenção=0004
+-- IDs de marca, modelo e domínios resolvidos via subquery pelo nome,
+-- compatível com os seeds 05_insert_veiculo_marca_modelo.sql e 06_insert_dominio.sql.
 -- =============================================================================
 
 -- ─── AutoElite — 20 veículos ─────────────────────────────────────────────────
@@ -408,8 +401,8 @@ INSERT INTO dealership.assinatura (id, empresa_id, plano_id, situacao_assinatura
   'faffffff-0001-0000-0000-000000000001',
   'bbbbbbbb-0001-0000-0000-000000000001',
   'ffffffff-0001-0000-0000-000000000002', -- Pro
-  'aaaaaaaa-0009-0000-0000-000000000001', -- ativa
-  'aaaaaaaa-0010-0000-0000-000000000001', -- mensal
+  'a8641ef4-6536-4fc9-97e0-25e51f1351ee', -- ativa
+  'c95321e0-bdfa-47f0-9bb5-4cb4bc0a5f11', -- mensal
   '2024-01-01', NULL, NULL, NULL, FALSE, NULL,
   'cus_stripe_autoelite_001', 'sub_stripe_autoelite_001',
   NOW(), NOW()
@@ -418,8 +411,8 @@ INSERT INTO dealership.assinatura (id, empresa_id, plano_id, situacao_assinatura
   'faffffff-0001-0000-0000-000000000002',
   'bbbbbbbb-0001-0000-0000-000000000002',
   'ffffffff-0001-0000-0000-000000000003', -- Enterprise
-  'aaaaaaaa-0009-0000-0000-000000000001', -- ativa
-  'aaaaaaaa-0010-0000-0000-000000000002', -- anual
+  'a8641ef4-6536-4fc9-97e0-25e51f1351ee', -- ativa
+  'c95321e0-bdfa-47f0-9bb5-4cb4bc0a5f11', -- anual
   '2024-01-15', NULL, NULL, NULL, FALSE, NULL,
   'cus_stripe_carioca_001', 'sub_stripe_carioca_001',
   NOW(), NOW()
@@ -428,8 +421,8 @@ INSERT INTO dealership.assinatura (id, empresa_id, plano_id, situacao_assinatura
   'faffffff-0001-0000-0000-000000000003',
   'bbbbbbbb-0001-0000-0000-000000000003',
   'ffffffff-0001-0000-0000-000000000001', -- Starter
-  'aaaaaaaa-0009-0000-0000-000000000002', -- trial
-  'aaaaaaaa-0010-0000-0000-000000000001', -- mensal
+  'ec6d6ae3-3159-470c-98a4-3422b954727a', -- trial
+  'c95321e0-bdfa-47f0-9bb5-4cb4bc0a5f11', -- mensal
   '2024-03-01', NULL, NULL, NULL, TRUE, '2024-04-01',
   NULL, NULL,
   NOW(), NOW()
