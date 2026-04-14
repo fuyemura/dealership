@@ -31,10 +31,11 @@ jobs:
           DB_URL: postgresql://postgres:postgres@localhost:54322/postgres
         run: |
           supabase db query "CREATE SCHEMA IF NOT EXISTS dealership;"
-          psql "$DB_URL" -f sql/01_create-tables.sql
-          psql "$DB_URL" -f sql/02_grant-dealership.sql
+          psql "$DB_URL" -f sql/01_create_tables.sql
+          psql "$DB_URL" -f sql/02_grant_dealership.sql
           psql "$DB_URL" -f sql/03_rls_tables.sql
           psql "$DB_URL" -f sql/04_functions.sql
+          psql "$DB_URL" -f sql/05_triggers.sql
 
       - name: Run database tests
         run: supabase test db
