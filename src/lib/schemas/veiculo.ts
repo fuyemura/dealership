@@ -68,13 +68,10 @@ export const veiculoBaseSchema = z.object({
   data_venda: z.string().optional().nullable(),
   data_entrega: z.string().optional().nullable(),
   descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
-  quantidade_dias_garantia: z.coerce
-    .number()
-    .int()
-    .min(0, "Valor inválido.")
-    .max(3650, "Máximo 3650 dias.")
-    .optional()
-    .nullable(),
+  quantidade_dias_garantia: z.preprocess(
+    (v) => (v === "" || (typeof v === "number" && isNaN(v)) ? null : v),
+    z.number().int().min(0, "Valor inválido.").max(3650, "Máximo 3650 dias.").nullable().optional()
+  ),
 });
 
 // Adiciona validação condicional: preço e data de venda obrigatórios quando situação = Vendido

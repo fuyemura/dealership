@@ -11,7 +11,7 @@
  * Provedor atual:
  *  - WDAPI2: https://wdapi2.com.br/{placa}
  *    Autenticação via header  Authorization: Bearer <token>
- *    Variável de ambiente:    WDAPI2_TOKEN
+ *    Variável de ambiente:    PLACA_API_TOKEN (fallback: WDAPI_TOKEN)
  *
  * Provedores alternativos conhecidos:
  *  - ApiPlacas: https://apiplacas.com.br/api/v1/{placa}/{token}  (token na URL)

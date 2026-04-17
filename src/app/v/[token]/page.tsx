@@ -140,7 +140,8 @@ export default async function VeiculoPublicoPage({ params }: Props) {
   // Disparado em background para não bloquear a renderização da página.
   void admin
     .schema("dealership")
-    .rpc("incrementar_visualizacao", { p_qr_id: qrCode.id });
+    .rpc("incrementar_visualizacao", { p_qr_id: qrCode.id })
+    .catch(() => {/* falha silenciosa — métrica não crítica */});
 
   // ─── Resolução de dados ───────────────────────────────────────────────────
 

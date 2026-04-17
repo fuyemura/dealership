@@ -600,7 +600,9 @@ export function VeiculoForm({
       data_venda: values.data_venda || null,
       data_entrega: values.data_entrega || null,
       descricao: values.descricao?.trim() || null,
-      quantidade_dias_garantia: values.quantidade_dias_garantia ?? null,
+      quantidade_dias_garantia: Number.isFinite(values.quantidade_dias_garantia)
+        ? (values.quantidade_dias_garantia as number)
+        : null,
     };
 
     const result = await salvarAction(data);
@@ -1168,7 +1170,9 @@ export function VeiculoForm({
                   min={0}
                   max={3650}
                   placeholder="90"
-                  {...register("quantidade_dias_garantia", { valueAsNumber: true })}
+                  {...register("quantidade_dias_garantia", {
+                    setValueAs: (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+                  })}
                   disabled={isSaving}
                   className={inputCls(!!errors.quantidade_dias_garantia)}
                 />

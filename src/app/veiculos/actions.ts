@@ -89,6 +89,12 @@ function validarDados(data: VeiculoFormData): ActionResult {
 
   if (data.descricao && data.descricao.length > 1000)
     return { error: "Descrição: máximo de 1000 caracteres." };
+
+  if (data.quantidade_dias_garantia != null) {
+    const dias = data.quantidade_dias_garantia;
+    if (!Number.isFinite(dias) || !Number.isInteger(dias) || dias < 0 || dias > 3650)
+      return { error: "Dias de garantia deve ser um inteiro entre 0 e 3650." };
+  }
 }
 
 // ─── Criar veículo ────────────────────────────────────────────────────────────
