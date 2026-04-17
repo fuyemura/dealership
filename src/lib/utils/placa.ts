@@ -8,11 +8,15 @@
  *  - Se o novo provedor não precisar de token, remova a variável de ambiente
  *    e o guard `if (!token)` no route handler.
  *
+ * Provedor atual:
+ *  - WDAPI2: https://wdapi2.com.br/{placa}
+ *    Autenticação via header  Authorization: Bearer <token>
+ *    Variável de ambiente:    WDAPI2_TOKEN
+ *
  * Provedores alternativos conhecidos:
- *  - WDAPI2:      https://wdapi2.com.br/{placa}/{token}          (requer token)
- *  - ApiPlacas:   https://apiplacas.com.br/api/v1/{placa}/{token} (requer token)
- *  - Permanência: sem API pública gratuita amplamente disponível —
- *                 ao migrar, atualize apenas buildUrl e normalizarResposta.
+ *  - ApiPlacas: https://apiplacas.com.br/api/v1/{placa}/{token}  (token na URL)
+ *  - Ao migrar, atualize apenas buildUrl, normalizarResposta e o
+ *    header/guard de autenticação no route handler (api/consulta-placa/route.ts).
  */
 
 export interface PlacaResult {

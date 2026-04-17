@@ -1,5 +1,4 @@
 ﻿import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { gerarQrCode } from "./actions";
 import { VeiculoLinhaAcoes } from "./_components/veiculo-linha-acoes";

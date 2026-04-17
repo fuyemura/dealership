@@ -136,8 +136,9 @@ export default async function VeiculoPublicoPage({ params }: Props) {
 
   if (!veiculo) notFound();
 
-  // 3. Incrementa contador de visualizações — atômico via RPC
-  await admin
+  // 3. Incrementa contador de visualizações — atômico via RPC.
+  // Disparado em background para não bloquear a renderização da página.
+  void admin
     .schema("dealership")
     .rpc("incrementar_visualizacao", { p_qr_id: qrCode.id });
 

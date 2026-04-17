@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -185,12 +185,9 @@ function CurrencyInput({ id, value, onChange, onBlur, disabled, hasError }: Curr
   );
 
   // Sincroniza display quando o valor externo muda (ex: reset do formulário).
-  // Padrão "setState durante o render" evita o ciclo extra de render do useEffect.
-  const [prevValue, setPrevValue] = useState(value);
-  if (prevValue !== value) {
-    setPrevValue(value);
+  useEffect(() => {
     setDisplay(value != null && value > 0 ? formatarMoeda(value) : "");
-  }
+  }, [value]);
 
   const borderCls = hasError
     ? "border-red-300 focus-within:border-red-400 focus-within:ring-red-100"
@@ -508,10 +505,11 @@ export function VeiculoForm({
   const diasGarantiaValue = watch("quantidade_dias_garantia");
 
   const garantiaInfo = useMemo(() => {
-    if (!dataVendaValue || !diasGarantiaValue || diasGarantiaValue <= 0) return null;
+    const dias = Number(diasGarantiaValue);
+    if (!dataVendaValue || !dias || isNaN(dias) || dias <= 0) return null;
     const [ano, mes, dia] = dataVendaValue.split("-").map(Number);
     const fim = new Date(ano, mes - 1, dia);
-    fim.setDate(fim.getDate() + diasGarantiaValue);
+    fim.setDate(fim.getDate() + dias);
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     const diasRestantes = Math.round((fim.getTime() - hoje.getTime()) / 86_400_000);
@@ -1170,7 +1168,7 @@ export function VeiculoForm({
                   min={0}
                   max={3650}
                   placeholder="90"
-                  {...register("quantidade_dias_garantia")}
+                  {...register("quantidade_dias_garantia", { valueAsNumber: true })}
                   disabled={isSaving}
                   className={inputCls(!!errors.quantidade_dias_garantia)}
                 />
