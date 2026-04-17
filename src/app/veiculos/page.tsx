@@ -115,12 +115,31 @@ function BadgeGarantia({ dataFim }: { dataFim: string | null }) {
   );
 }
 
+// ─── Tipos locais ────────────────────────────────────────────────────────────────
+
+type VeiculoRow = {
+  id: string;
+  placa: string;
+  cor_veiculo: string;
+  ano_fabricacao: number;
+  ano_modelo: number;
+  quilometragem: number;
+  preco_venda: number | null;
+  criado_em: string;
+  data_compra: string;
+  data_fim_garantia: string | null;
+  marca: { nome_dominio: string } | null;
+  modelo: { nome_dominio: string } | null;
+  situacao: { nome_dominio: string } | null;
+  veiculo_qr_code: { url_publica: string; token_publica: string; total_visualizacoes: number }[] | null;
+};
+
 // ─── Página ───────────────────────────────────────────────────────────────────────
 
 export default async function VeiculosPage() {
   const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
-  const { data: veiculos } = await supabase
+  const { data: veiculosRaw } = await supabase
     .schema("dealership")
     .from("veiculo")
     .select(
@@ -133,6 +152,8 @@ export default async function VeiculosPage() {
     )
     .eq("empresa_id", usuarioAtual.empresa_id)
     .order("data_compra", { ascending: true });
+
+  const veiculos = veiculosRaw as unknown as VeiculoRow[] | null;
 
   const total = veiculos?.length ?? 0;
 
@@ -208,21 +229,10 @@ export default async function VeiculosPage() {
 
           <ul role="list" className="divide-y divide-brand-gray-mid/20">
             {veiculos?.map((v) => {
-              const marca = (
-                v.marca as unknown as { nome_dominio: string } | null
-              )?.nome_dominio ?? "—";
-              const modelo = (
-                v.modelo as unknown as { nome_dominio: string } | null
-              )?.nome_dominio ?? "—";
-              const situacao = (
-                v.situacao as unknown as { nome_dominio: string } | null
-              )?.nome_dominio ?? "—";
-              const qrRaw = v.veiculo_qr_code as unknown as {
-                url_publica: string;
-                token_publica: string;
-                total_visualizacoes: number;
-              }[] | null;
-              const qrExistente = Array.isArray(qrRaw) ? (qrRaw[0] ?? null) : null;
+              const marca = v.marca?.nome_dominio ?? "—";
+              const modelo = v.modelo?.nome_dominio ?? "—";
+              const situacao = v.situacao?.nome_dominio ?? "—";
+              const qrExistente = Array.isArray(v.veiculo_qr_code) ? (v.veiculo_qr_code[0] ?? null) : null;
 
               const kmFormatado = new Intl.NumberFormat("pt-BR").format(
                 v.quilometragem
@@ -288,7 +298,7 @@ export default async function VeiculosPage() {
                     <div className="relative z-10 flex flex-col gap-1.5">
                       <BadgeSituacao situacao={situacao} />
                       {situacao.toLowerCase() === "vendido" && (
-                        <BadgeGarantia dataFim={(v as unknown as { data_fim_garantia: string | null }).data_fim_garantia} />
+                        <BadgeGarantia dataFim={v.data_fim_garantia} />
                       )}
                     </div>
 
@@ -317,7 +327,7 @@ export default async function VeiculosPage() {
                       <div className="flex flex-col items-end gap-1.5">
                         <BadgeSituacao situacao={situacao} />
                         {situacao.toLowerCase() === "vendido" && (
-                          <BadgeGarantia dataFim={(v as unknown as { data_fim_garantia: string | null }).data_fim_garantia} />
+                          <BadgeGarantia dataFim={v.data_fim_garantia} />
                         )}
                       </div>
                     </div>

@@ -15,6 +15,36 @@ import {
   definirFotoPrincipal,
 } from "../actions";
 
+// ─── Tipo local para o registro de veículo selecionado ──────────────────────
+
+type VeiculoEditRow = {
+  id: string;
+  placa: string;
+  renavam: string;
+  numero_chassi: string;
+  marca_veiculo_id: string;
+  modelo_veiculo_id: string;
+  combustivel_veiculo_id: string;
+  cambio_veiculo_id: string;
+  direcao_veiculo_id: string;
+  situacao_veiculo_id: string;
+  ano_fabricacao: number;
+  ano_modelo: number;
+  cor_veiculo: string;
+  quantidade_portas: number;
+  quilometragem: number;
+  vidro_eletrico: boolean;
+  trava_eletrica: boolean;
+  laudo_aprovado: boolean;
+  data_compra: string;
+  preco_compra: number;
+  preco_venda: number | null;
+  data_venda: string | null;
+  data_entrega: string | null;
+  quantidade_dias_garantia: number | null;
+  descricao: string | null;
+};
+
 export default async function EditarVeiculoPage({
   params,
   searchParams,
@@ -90,6 +120,8 @@ export default async function EditarVeiculoPage({
 
   if (!veiculo) notFound();
 
+  const v = veiculo as unknown as VeiculoEditRow;
+
   const agrupar = (grupo: string) =>
     (dominiosVeiculo ?? [])
       .filter((d) => d.grupo_dominio === grupo)
@@ -156,31 +188,31 @@ export default async function EditarVeiculoPage({
         salvarAction={salvarAction}
         gerarQrCodeAction={gerarQrCodeAction}
         initialData={{
-          id: veiculo.id,
-          placa: veiculo.placa,
-          renavam: veiculo.renavam,
-          numero_chassi: veiculo.numero_chassi,
-          marca_veiculo_id: veiculo.marca_veiculo_id,
-          modelo_veiculo_id: veiculo.modelo_veiculo_id,
-          combustivel_veiculo_id: veiculo.combustivel_veiculo_id,
-          cambio_veiculo_id: veiculo.cambio_veiculo_id,
-          direcao_veiculo_id: veiculo.direcao_veiculo_id,
-          situacao_veiculo_id: veiculo.situacao_veiculo_id,
-          ano_fabricacao: veiculo.ano_fabricacao,
-          ano_modelo: veiculo.ano_modelo,
-          cor_veiculo: veiculo.cor_veiculo,
-          quantidade_portas: veiculo.quantidade_portas,
-          quilometragem: veiculo.quilometragem,
-          vidro_eletrico: veiculo.vidro_eletrico,
-          trava_eletrica: veiculo.trava_eletrica,
-          laudo_aprovado: veiculo.laudo_aprovado,
-          data_compra: veiculo.data_compra,
-          preco_compra: veiculo.preco_compra,
-          preco_venda: veiculo.preco_venda ?? null,
-          data_venda: veiculo.data_venda ?? null,
-          data_entrega: veiculo.data_entrega ?? null,
-          descricao: veiculo.descricao ?? null,
-          quantidade_dias_garantia: (veiculo as unknown as { quantidade_dias_garantia: number | null }).quantidade_dias_garantia ?? null,
+          id: v.id,
+          placa: v.placa,
+          renavam: v.renavam,
+          numero_chassi: v.numero_chassi,
+          marca_veiculo_id: v.marca_veiculo_id,
+          modelo_veiculo_id: v.modelo_veiculo_id,
+          combustivel_veiculo_id: v.combustivel_veiculo_id,
+          cambio_veiculo_id: v.cambio_veiculo_id,
+          direcao_veiculo_id: v.direcao_veiculo_id,
+          situacao_veiculo_id: v.situacao_veiculo_id,
+          ano_fabricacao: v.ano_fabricacao,
+          ano_modelo: v.ano_modelo,
+          cor_veiculo: v.cor_veiculo,
+          quantidade_portas: v.quantidade_portas,
+          quilometragem: v.quilometragem,
+          vidro_eletrico: v.vidro_eletrico,
+          trava_eletrica: v.trava_eletrica,
+          laudo_aprovado: v.laudo_aprovado,
+          data_compra: v.data_compra,
+          preco_compra: v.preco_compra,
+          preco_venda: v.preco_venda ?? null,
+          data_venda: v.data_venda ?? null,
+          data_entrega: v.data_entrega ?? null,
+          descricao: v.descricao ?? null,
+          quantidade_dias_garantia: v.quantidade_dias_garantia ?? null,
         }}
         qrCodeInicial={qrCodeInicial}
       />

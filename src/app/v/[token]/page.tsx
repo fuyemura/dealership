@@ -138,10 +138,11 @@ export default async function VeiculoPublicoPage({ params }: Props) {
 
   // 3. Incrementa contador de visualizações — atômico via RPC.
   // Disparado em background para não bloquear a renderização da página.
-  void admin
-    .schema("dealership")
-    .rpc("incrementar_visualizacao", { p_qr_id: qrCode.id })
-    .catch(() => {/* falha silenciosa — métrica não crítica */});
+  void Promise.resolve(
+    admin
+      .schema("dealership")
+      .rpc("incrementar_visualizacao", { p_qr_id: qrCode.id })
+  ).catch(() => {/* falha silenciosa — métrica não crítica */});
 
   // ─── Resolução de dados ───────────────────────────────────────────────────
 

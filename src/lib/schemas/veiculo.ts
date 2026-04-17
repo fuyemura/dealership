@@ -69,7 +69,11 @@ export const veiculoBaseSchema = z.object({
   data_entrega: z.string().optional().nullable(),
   descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
   quantidade_dias_garantia: z.preprocess(
-    (v) => (v === "" || (typeof v === "number" && isNaN(v)) ? null : v),
+    (v) => {
+      if (v === "" || v === null || v === undefined) return null;
+      const n = Number(v);
+      return isNaN(n) ? null : n;
+    },
     z.number().int().min(0, "Valor inválido.").max(3650, "Máximo 3650 dias.").nullable().optional()
   ),
 });

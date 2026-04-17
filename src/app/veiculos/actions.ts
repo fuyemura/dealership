@@ -238,8 +238,12 @@ export async function atualizarVeiculo(
       preco_venda: data.preco_venda ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
-      quantidade_dias_garantia: data.quantidade_dias_garantia ?? null,
-      data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia ?? null),
+      // Só atualiza garantia quando o campo foi explicitamente enviado;
+      // undefined faz o Supabase ignorar a coluna, preservando o valor existente.
+      ...(data.quantidade_dias_garantia !== undefined && {
+        quantidade_dias_garantia: data.quantidade_dias_garantia,
+        data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia),
+      }),
       descricao: data.descricao?.trim() || null,
       atualizado_por: usuarioAtual.id,
     })
