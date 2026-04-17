@@ -118,5 +118,10 @@ type NullifyUndefined<T> = {
 /**
  * Tipo derivado do schema — fonte única de verdade para os campos do formulário.
  * Importado em veiculos/actions.ts em vez de uma interface manual.
+ * quantidade_dias_garantia preserva undefined para que o server action possa
+ * distinguir "não enviado" (não tocar no banco) de "limpar valor" (gravar null).
  */
-export type VeiculoFormData = NullifyUndefined<z.infer<typeof veiculoBaseSchema>>;
+export type VeiculoFormData = Omit<
+  NullifyUndefined<z.infer<typeof veiculoBaseSchema>>,
+  "quantidade_dias_garantia"
+> & { quantidade_dias_garantia?: number | null };

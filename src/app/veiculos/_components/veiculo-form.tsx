@@ -61,7 +61,7 @@ export interface VeiculoInicial {
   data_venda: string | null;
   data_entrega: string | null;
   descricao: string | null;
-  quantidade_dias_garantia: number | null;
+  quantidade_dias_garantia: number | null | undefined;
 }
 
 export interface VeiculoFormProps {
@@ -602,7 +602,7 @@ export function VeiculoForm({
       descricao: values.descricao?.trim() || null,
       quantidade_dias_garantia: Number.isFinite(values.quantidade_dias_garantia)
         ? (values.quantidade_dias_garantia as number)
-        : null,
+        : undefined,
     };
 
     const result = await salvarAction(data);
