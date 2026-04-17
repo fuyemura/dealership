@@ -1,5 +1,6 @@
 ﻿import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
+import { PAPEIS } from "@/lib/auth/roles";
 import { VeiculoForm } from "../_components/veiculo-form";
 import type { Dominios, QrCodeInfo } from "../_components/veiculo-form";
 import { VeiculoArquivos } from "../_components/veiculo-arquivos";
@@ -23,25 +24,8 @@ export default async function EditarVeiculoPage({
 }) {
   const [{ id }, { novo }] = await Promise.all([params, searchParams]);
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuario?.empresa_id) redirect("/login");
-
-  const isAdmin =
-    (usuario.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio?.toLowerCase() === "administrador";
+  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
+  const isAdmin = papel === PAPEIS.ADMINISTRADOR;
 
   // Carrega veículo, marcas, modelos, domínios, QR code e arquivos em paralelo
   const [
@@ -66,7 +50,7 @@ export default async function EditarVeiculoPage({
            data_venda, data_entrega, quantidade_dias_garantia, descricao`
         )
         .eq("id", id)
-        .eq("empresa_id", usuario.empresa_id)
+        .eq("empresa_id", usuarioAtual.empresa_id)
         .single(),
 
       supabase
@@ -100,7 +84,7 @@ export default async function EditarVeiculoPage({
         .from("veiculo_arquivo")
         .select("id, url_arquivo, arquivo_principal, ordem_exibicao, tamanho_arquivo, tipo_arquivo:dominio!tipo_arquivo_id(nome_dominio)")
         .eq("veiculo_id", id)
-        .eq("empresa_id", usuario.empresa_id)
+        .eq("empresa_id", usuarioAtual.empresa_id)
         .order("ordem_exibicao", { ascending: true }),
     ]);
 

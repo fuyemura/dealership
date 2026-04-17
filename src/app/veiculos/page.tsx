@@ -1,6 +1,6 @@
 ﻿import Link from "next/link";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { gerarQrCode } from "./actions";
 import { VeiculoLinhaAcoes } from "./_components/veiculo-linha-acoes";
 
@@ -119,21 +119,7 @@ function BadgeGarantia({ dataFim }: { dataFim: string | null }) {
 // ─── Página ───────────────────────────────────────────────────────────────────────
 
 export default async function VeiculosPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("empresa_id")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuario?.empresa_id) redirect("/login");
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
   const { data: veiculos } = await supabase
     .schema("dealership")
@@ -146,7 +132,7 @@ export default async function VeiculosPage() {
        situacao:dominio!situacao_veiculo_id(nome_dominio),
        veiculo_qr_code(url_publica, token_publica, total_visualizacoes)`
     )
-    .eq("empresa_id", usuario.empresa_id)
+    .eq("empresa_id", usuarioAtual.empresa_id)
     .order("data_compra", { ascending: true });
 
   const total = veiculos?.length ?? 0;

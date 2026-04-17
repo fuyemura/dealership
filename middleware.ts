@@ -81,11 +81,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Executa o middleware em todas as rotas EXCETO:
-     * - arquivos estáticos (_next/static, _next/image, favicon, etc.)
-     * - arquivos com extensão conhecida (svg, png, jpg…)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

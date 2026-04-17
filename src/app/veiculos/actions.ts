@@ -185,7 +185,7 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
   }
 
   revalidatePath("/veiculos");
-  redirect(`/veiculos/${novoVeiculo!.id}?novo=1`);
+  redirect(`/veiculos/${novoVeiculo.id}?novo=1`);
 }
 
 // ─── Atualizar veículo ────────────────────────────────────────────────────────
@@ -236,7 +236,6 @@ export async function atualizarVeiculo(
       data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia ?? null),
       descricao: data.descricao?.trim() || null,
       atualizado_por: usuarioAtual.id,
-      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id);

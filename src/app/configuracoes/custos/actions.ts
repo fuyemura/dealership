@@ -65,7 +65,6 @@ export async function atualizarCusto(
     .update({
       nome_custo: nomeCusto.trim(),
       descricao: descricao?.trim() || null,
-      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id); // garante isolamento por empresa

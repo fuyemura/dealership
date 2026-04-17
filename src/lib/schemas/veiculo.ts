@@ -56,7 +56,13 @@ export const veiculoBaseSchema = z.object({
   laudo_aprovado: z.boolean(),
   data_compra: z.string()
     .min(1, "Data de compra é obrigatória.")
-    .refine((v) => new Date(v) <= new Date(), "Data de compra não pode ser futura."),
+    .refine((v) => {
+      const [ano, mes, dia] = v.split("-").map(Number);
+      const dataLocal = new Date(ano, mes - 1, dia);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return dataLocal <= hoje;
+    }, "Data de compra não pode ser futura."),
   preco_compra: z.coerce.number().positive("Informe um preço de compra válido."),
   preco_venda: z.coerce.number().min(0).optional().nullable(),
   data_venda: z.string().optional().nullable(),

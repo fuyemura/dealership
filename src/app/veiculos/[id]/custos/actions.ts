@@ -102,7 +102,6 @@ export async function atualizarManutencao(
       obs_manutencao: data.obs_manutencao?.trim() || null,
       situacao_manutencao_id: data.situacao_manutencao_id,
       data_conclusao: data.data_conclusao,
-      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id);
