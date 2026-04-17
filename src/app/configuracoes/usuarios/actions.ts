@@ -2,40 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAdminAutorizado } from "@/lib/auth/guards";
 import { validarCpf, sanitizarCpf } from "@/lib/utils/validators";
 
 export type ActionResult = { error: string } | undefined;
-
-// ─── Helpers internos ─────────────────────────────────────────────────────────
-
-async function getAdminAutorizado() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuarioAtual } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuarioAtual?.empresa_id) redirect("/login");
-
-  const papel =
-    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio?.toLowerCase() ?? "";
-
-  // Somente administradores gerenciam usuários
-  if (papel !== "administrador") redirect("/dashboard");
-
-  return { supabase, usuarioAtual };
-}
 
 // ─── Validação server-side ────────────────────────────────────────────────────
 
@@ -119,6 +90,7 @@ export async function convidarUsuario(
     return { error: "Erro ao cadastrar o usuário. Tente novamente." };
   }
 
+  revalidatePath("/configuracoes/usuarios");
   redirect("/configuracoes/usuarios");
 }
 
@@ -162,7 +134,6 @@ export async function atualizarUsuario(
       nome_usuario: nomeUsuario.trim(),
       cpf: cpfSanitizado,
       papel_usuario_id: papelUsuarioId,
-      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id); // isolamento por empresa

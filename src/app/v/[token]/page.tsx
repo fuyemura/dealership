@@ -136,11 +136,13 @@ export default async function VeiculoPublicoPage({ params }: Props) {
 
   if (!veiculo) notFound();
 
-  // 3. Incrementa contador de visualizações — atômico via RPC (fire-and-forget)
-  admin
-    .schema("dealership")
-    .rpc("incrementar_visualizacao", { p_qr_id: qrCode.id })
-    .then(() => {});
+  // 3. Incrementa contador de visualizações — atômico via RPC.
+  // Disparado em background para não bloquear a renderização da página.
+  void Promise.resolve(
+    admin
+      .schema("dealership")
+      .rpc("incrementar_visualizacao", { p_qr_id: qrCode.id })
+  ).catch(() => {/* falha silenciosa — métrica não crítica */});
 
   // ─── Resolução de dados ───────────────────────────────────────────────────
 
@@ -168,7 +170,7 @@ export default async function VeiculoPublicoPage({ params }: Props) {
 
   const fotos = (arquivos ?? []).filter(
     (a) =>
-      (a.tipo as unknown as { nome_dominio: string } | null)?.nome_dominio ===
+      (a.tipo as unknown as { nome_dominio: string } | null)?.nome_dominio?.toLowerCase() ===
       "foto"
   );
 

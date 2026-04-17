@@ -61,6 +61,7 @@ export interface VeiculoInicial {
   data_venda: string | null;
   data_entrega: string | null;
   descricao: string | null;
+  quantidade_dias_garantia: number | null | undefined;
 }
 
 export interface VeiculoFormProps {
@@ -183,6 +184,7 @@ function CurrencyInput({ id, value, onChange, onBlur, disabled, hasError }: Curr
     value != null && value > 0 ? formatarMoeda(value) : ""
   );
 
+  // Sincroniza display quando o valor externo muda (ex: reset do formulário).
   useEffect(() => {
     setDisplay(value != null && value > 0 ? formatarMoeda(value) : "");
   }, [value]);
@@ -489,6 +491,7 @@ export function VeiculoForm({
       data_venda: initialData?.data_venda ?? "",
       data_entrega: initialData?.data_entrega ?? "",
       descricao: initialData?.descricao ?? "",
+      quantidade_dias_garantia: initialData?.quantidade_dias_garantia ?? undefined,
     },
   });
 
@@ -497,6 +500,23 @@ export function VeiculoForm({
   const marcaIdSelecionada = watch("marca_veiculo_id");
   const situacaoSelecionadaId = watch("situacao_veiculo_id");
   const isVendido = !!vendidoId && situacaoSelecionadaId === vendidoId;
+
+  const dataVendaValue = watch("data_venda");
+  const diasGarantiaValue = watch("quantidade_dias_garantia");
+
+  const garantiaInfo = useMemo(() => {
+    const dias = Number(diasGarantiaValue);
+    if (!dataVendaValue || !dias || isNaN(dias) || dias <= 0) return null;
+    const [ano, mes, dia] = dataVendaValue.split("-").map(Number);
+    const fim = new Date(ano, mes - 1, dia);
+    fim.setDate(fim.getDate() + dias);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const diasRestantes = Math.round((fim.getTime() - hoje.getTime()) / 86_400_000);
+    const estado: "ativa" | "expirando" | "expirada" =
+      diasRestantes < 0 ? "expirada" : diasRestantes <= 30 ? "expirando" : "ativa";
+    return { dataFimFormatada: fim.toLocaleDateString("pt-BR"), diasRestantes, estado };
+  }, [dataVendaValue, diasGarantiaValue]);
 
   const modelosFiltrados =
     marcaIdSelecionada
@@ -580,6 +600,9 @@ export function VeiculoForm({
       data_venda: values.data_venda || null,
       data_entrega: values.data_entrega || null,
       descricao: values.descricao?.trim() || null,
+      quantidade_dias_garantia: Number.isFinite(values.quantidade_dias_garantia)
+        ? (values.quantidade_dias_garantia as number)
+        : undefined,
     };
 
     const result = await salvarAction(data);
@@ -1101,7 +1124,15 @@ export function VeiculoForm({
                 <input
                   id="data_venda"
                   type="date"
-                  {...register("data_venda")}
+                  {...register("data_venda", {
+                    onChange(e) {
+                      const novaData: string = e.target.value;
+                      const dataEntregaAtual = watch("data_entrega") ?? "";
+                      if (!dataEntregaAtual || dataEntregaAtual < novaData) {
+                        setValue("data_entrega", novaData, { shouldValidate: true });
+                      }
+                    },
+                  })}
                   disabled={isSaving}
                   className={inputCls(!!errors.data_venda)}
                 />
@@ -1118,13 +1149,75 @@ export function VeiculoForm({
                 <input
                   id="data_entrega"
                   type="date"
+                  min={dataVendaValue || undefined}
                   {...register("data_entrega")}
                   disabled={isSaving}
                   className={inputCls(!!errors.data_entrega)}
                 />
+                <FieldError msg={errors.data_entrega?.message} />
+              </div>
+            )}
+
+            {/* Dias de Garantia — apenas quando situação = Vendido */}
+            {isEditing && isVendido && (
+              <div className="space-y-1.5">
+                <label htmlFor="quantidade_dias_garantia" className={labelCls}>
+                  Dias de Garantia
+                </label>
+                <input
+                  id="quantidade_dias_garantia"
+                  type="number"
+                  min={0}
+                  max={3650}
+                  placeholder="90"
+                  {...register("quantidade_dias_garantia", {
+                    setValueAs: (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+                  })}
+                  disabled={isSaving}
+                  className={inputCls(!!errors.quantidade_dias_garantia)}
+                />
+                <FieldError msg={errors.quantidade_dias_garantia?.message} />
+              </div>
+            )}
+
+            {/* Data Fim da Garantia — calculada, somente leitura */}
+            {isEditing && isVendido && (
+              <div className="space-y-1.5">
+                <label className={labelCls}>Data Fim da Garantia</label>
+                <div
+                  className={`${inputCls(false)} bg-brand-gray-soft text-brand-gray-text cursor-default select-none`}
+                >
+                  {garantiaInfo?.dataFimFormatada ?? "—"}
+                </div>
+                <p className="text-xs text-brand-gray-text/70">Calculado automaticamente.</p>
               </div>
             )}
           </div>
+
+          {/* Banner de status da garantia */}
+          {isEditing && isVendido && garantiaInfo && (
+            <div
+              className={`mt-5 rounded-xl border px-4 py-3 text-sm font-medium ${
+                garantiaInfo.estado === "expirada"
+                  ? "bg-red-50 border-red-200 text-red-700"
+                  : garantiaInfo.estado === "expirando"
+                  ? "bg-status-warning-bg border-status-warning-border text-status-warning-text"
+                  : "bg-status-success-bg border-status-success-border text-status-success-text"
+              }`}
+            >
+              {garantiaInfo.estado === "expirada"
+                ? `Garantia expirada há ${Math.abs(garantiaInfo.diasRestantes)} dia${
+                    Math.abs(garantiaInfo.diasRestantes) !== 1 ? "s" : ""
+                  } — venceu em ${garantiaInfo.dataFimFormatada}`
+                : garantiaInfo.estado === "expirando"
+                ? garantiaInfo.diasRestantes === 0
+                  ? `Garantia expira hoje (${garantiaInfo.dataFimFormatada})`
+                  : `Garantia expira em ${garantiaInfo.diasRestantes} dia${
+                      garantiaInfo.diasRestantes !== 1 ? "s" : ""
+                    } — ${garantiaInfo.dataFimFormatada}`
+                : `Garantia ativa — vence em ${garantiaInfo.diasRestantes} dias (${garantiaInfo.dataFimFormatada})`}
+            </div>
+          )}
         </section>
 
         {/* ── Seção 4: Observações ──────────────────────────────────────────── */}

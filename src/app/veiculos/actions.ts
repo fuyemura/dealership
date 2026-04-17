@@ -89,6 +89,12 @@ function validarDados(data: VeiculoFormData): ActionResult {
 
   if (data.descricao && data.descricao.length > 1000)
     return { error: "Descrição: máximo de 1000 caracteres." };
+
+  if (data.quantidade_dias_garantia != null) {
+    const dias = data.quantidade_dias_garantia;
+    if (!Number.isFinite(dias) || !Number.isInteger(dias) || dias < 0 || dias > 3650)
+      return { error: "Dias de garantia deve ser um inteiro entre 0 e 3650." };
+  }
 }
 
 // ─── Criar veículo ────────────────────────────────────────────────────────────
@@ -112,6 +118,17 @@ async function validarCamposVenda(
     return { error: "Informe o preço de venda." };
   if (!data.data_venda)
     return { error: "Informe a data de venda." };
+}
+
+function calcularDataFimGarantia(
+  dataVenda: string | null,
+  dias: number | null
+): string | null {
+  if (!dataVenda || !dias || dias <= 0) return null;
+  const [ano, mes, dia] = dataVenda.split("-").map(Number);
+  const d = new Date(ano, mes - 1, dia);
+  d.setDate(d.getDate() + dias);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult> {
@@ -154,6 +171,8 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
       preco_venda: data.preco_venda ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
+      quantidade_dias_garantia: data.quantidade_dias_garantia ?? null,
+      data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia ?? null),
       descricao: data.descricao?.trim() || null,
       criado_por: usuarioAtual.id,
       atualizado_por: usuarioAtual.id,
@@ -172,7 +191,7 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
   }
 
   revalidatePath("/veiculos");
-  redirect(`/veiculos/${novoVeiculo!.id}?novo=1`);
+  redirect(`/veiculos/${novoVeiculo.id}?novo=1`);
 }
 
 // ─── Atualizar veículo ────────────────────────────────────────────────────────
@@ -219,9 +238,14 @@ export async function atualizarVeiculo(
       preco_venda: data.preco_venda ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
+      // Só atualiza garantia quando o campo foi explicitamente enviado;
+      // undefined faz o Supabase ignorar a coluna, preservando o valor existente.
+      ...(data.quantidade_dias_garantia !== undefined && {
+        quantidade_dias_garantia: data.quantidade_dias_garantia,
+        data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia),
+      }),
       descricao: data.descricao?.trim() || null,
       atualizado_por: usuarioAtual.id,
-      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id);

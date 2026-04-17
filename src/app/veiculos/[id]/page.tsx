@@ -1,5 +1,6 @@
 ﻿import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
+import { PAPEIS } from "@/lib/auth/roles";
 import { VeiculoForm } from "../_components/veiculo-form";
 import type { Dominios, QrCodeInfo } from "../_components/veiculo-form";
 import { VeiculoArquivos } from "../_components/veiculo-arquivos";
@@ -14,6 +15,36 @@ import {
   definirFotoPrincipal,
 } from "../actions";
 
+// ─── Tipo local para o registro de veículo selecionado ──────────────────────
+
+type VeiculoEditRow = {
+  id: string;
+  placa: string;
+  renavam: string;
+  numero_chassi: string;
+  marca_veiculo_id: string;
+  modelo_veiculo_id: string;
+  combustivel_veiculo_id: string;
+  cambio_veiculo_id: string;
+  direcao_veiculo_id: string;
+  situacao_veiculo_id: string;
+  ano_fabricacao: number;
+  ano_modelo: number;
+  cor_veiculo: string;
+  quantidade_portas: number;
+  quilometragem: number;
+  vidro_eletrico: boolean;
+  trava_eletrica: boolean;
+  laudo_aprovado: boolean;
+  data_compra: string;
+  preco_compra: number;
+  preco_venda: number | null;
+  data_venda: string | null;
+  data_entrega: string | null;
+  quantidade_dias_garantia: number | null;
+  descricao: string | null;
+};
+
 export default async function EditarVeiculoPage({
   params,
   searchParams,
@@ -23,25 +54,8 @@ export default async function EditarVeiculoPage({
 }) {
   const [{ id }, { novo }] = await Promise.all([params, searchParams]);
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuario?.empresa_id) redirect("/login");
-
-  const isAdmin =
-    (usuario.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio?.toLowerCase() === "administrador";
+  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
+  const isAdmin = papel === PAPEIS.ADMINISTRADOR;
 
   // Carrega veículo, marcas, modelos, domínios, QR code e arquivos em paralelo
   const [
@@ -63,10 +77,10 @@ export default async function EditarVeiculoPage({
            quantidade_portas, quilometragem,
            vidro_eletrico, trava_eletrica, laudo_aprovado,
            data_compra, preco_compra, preco_venda,
-           data_venda, data_entrega, descricao`
+           data_venda, data_entrega, quantidade_dias_garantia, descricao`
         )
         .eq("id", id)
-        .eq("empresa_id", usuario.empresa_id)
+        .eq("empresa_id", usuarioAtual.empresa_id)
         .single(),
 
       supabase
@@ -100,11 +114,13 @@ export default async function EditarVeiculoPage({
         .from("veiculo_arquivo")
         .select("id, url_arquivo, arquivo_principal, ordem_exibicao, tamanho_arquivo, tipo_arquivo:dominio!tipo_arquivo_id(nome_dominio)")
         .eq("veiculo_id", id)
-        .eq("empresa_id", usuario.empresa_id)
+        .eq("empresa_id", usuarioAtual.empresa_id)
         .order("ordem_exibicao", { ascending: true }),
     ]);
 
   if (!veiculo) notFound();
+
+  const v = veiculo as unknown as VeiculoEditRow;
 
   const agrupar = (grupo: string) =>
     (dominiosVeiculo ?? [])
@@ -172,30 +188,31 @@ export default async function EditarVeiculoPage({
         salvarAction={salvarAction}
         gerarQrCodeAction={gerarQrCodeAction}
         initialData={{
-          id: veiculo.id,
-          placa: veiculo.placa,
-          renavam: veiculo.renavam,
-          numero_chassi: veiculo.numero_chassi,
-          marca_veiculo_id: veiculo.marca_veiculo_id,
-          modelo_veiculo_id: veiculo.modelo_veiculo_id,
-          combustivel_veiculo_id: veiculo.combustivel_veiculo_id,
-          cambio_veiculo_id: veiculo.cambio_veiculo_id,
-          direcao_veiculo_id: veiculo.direcao_veiculo_id,
-          situacao_veiculo_id: veiculo.situacao_veiculo_id,
-          ano_fabricacao: veiculo.ano_fabricacao,
-          ano_modelo: veiculo.ano_modelo,
-          cor_veiculo: veiculo.cor_veiculo,
-          quantidade_portas: veiculo.quantidade_portas,
-          quilometragem: veiculo.quilometragem,
-          vidro_eletrico: veiculo.vidro_eletrico,
-          trava_eletrica: veiculo.trava_eletrica,
-          laudo_aprovado: veiculo.laudo_aprovado,
-          data_compra: veiculo.data_compra,
-          preco_compra: veiculo.preco_compra,
-          preco_venda: veiculo.preco_venda ?? null,
-          data_venda: veiculo.data_venda ?? null,
-          data_entrega: veiculo.data_entrega ?? null,
-          descricao: veiculo.descricao ?? null,
+          id: v.id,
+          placa: v.placa,
+          renavam: v.renavam,
+          numero_chassi: v.numero_chassi,
+          marca_veiculo_id: v.marca_veiculo_id,
+          modelo_veiculo_id: v.modelo_veiculo_id,
+          combustivel_veiculo_id: v.combustivel_veiculo_id,
+          cambio_veiculo_id: v.cambio_veiculo_id,
+          direcao_veiculo_id: v.direcao_veiculo_id,
+          situacao_veiculo_id: v.situacao_veiculo_id,
+          ano_fabricacao: v.ano_fabricacao,
+          ano_modelo: v.ano_modelo,
+          cor_veiculo: v.cor_veiculo,
+          quantidade_portas: v.quantidade_portas,
+          quilometragem: v.quilometragem,
+          vidro_eletrico: v.vidro_eletrico,
+          trava_eletrica: v.trava_eletrica,
+          laudo_aprovado: v.laudo_aprovado,
+          data_compra: v.data_compra,
+          preco_compra: v.preco_compra,
+          preco_venda: v.preco_venda ?? null,
+          data_venda: v.data_venda ?? null,
+          data_entrega: v.data_entrega ?? null,
+          descricao: v.descricao ?? null,
+          quantidade_dias_garantia: v.quantidade_dias_garantia ?? null,
         }}
         qrCodeInicial={qrCodeInicial}
       />

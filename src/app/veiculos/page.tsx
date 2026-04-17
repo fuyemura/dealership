@@ -1,6 +1,5 @@
 ﻿import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { gerarQrCode } from "./actions";
 import { VeiculoLinhaAcoes } from "./_components/veiculo-linha-acoes";
 
@@ -82,38 +81,79 @@ function BadgeSituacao({ situacao }: { situacao: string }) {
   );
 }
 
-// ─── Página ───────────────────────────────────────────────────────────────────
+function BadgeGarantia({ dataFim }: { dataFim: string | null }) {
+  if (!dataFim) return null;
+  const [ano, mes, dia] = dataFim.split("-").map(Number);
+  const fim = new Date(ano, mes - 1, dia);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dias = Math.round((fim.getTime() - hoje.getTime()) / 86_400_000);
+
+  let cls: string;
+  let texto: string;
+  if (dias < 0) {
+    cls = "bg-red-50 text-red-700 border-red-200";
+    const abs = Math.abs(dias);
+    texto = abs === 1 ? "Expirada há 1 dia" : `Expirada há ${abs} dias`;
+  } else if (dias === 0) {
+    cls = "bg-status-warning-bg text-status-warning-text border-status-warning-border";
+    texto = "Expira hoje";
+  } else if (dias <= 30) {
+    cls = "bg-status-warning-bg text-status-warning-text border-status-warning-border";
+    texto = dias === 1 ? "Expira em 1 dia" : `Expira em ${dias} dias`;
+  } else {
+    cls = "bg-status-success-bg text-status-success-text border-status-success-border";
+    texto = `Garantia: ${dias} dias`;
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border whitespace-nowrap ${cls}`}
+    >
+      {texto}
+    </span>
+  );
+}
+
+// ─── Tipos locais ────────────────────────────────────────────────────────────────
+
+type VeiculoRow = {
+  id: string;
+  placa: string;
+  cor_veiculo: string;
+  ano_fabricacao: number;
+  ano_modelo: number;
+  quilometragem: number;
+  preco_venda: number | null;
+  criado_em: string;
+  data_compra: string;
+  data_fim_garantia: string | null;
+  marca: { nome_dominio: string } | null;
+  modelo: { nome_dominio: string } | null;
+  situacao: { nome_dominio: string } | null;
+  veiculo_qr_code: { url_publica: string; token_publica: string; total_visualizacoes: number }[] | null;
+};
+
+// ─── Página ───────────────────────────────────────────────────────────────────────
 
 export default async function VeiculosPage() {
-  const supabase = await createClient();
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("empresa_id")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuario?.empresa_id) redirect("/login");
-
-  const { data: veiculos } = await supabase
+  const { data: veiculosRaw } = await supabase
     .schema("dealership")
     .from("veiculo")
     .select(
       `id, placa, cor_veiculo, ano_fabricacao, ano_modelo, quilometragem, preco_venda,
-       criado_em, data_compra,
+       criado_em, data_compra, data_fim_garantia,
        marca:veiculo_marca!marca_veiculo_id(nome_dominio:nome),
        modelo:veiculo_modelo!modelo_veiculo_id(nome_dominio:nome),
        situacao:dominio!situacao_veiculo_id(nome_dominio),
        veiculo_qr_code(url_publica, token_publica, total_visualizacoes)`
     )
-    .eq("empresa_id", usuario.empresa_id)
+    .eq("empresa_id", usuarioAtual.empresa_id)
     .order("data_compra", { ascending: true });
+
+  const veiculos = veiculosRaw as unknown as VeiculoRow[] | null;
 
   const total = veiculos?.length ?? 0;
 
@@ -189,21 +229,10 @@ export default async function VeiculosPage() {
 
           <ul role="list" className="divide-y divide-brand-gray-mid/20">
             {veiculos?.map((v) => {
-              const marca = (
-                v.marca as unknown as { nome_dominio: string } | null
-              )?.nome_dominio ?? "—";
-              const modelo = (
-                v.modelo as unknown as { nome_dominio: string } | null
-              )?.nome_dominio ?? "—";
-              const situacao = (
-                v.situacao as unknown as { nome_dominio: string } | null
-              )?.nome_dominio ?? "—";
-              const qrRaw = v.veiculo_qr_code as unknown as {
-                url_publica: string;
-                token_publica: string;
-                total_visualizacoes: number;
-              }[] | null;
-              const qrExistente = Array.isArray(qrRaw) ? (qrRaw[0] ?? null) : null;
+              const marca = v.marca?.nome_dominio ?? "—";
+              const modelo = v.modelo?.nome_dominio ?? "—";
+              const situacao = v.situacao?.nome_dominio ?? "—";
+              const qrExistente = Array.isArray(v.veiculo_qr_code) ? (v.veiculo_qr_code[0] ?? null) : null;
 
               const kmFormatado = new Intl.NumberFormat("pt-BR").format(
                 v.quilometragem
@@ -266,8 +295,11 @@ export default async function VeiculosPage() {
                     </div>
 
                     {/* Situação */}
-                    <div className="relative z-10">
+                    <div className="relative z-10 flex flex-col gap-1.5">
                       <BadgeSituacao situacao={situacao} />
+                      {situacao.toLowerCase() === "vendido" && (
+                        <BadgeGarantia dataFim={v.data_fim_garantia} />
+                      )}
                     </div>
 
                     {/* Ações */}
@@ -292,7 +324,12 @@ export default async function VeiculosPage() {
                           {v.cor_veiculo}
                         </span>
                       </div>
-                      <BadgeSituacao situacao={situacao} />
+                      <div className="flex flex-col items-end gap-1.5">
+                        <BadgeSituacao situacao={situacao} />
+                        {situacao.toLowerCase() === "vendido" && (
+                          <BadgeGarantia dataFim={v.data_fim_garantia} />
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex flex-col gap-0.5">

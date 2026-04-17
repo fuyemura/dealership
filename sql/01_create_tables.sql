@@ -232,7 +232,7 @@ CREATE TABLE dealership.veiculo (
     data_venda                DATE          NULL,
     preco_venda               DECIMAL(10,2) NULL,
     data_entrega              DATE          NULL,
-    quantidade_dias_garantia  INTEGER       NULL DEFAULT 90,
+    quantidade_dias_garantia  INTEGER       NULL,
     data_fim_garantia         DATE          NULL,
     laudo_aprovado            BOOLEAN       NOT NULL,
     vendido_para              UUID          NULL,

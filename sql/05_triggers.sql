@@ -73,6 +73,14 @@ BEFORE UPDATE ON dealership.veiculo_custo
 FOR EACH ROW
 EXECUTE FUNCTION dealership.set_atualizado_em();
 
+-- ─── veiculo_manutencao ───────────────────────────────────────────────────────
+
+DROP TRIGGER IF EXISTS trg_set_atualizado_em_veiculo_manutencao ON dealership.veiculo_manutencao;
+CREATE TRIGGER trg_set_atualizado_em_veiculo_manutencao
+BEFORE UPDATE ON dealership.veiculo_manutencao
+FOR EACH ROW
+EXECUTE FUNCTION dealership.set_atualizado_em();
+
 
 -- Função e trigger: grava o estado anterior de assinatura antes de cada UPDATE
 -- SECURITY DEFINER: necessário porque assinatura_historico não possui policy de

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { trocarPlano } from "../actions";
 
@@ -169,16 +169,20 @@ export function TrocarPlanoModal({ planoAtual, planoNovo }: TrocarPlanoModalProp
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const handleClose = useCallback(() => {
+    if (isPending) return;
+    setOpen(false);
+  }, [isPending]);
+
   // ── Fechar no Escape ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isPending) handleClose();
+      if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPending]);
+  }, [open, handleClose]);
 
   // ── Travar scroll do body ───────────────────────────────────────────────────
   useEffect(() => {
@@ -200,10 +204,6 @@ export function TrocarPlanoModal({ planoAtual, planoNovo }: TrocarPlanoModalProp
     setOpen(true);
   }
 
-  function handleClose() {
-    if (isPending) return;
-    setOpen(false);
-  }
 
   function handleConfirmar() {
     startTransition(async () => {

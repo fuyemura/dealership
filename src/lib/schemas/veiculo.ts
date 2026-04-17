@@ -56,12 +56,26 @@ export const veiculoBaseSchema = z.object({
   laudo_aprovado: z.boolean(),
   data_compra: z.string()
     .min(1, "Data de compra é obrigatória.")
-    .refine((v) => new Date(v) <= new Date(), "Data de compra não pode ser futura."),
+    .refine((v) => {
+      const [ano, mes, dia] = v.split("-").map(Number);
+      const dataLocal = new Date(ano, mes - 1, dia);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return dataLocal <= hoje;
+    }, "Data de compra não pode ser futura."),
   preco_compra: z.coerce.number().positive("Informe um preço de compra válido."),
   preco_venda: z.coerce.number().min(0).optional().nullable(),
   data_venda: z.string().optional().nullable(),
   data_entrega: z.string().optional().nullable(),
   descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
+  quantidade_dias_garantia: z.preprocess(
+    (v) => {
+      if (v === "" || v === null || v === undefined) return null;
+      const n = Number(v);
+      return isNaN(n) ? null : n;
+    },
+    z.number().int().min(0, "Valor inválido.").max(3650, "Máximo 3650 dias.").nullable().optional()
+  ),
 });
 
 // Adiciona validação condicional: preço e data de venda obrigatórios quando situação = Vendido
@@ -82,6 +96,13 @@ export function buildVeiculoSchema(vendidoId: string) {
         path: ["data_venda"],
       });
     }
+    if (data.data_entrega && data.data_venda && data.data_entrega < data.data_venda) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Data de entrega não pode ser anterior à data de venda.",
+        path: ["data_entrega"],
+      });
+    }
   });
 }
 
@@ -97,5 +118,10 @@ type NullifyUndefined<T> = {
 /**
  * Tipo derivado do schema — fonte única de verdade para os campos do formulário.
  * Importado em veiculos/actions.ts em vez de uma interface manual.
+ * quantidade_dias_garantia preserva undefined para que o server action possa
+ * distinguir "não enviado" (não tocar no banco) de "limpar valor" (gravar null).
  */
-export type VeiculoFormData = NullifyUndefined<z.infer<typeof veiculoBaseSchema>>;
+export type VeiculoFormData = Omit<
+  NullifyUndefined<z.infer<typeof veiculoBaseSchema>>,
+  "quantidade_dias_garantia"
+> & { quantidade_dias_garantia?: number | null };

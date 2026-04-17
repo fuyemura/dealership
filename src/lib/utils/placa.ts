@@ -8,11 +8,15 @@
  *  - Se o novo provedor não precisar de token, remova a variável de ambiente
  *    e o guard `if (!token)` no route handler.
  *
+ * Provedor atual:
+ *  - WDAPI2: https://wdapi2.com.br/{placa}
+ *    Autenticação via header  Authorization: Bearer <token>
+ *    Variável de ambiente:    PLACA_API_TOKEN (fallback: WDAPI_TOKEN)
+ *
  * Provedores alternativos conhecidos:
- *  - WDAPI2:      https://wdapi2.com.br/{placa}/{token}          (requer token)
- *  - ApiPlacas:   https://apiplacas.com.br/api/v1/{placa}/{token} (requer token)
- *  - Permanência: sem API pública gratuita amplamente disponível —
- *                 ao migrar, atualize apenas buildUrl e normalizarResposta.
+ *  - ApiPlacas: https://apiplacas.com.br/api/v1/{placa}/{token}  (token na URL)
+ *  - Ao migrar, atualize apenas buildUrl, normalizarResposta e o
+ *    header/guard de autenticação no route handler (api/consulta-placa/route.ts).
  */
 
 export interface PlacaResult {
@@ -32,10 +36,9 @@ export interface PlacaResult {
 /**
  * Monta a URL de consulta para o provedor configurado.
  * @param placa  Placa normalizada (somente letras e dígitos, maiúscula).
- * @param token  Token de autenticação lido de variável de ambiente.
  */
-function buildUrl(placa: string, token: string): string {
-  return `https://wdapi2.com.br/${placa}/${token}`;
+function buildUrl(placa: string): string {
+  return `https://wdapi2.com.br/${placa}`;
 }
 
 /**
@@ -77,7 +80,10 @@ export async function consultarPlaca(
 ): Promise<ConsultaPlacaResult> {
   let res: Response;
   try {
-    res = await fetch(buildUrl(placa, token), { cache: "no-store" });
+    res = await fetch(buildUrl(placa), {
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${token}` },
+    });
   } catch {
     return { ok: false, status: 500, error: "Erro ao consultar a placa. Verifique sua conexão e tente novamente." };
   }

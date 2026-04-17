@@ -96,7 +96,6 @@ export async function atualizarCliente(
       nome_cliente: nome.trim(),
       telefone_cliente: telefone ? sanitizarTelefone(telefone) : null,
       email_cliente: email?.trim().toLowerCase() || null,
-      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id);
