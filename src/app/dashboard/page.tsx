@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/sign-out-button";
@@ -533,7 +533,7 @@ export default async function DashboardPage() {
                       </td>
                       <td className="px-6 py-3.5 text-right">
                         <Link
-                          href={`/veiculos/${v.placa}`}
+                          href={`/veiculos/${v.id}`}
                           className="inline-flex items-center gap-1 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity whitespace-nowrap"
                         >
                           Consultar <IconArrowRight />

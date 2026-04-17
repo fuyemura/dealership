@@ -168,7 +168,7 @@ export default async function VeiculoPublicoPage({ params }: Props) {
 
   const fotos = (arquivos ?? []).filter(
     (a) =>
-      (a.tipo as unknown as { nome_dominio: string } | null)?.nome_dominio ===
+      (a.tipo as unknown as { nome_dominio: string } | null)?.nome_dominio?.toLowerCase() ===
       "foto"
   );
 

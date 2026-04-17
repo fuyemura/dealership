@@ -114,6 +114,17 @@ async function validarCamposVenda(
     return { error: "Informe a data de venda." };
 }
 
+function calcularDataFimGarantia(
+  dataVenda: string | null,
+  dias: number | null
+): string | null {
+  if (!dataVenda || !dias || dias <= 0) return null;
+  const [ano, mes, dia] = dataVenda.split("-").map(Number);
+  const d = new Date(ano, mes - 1, dia);
+  d.setDate(d.getDate() + dias);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult> {
   const validationError = validarDados(data);
   if (validationError) return validationError;
@@ -154,6 +165,8 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
       preco_venda: data.preco_venda ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
+      quantidade_dias_garantia: data.quantidade_dias_garantia ?? null,
+      data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia ?? null),
       descricao: data.descricao?.trim() || null,
       criado_por: usuarioAtual.id,
       atualizado_por: usuarioAtual.id,
@@ -219,6 +232,8 @@ export async function atualizarVeiculo(
       preco_venda: data.preco_venda ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
+      quantidade_dias_garantia: data.quantidade_dias_garantia ?? null,
+      data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia ?? null),
       descricao: data.descricao?.trim() || null,
       atualizado_por: usuarioAtual.id,
       atualizado_em: new Date().toISOString(),

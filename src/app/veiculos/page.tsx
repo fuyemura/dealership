@@ -82,7 +82,41 @@ function BadgeSituacao({ situacao }: { situacao: string }) {
   );
 }
 
-// ─── Página ───────────────────────────────────────────────────────────────────
+function BadgeGarantia({ dataFim }: { dataFim: string | null }) {
+  if (!dataFim) return null;
+  const [ano, mes, dia] = dataFim.split("-").map(Number);
+  const fim = new Date(ano, mes - 1, dia);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dias = Math.round((fim.getTime() - hoje.getTime()) / 86_400_000);
+
+  let cls: string;
+  let texto: string;
+  if (dias < 0) {
+    cls = "bg-red-50 text-red-700 border-red-200";
+    const abs = Math.abs(dias);
+    texto = abs === 1 ? "Expirada há 1 dia" : `Expirada há ${abs} dias`;
+  } else if (dias === 0) {
+    cls = "bg-status-warning-bg text-status-warning-text border-status-warning-border";
+    texto = "Expira hoje";
+  } else if (dias <= 30) {
+    cls = "bg-status-warning-bg text-status-warning-text border-status-warning-border";
+    texto = dias === 1 ? "Expira em 1 dia" : `Expira em ${dias} dias`;
+  } else {
+    cls = "bg-status-success-bg text-status-success-text border-status-success-border";
+    texto = `Garantia: ${dias} dias`;
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border whitespace-nowrap ${cls}`}
+    >
+      {texto}
+    </span>
+  );
+}
+
+// ─── Página ───────────────────────────────────────────────────────────────────────
 
 export default async function VeiculosPage() {
   const supabase = await createClient();
@@ -106,7 +140,7 @@ export default async function VeiculosPage() {
     .from("veiculo")
     .select(
       `id, placa, cor_veiculo, ano_fabricacao, ano_modelo, quilometragem, preco_venda,
-       criado_em, data_compra,
+       criado_em, data_compra, data_fim_garantia,
        marca:veiculo_marca!marca_veiculo_id(nome_dominio:nome),
        modelo:veiculo_modelo!modelo_veiculo_id(nome_dominio:nome),
        situacao:dominio!situacao_veiculo_id(nome_dominio),
@@ -266,8 +300,11 @@ export default async function VeiculosPage() {
                     </div>
 
                     {/* Situação */}
-                    <div className="relative z-10">
+                    <div className="relative z-10 flex flex-col gap-1.5">
                       <BadgeSituacao situacao={situacao} />
+                      {situacao.toLowerCase() === "vendido" && (
+                        <BadgeGarantia dataFim={(v as unknown as { data_fim_garantia: string | null }).data_fim_garantia} />
+                      )}
                     </div>
 
                     {/* Ações */}
@@ -292,7 +329,12 @@ export default async function VeiculosPage() {
                           {v.cor_veiculo}
                         </span>
                       </div>
-                      <BadgeSituacao situacao={situacao} />
+                      <div className="flex flex-col items-end gap-1.5">
+                        <BadgeSituacao situacao={situacao} />
+                        {situacao.toLowerCase() === "vendido" && (
+                          <BadgeGarantia dataFim={(v as unknown as { data_fim_garantia: string | null }).data_fim_garantia} />
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex flex-col gap-0.5">

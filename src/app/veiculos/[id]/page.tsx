@@ -63,7 +63,7 @@ export default async function EditarVeiculoPage({
            quantidade_portas, quilometragem,
            vidro_eletrico, trava_eletrica, laudo_aprovado,
            data_compra, preco_compra, preco_venda,
-           data_venda, data_entrega, descricao`
+           data_venda, data_entrega, quantidade_dias_garantia, descricao`
         )
         .eq("id", id)
         .eq("empresa_id", usuario.empresa_id)
@@ -196,6 +196,7 @@ export default async function EditarVeiculoPage({
           data_venda: veiculo.data_venda ?? null,
           data_entrega: veiculo.data_entrega ?? null,
           descricao: veiculo.descricao ?? null,
+          quantidade_dias_garantia: (veiculo as unknown as { quantidade_dias_garantia: number | null }).quantidade_dias_garantia ?? null,
         }}
         qrCodeInicial={qrCodeInicial}
       />

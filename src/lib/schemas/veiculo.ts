@@ -62,6 +62,13 @@ export const veiculoBaseSchema = z.object({
   data_venda: z.string().optional().nullable(),
   data_entrega: z.string().optional().nullable(),
   descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
+  quantidade_dias_garantia: z.coerce
+    .number()
+    .int()
+    .min(0, "Valor inválido.")
+    .max(3650, "Máximo 3650 dias.")
+    .optional()
+    .nullable(),
 });
 
 // Adiciona validação condicional: preço e data de venda obrigatórios quando situação = Vendido
@@ -80,6 +87,13 @@ export function buildVeiculoSchema(vendidoId: string) {
         code: z.ZodIssueCode.custom,
         message: "Informe a data de venda.",
         path: ["data_venda"],
+      });
+    }
+    if (data.data_entrega && data.data_venda && data.data_entrega < data.data_venda) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Data de entrega não pode ser anterior à data de venda.",
+        path: ["data_entrega"],
       });
     }
   });
