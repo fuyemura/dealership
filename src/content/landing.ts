@@ -42,6 +42,58 @@ export const FEATURES: Feature[] = [
   },
 ];
 
+export interface PricingPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  period: string;
+  popular?: boolean;
+  features: string[];
+}
+
+export const PRICING_PLANS: PricingPlan[] = [
+  {
+    id: "basico",
+    name: "Básico",
+    price: "R$ 49,99",
+    period: "/mês",
+    description: "Para revendas que estão começando a digitalizar o estoque.",
+    features: ["Até 30 veículos", "Até 2 usuários", "Geração de QR Codes"],
+    popular: false,
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    price: "R$ 99,99",
+    period: "/mês",
+    description: "Para revendas em crescimento que precisam de mais recursos.",
+    features: [
+      "Até 100 veículos",
+      "Até 5 usuários",
+      "QR Codes personalizados",
+      "Relatórios e analytics",
+      "Suporte prioritário",
+    ],
+    popular: true,
+  },
+  {
+    id: "empresarial",
+    name: "Empresarial",
+    price: "R$ 199,99",
+    period: "/mês",
+    description: "Para grandes operações sem limite de escala.",
+    features: [
+      "Veículos ilimitados",
+      "Usuários ilimitados",
+      "QR Codes premium",
+      "Relatórios e analytics",
+      "Suporte dedicado",
+    ],
+    popular: false,
+  },
+];
+
 export const BENEFITS: Benefit[] = [
   {
     id: "eficiencia",
