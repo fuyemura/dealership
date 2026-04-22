@@ -106,7 +106,7 @@ export default async function ResultadoPeriodoPage({ searchParams }: Props) {
   const totalDespesas = (despesasRaw ?? []).reduce((acc, d) => acc + Number(d.valor), 0);
 
   const registrosVendidos = (veiculosVendidosRaw ?? []).map((v) => {
-    const mans = (v.manutencoes as ManutencaoRaw[]) ?? [];
+    const mans = (v.manutencoes as unknown as ManutencaoRaw[]) ?? [];
     const custoMans = mans
       .filter((m) => m.situacao?.nome_dominio === "Concluída")
       .reduce((acc, m) => acc + Number(m.valor_manutencao), 0);
@@ -115,8 +115,8 @@ export default async function ResultadoPeriodoPage({ searchParams }: Props) {
     return {
       id: v.id,
       placa: v.placa,
-      marca: (v.marca as { nome: string } | null)?.nome ?? "",
-      modelo: (v.modelo as { nome: string } | null)?.nome ?? "",
+      marca: (v.marca as unknown as { nome: string } | null)?.nome ?? "",
+      modelo: (v.modelo as unknown as { nome: string } | null)?.nome ?? "",
       dataVenda: v.data_venda as string,
       totalInvestido,
       precoVenda: Number(v.preco_venda),
@@ -131,7 +131,7 @@ export default async function ResultadoPeriodoPage({ searchParams }: Props) {
 
   // Despesas agrupadas por categoria
   const porCategoria: Record<string, number> = {};
-  for (const d of (despesasRaw ?? []) as DespesaComCategoria[]) {
+  for (const d of (despesasRaw ?? []) as unknown as DespesaComCategoria[]) {
     const nome = d.categoria?.nome ?? "Sem categoria";
     porCategoria[nome] = (porCategoria[nome] ?? 0) + Number(d.valor);
   }

@@ -31,7 +31,7 @@ export const getUsuarioAutorizado = cache(async function getUsuarioAutorizado() 
 
   // Normaliza para minúsculas — o banco armazena com inicial maiúscula (ex.: "Administrador")
   const papel =
-    (usuarioAtual.papel as { nome_dominio: string } | null)
+    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
       ?.nome_dominio?.toLowerCase() ?? "";
 
   return { supabase, usuarioAtual, papel };
