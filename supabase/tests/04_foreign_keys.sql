@@ -1,7 +1,7 @@
 ﻿-- =============================================================================
 -- 04_foreign_keys.sql
 -- Verifica que todas as FK declaradas existem e apontam para as tabelas e
--- colunas corretas. Total: 43 FKs.
+-- colunas corretas. Total: 44 FKs.
 --
 -- Nomenclatura das constraints: fk_<tabela>_<coluna>
 -- Execução: supabase test db
@@ -297,20 +297,6 @@ SELECT fk_ok(
     'dealership', 'veiculo_manutencao',  ARRAY['empresa_id'],
     'dealership', 'empresa',             ARRAY['id'],
     'fk_veiculo_manutencao_empresa_id: veiculo_manutencao.empresa_id → empresa.id'
-);
-
--- fk_veiculo_manutencao_situacao_manutencao_id → dominio.id
-SELECT fk_ok(
-    'dealership', 'veiculo_manutencao',  ARRAY['situacao_manutencao_id'],
-    'dealership', 'dominio',             ARRAY['id'],
-    'fk_veiculo_manutencao_situacao_manutencao_id: veiculo_manutencao.situacao_manutencao_id → dominio.id'
-);
-
--- fk_veiculo_manutencao_criado_por → usuario.id
-SELECT fk_ok(
-    'dealership', 'veiculo_manutencao',  ARRAY['criado_por'],
-    'dealership', 'usuario',             ARRAY['id'],
-    'fk_veiculo_manutencao_criado_por: veiculo_manutencao.criado_por → usuario.id'
 );
 
 -- fk_veiculo_manutencao_situacao_manutencao_id → dominio.id

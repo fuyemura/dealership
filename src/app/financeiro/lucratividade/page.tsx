@@ -102,7 +102,7 @@ export default async function LucratividadePage({ searchParams }: Props) {
   // ── Processamento ─────────────────────────────────────────────────────────
 
   const registros = (veiculosRaw ?? []).map((v) => {
-    const mans = (v.manutencoes as ManutencaoRaw[]) ?? [];
+    const mans = (v.manutencoes as unknown as ManutencaoRaw[]) ?? [];
     const custoMans = mans
       .filter((m) => m.situacao?.nome_dominio === "Concluída")
       .reduce((acc, m) => acc + Number(m.valor_manutencao), 0);
