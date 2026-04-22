@@ -743,7 +743,6 @@ export function VeiculoForm({
   const situacaoSelecionadaId = watch("situacao_veiculo_id");
   const isVendido = !!vendidoId && situacaoSelecionadaId === vendidoId;
 
-  const dataCompraValue = watch("data_compra");
   const dataVendaValue = watch("data_venda");
   const diasGarantiaValue = watch("quantidade_dias_garantia");
 

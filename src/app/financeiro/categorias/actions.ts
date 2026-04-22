@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
 

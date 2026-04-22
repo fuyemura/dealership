@@ -1,4 +1,4 @@
-﻿import { notFound, redirect } from "next/navigation";
+﻿import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
