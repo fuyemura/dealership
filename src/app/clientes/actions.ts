@@ -24,7 +24,7 @@ export type ClientePayload = {
   estado?: string;
 };
 
-// â”€â”€â”€ ValidaÃ§Ã£o server-side â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Validação server-side 
 
 function sanitizarTelefone(tel: string): string {
   return tel.replace(/\D/g, "");
@@ -33,40 +33,40 @@ function sanitizarTelefone(tel: string): string {
 function validarInputs(payload: ClientePayload): ActionResult {
   const { nome_cliente, cpf, telefone_cliente, email_cliente } = payload;
 
-  if (!nome_cliente.trim()) return { error: "O nome do cliente Ã© obrigatÃ³rio." };
+  if (!nome_cliente.trim()) return { error: "O nome do cliente é obrigatório." };
   if (nome_cliente.trim().length > 255)
-    return { error: "Nome: mÃ¡ximo de 255 caracteres." };
-  if (!validarCpf(cpf)) return { error: "CPF invÃ¡lido. Informe os 11 dÃ­gitos." };
+    return { error: "Nome: máximo de 255 caracteres." };
+  if (!validarCpf(cpf)) return { error: "CPF inválido. Informe os 11 dígitos." };
   if (telefone_cliente && sanitizarTelefone(telefone_cliente).length > 20)
-    return { error: "Telefone invÃ¡lido." };
+    return { error: "Telefone inválido." };
   if (email_cliente && email_cliente.trim().length > 255)
-    return { error: "E-mail: mÃ¡ximo de 255 caracteres." };
+    return { error: "E-mail: máximo de 255 caracteres." };
   if (
     email_cliente &&
     email_cliente.trim() &&
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email_cliente.trim())
   )
-    return { error: "E-mail invÃ¡lido." };
+    return { error: "E-mail inválido." };
 
-  // ValidaÃ§Ã£o do endereÃ§o: se qualquer campo estiver preenchido, valida todos
+  // Validação do endereço: se qualquer campo estiver preenchido, valida todos
   const temEndereco = payload.cep || payload.logradouro || payload.bairro || payload.cidade || payload.estado;
   if (temEndereco) {
     if (!payload.cep || !/^\d{5}-\d{3}$/.test(payload.cep))
-      return { error: "CEP invÃ¡lido." };
+      return { error: "CEP inválido." };
     if (!payload.logradouro?.trim())
-      return { error: "O logradouro Ã© obrigatÃ³rio." };
+      return { error: "O logradouro é obrigatório." };
     if (!payload.numero_logradouro || payload.numero_logradouro <= 0)
-      return { error: "O nÃºmero do logradouro Ã© invÃ¡lido." };
+      return { error: "O número do logradouro é inválido." };
     if (!payload.bairro?.trim())
-      return { error: "O bairro Ã© obrigatÃ³rio." };
+      return { error: "O bairro é obrigatório." };
     if (!payload.cidade?.trim())
-      return { error: "A cidade Ã© obrigatÃ³ria." };
+      return { error: "A cidade é obrigatória." };
     if (!payload.estado || payload.estado.length !== 2)
       return { error: "Informe a UF." };
   }
 }
 
-// â”€â”€â”€ Criar cliente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Criar cliente
 
 export async function criarCliente(payload: ClientePayload): Promise<ActionResult> {
   const validationError = validarInputs(payload);
@@ -76,7 +76,7 @@ export async function criarCliente(payload: ClientePayload): Promise<ActionResul
   const admin = createAdminClient();
   const cpfSanitizado = sanitizarCpf(payload.cpf);
 
-  // Criar localizacao se endereÃ§o fornecido
+  // Criar localizacao se endereço fornecido
   let localizacao_id: string | null = null;
   const temEndereco = payload.cep && payload.logradouro && payload.bairro && payload.cidade && payload.estado;
   if (temEndereco) {
@@ -95,7 +95,7 @@ export async function criarCliente(payload: ClientePayload): Promise<ActionResul
       .select("id")
       .single();
 
-    if (locError) return { error: "Erro ao salvar o endereÃ§o. Tente novamente." };
+    if (locError) return { error: "Erro ao salvar o endereço. Tente novamente." };
     localizacao_id = loc.id;
   }
 
@@ -124,7 +124,7 @@ export async function criarCliente(payload: ClientePayload): Promise<ActionResul
         .eq("id", localizacao_id);
     }
     if (error.code === "23505")
-      return { error: "JÃ¡ existe um cliente com este CPF cadastrado." };
+      return { error: "Já existe um cliente com este CPF cadastrado." };
     return { error: "Erro ao cadastrar o cliente. Tente novamente." };
   }
 
@@ -132,7 +132,7 @@ export async function criarCliente(payload: ClientePayload): Promise<ActionResul
   redirect("/clientes");
 }
 
-// â”€â”€â”€ Atualizar cliente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Atualizar cliente
 
 export async function atualizarCliente(
   id: string,
@@ -179,7 +179,7 @@ export async function atualizarCliente(
         .update(locData)
         .eq("id", localizacaoAtualId);
 
-      if (locError) return { error: "Erro ao atualizar o endereÃ§o. Tente novamente." };
+      if (locError) return { error: "Erro ao atualizar o endereço. Tente novamente." };
       localizacao_id = localizacaoAtualId;
     } else {
       // Criar nova localizacao
@@ -190,11 +190,11 @@ export async function atualizarCliente(
         .select("id")
         .single();
 
-      if (locError) return { error: "Erro ao salvar o endereÃ§o. Tente novamente." };
+      if (locError) return { error: "Erro ao salvar o endereço. Tente novamente." };
       localizacao_id = loc.id;
     }
   } else if (localizacaoAtualId) {
-    // EndereÃ§o removido: primeiro desvincula o cliente, depois exclui a localizacao
+    // Endereço removido: primeiro desvincula o cliente, depois exclui a localizacao
     const { error: updateVinculoError } = await supabase
       .schema("dealership")
       .from("cliente")
@@ -213,7 +213,7 @@ export async function atualizarCliente(
 
     if (updateVinculoError) {
       if (updateVinculoError.code === "23505")
-        return { error: "JÃ¡ existe um cliente com este CPF cadastrado." };
+        return { error: "Já existe um cliente com este CPF cadastrado." };
       return { error: "Erro ao atualizar o cliente. Tente novamente." };
     }
 
@@ -224,8 +224,8 @@ export async function atualizarCliente(
       .eq("id", localizacaoAtualId);
 
     if (deleteLocError) {
-      // NÃ£o bloqueia o fluxo â€” cliente jÃ¡ foi atualizado com sucesso
-      console.error("Erro ao excluir localizaÃ§Ã£o Ã³rfÃ£:", deleteLocError.message);
+      // Não bloqueia o fluxo — cliente já foi atualizado com sucesso
+      console.error("Erro ao excluir localização órfã:", deleteLocError.message);
     }
 
     revalidatePath("/clientes");
@@ -250,7 +250,7 @@ export async function atualizarCliente(
 
   if (error) {
     if (error.code === "23505")
-      return { error: "JÃ¡ existe um cliente com este CPF cadastrado." };
+      return { error: "Já existe um cliente com este CPF cadastrado." };
     return { error: "Erro ao atualizar o cliente. Tente novamente." };
   }
 
@@ -258,10 +258,10 @@ export async function atualizarCliente(
   redirect("/clientes");
 }
 
-// â”€â”€â”€ Excluir cliente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Excluir cliente 
 
 export async function excluirCliente(id: string): Promise<ActionResult> {
-  if (!validarUuid(id)) return { error: "ID invÃ¡lido." };
+  if (!validarUuid(id)) return { error: "ID inválido." };
 
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
   const admin = createAdminClient();
@@ -292,12 +292,12 @@ export async function excluirCliente(id: string): Promise<ActionResult> {
     if (error.code === "23503")
       return {
         error:
-          "Este cliente possui vÃ­nculos com vendas e nÃ£o pode ser excluÃ­do.",
+          "Este cliente possui vínculos com vendas e não pode ser excluído.",
       };
     return { error: "Erro ao excluir o cliente. Tente novamente." };
   }
 
-  // Excluir localizacao Ã³rfã apÃ³s remover o cliente
+  // Excluir localização órfã após remover o cliente
   if (localizacaoId) {
     await admin
       .schema("dealership")

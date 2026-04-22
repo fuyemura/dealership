@@ -126,6 +126,7 @@ type VeiculoRow = {
   quilometragem: number;
   preco_venda: number | null;
   criado_em: string;
+  atualizado_em: string;
   data_compra: string;
   data_fim_garantia: string | null;
   marca: { nome_dominio: string } | null;
@@ -144,14 +145,14 @@ export default async function VeiculosPage() {
     .from("veiculo")
     .select(
       `id, placa, cor_veiculo, ano_fabricacao, ano_modelo, quilometragem, preco_venda,
-       criado_em, data_compra, data_fim_garantia,
+       criado_em, atualizado_em, data_compra, data_fim_garantia,
        marca:veiculo_marca!marca_veiculo_id(nome_dominio:nome),
        modelo:veiculo_modelo!modelo_veiculo_id(nome_dominio:nome),
        situacao:dominio!situacao_veiculo_id(nome_dominio),
        veiculo_qr_code(url_publica, token_publica, total_visualizacoes)`
     )
     .eq("empresa_id", usuarioAtual.empresa_id)
-    .order("data_compra", { ascending: true })
+    .order("atualizado_em", { ascending: false })
     .limit(200);
 
   const veiculos = veiculosRaw as unknown as VeiculoRow[] | null;
@@ -218,7 +219,7 @@ export default async function VeiculosPage() {
               Ano · Km
             </span>
             <span className="text-xs font-semibold uppercase tracking-wide text-brand-gray-text whitespace-nowrap">
-              Tempo em Estoque
+              Atualizado em
             </span>
             <span className="text-xs font-semibold uppercase tracking-wide text-brand-gray-text">
               Situação
@@ -288,10 +289,10 @@ export default async function VeiculosPage() {
                       </span>
                     </div>
 
-                    {/* Tempo em Estoque */}
+                    {/* Atualizado em */}
                     <div className="relative z-10">
                       <span className="text-xs tabular-nums text-brand-gray-text">
-                        {tempoEmEstoque(v.data_compra as string)}
+                        {new Date(v.atualizado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                       </span>
                     </div>
 
@@ -341,7 +342,7 @@ export default async function VeiculosPage() {
                           {v.ano_fabricacao}/{v.ano_modelo} · {kmFormatado} km
                         </span>
                         <span className="text-xs text-brand-gray-text">
-                          {tempoEmEstoque(v.data_compra as string)} em estoque
+                          Atualizado em {new Date(v.atualizado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                         </span>
                         {precoFormatado && (
                           <span className="text-xs font-medium text-brand-black">

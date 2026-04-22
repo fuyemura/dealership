@@ -39,6 +39,7 @@ type VeiculoEditRow = {
   data_compra: string;
   preco_compra: number;
   preco_venda: number | null;
+  preco_venda_sugerido: number | null;
   data_venda: string | null;
   data_entrega: string | null;
   quantidade_dias_garantia: number | null;
@@ -78,7 +79,7 @@ export default async function EditarVeiculoPage({
            ano_fabricacao, ano_modelo, cor_veiculo,
            quantidade_portas, quilometragem,
            vidro_eletrico, trava_eletrica, laudo_aprovado,
-           data_compra, preco_compra, preco_venda,
+           data_compra, preco_compra, preco_venda, preco_venda_sugerido,
            data_venda, data_entrega, quantidade_dias_garantia, vendido_para, descricao`
         )
         .eq("id", id)
@@ -225,19 +226,20 @@ export default async function EditarVeiculoPage({
           data_entrega: v.data_entrega ?? null,
           descricao: v.descricao ?? null,
           vendido_para: v.vendido_para ?? null,
+          quantidade_dias_garantia: v.quantidade_dias_garantia ?? null,
+          preco_venda_sugerido: v.preco_venda_sugerido ?? null,
         }}
         qrCodeInicial={qrCodeInicial}
       />
       <VeiculoArquivos
         fotos={fotos}
         laudo={laudo}
-        novoCadastro={novo === "1"}
         uploadFotoAction={uploadFotoAction}
         uploadLaudoAction={uploadLaudoAction}
         excluirArquivoAction={excluirArquivoAction}
         principalAction={principalAction}
       />
-      {excluirAction && <VeiculoZonaPerigo excluirAction={excluirAction} />}
+      {excluirAction && <VeiculoZonaPerigo excluirAction={excluirAction} placa={v.placa} />}
     </>
   );
 }

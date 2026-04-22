@@ -1,9 +1,9 @@
-﻿"use server";
+"use server";
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import type { createClient } from "@/lib/supabase/server";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
 import { PLACA_REGEX } from "@/lib/utils/placa";
@@ -40,8 +40,11 @@ export interface VeiculoFormData {
   data_compra: string;
   preco_compra: number;
   preco_venda: number | null;
+  preco_venda_sugerido: number | null;
   data_venda: string | null;
   data_entrega: string | null;
+  quantidade_dias_garantia: number | null;
+  data_fim_garantia: string | null;
   descricao: string | null;
   vendido_para: string | null;
 }
@@ -184,6 +187,7 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
       data_compra: data.data_compra,
       preco_compra: data.preco_compra,
       preco_venda: data.preco_venda ?? null,
+      preco_venda_sugerido: data.preco_venda_sugerido ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
       descricao: data.descricao?.trim() || null,
@@ -205,7 +209,7 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
   }
 
   revalidatePath("/veiculos");
-  redirect(`/veiculos/${novoVeiculo!.id}?novo=1`);
+  redirect(`/veiculos/${novoVeiculo!.id}/fotos`);
 }
 
 // ─── Atualizar veículo ────────────────────────────────────────────────────────
@@ -226,7 +230,7 @@ export async function atualizarVeiculo(
   const placa = data.placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   const renavam = data.renavam.replace(/\D/g, "");
 
-  const { data: updated, error } = await supabase
+  const { error } = await supabase
     .schema("dealership")
     .from("veiculo")
     .update({
@@ -250,6 +254,7 @@ export async function atualizarVeiculo(
       data_compra: data.data_compra,
       preco_compra: data.preco_compra,
       preco_venda: data.preco_venda ?? null,
+      preco_venda_sugerido: data.preco_venda_sugerido ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
       descricao: data.descricao?.trim() || null,
@@ -271,7 +276,7 @@ export async function atualizarVeiculo(
     }
     return { error: "Erro ao atualizar o veículo. Tente novamente." };
   }
-  if (!error && !updated) return { error: "Veículo não encontrado." };
+  if (!error && !data) return { error: "Veículo não encontrado." };
 
   revalidatePath("/veiculos");
   revalidatePath(`/veiculos/${id}`);
@@ -285,7 +290,7 @@ export async function excluirVeiculo(id: string): Promise<ActionResult> {
 
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
-  if (papel.toLowerCase() !== PAPEIS.ADMINISTRADOR) {
+  if (papel !== PAPEIS.ADMINISTRADOR) {
     return { error: "Apenas administradores podem excluir veículos." };
   }
 
