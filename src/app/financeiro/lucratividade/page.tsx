@@ -113,8 +113,8 @@ export default async function LucratividadePage({ searchParams }: Props) {
     return {
       id: v.id,
       placa: v.placa as string,
-      marca: (v.marca as { nome: string } | null)?.nome ?? "",
-      modelo: (v.modelo as { nome: string } | null)?.nome ?? "",
+      marca: (v.marca as unknown as { nome: string } | null)?.nome ?? "",
+      modelo: (v.modelo as unknown as { nome: string } | null)?.nome ?? "",
       dataVenda: v.data_venda as string,
       precoCompra: Number(v.preco_compra),
       custoMans,
