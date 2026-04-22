@@ -31,6 +31,11 @@ export interface PlacaResult {
   valor_fipe: string | null;
 }
 
+// ─── Constante de validação de placa ────────────────────────────────────────
+
+/** Formato padrão (ABC1234) e Mercosul (ABC1D23). */
+export const PLACA_REGEX = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+
 // ─── Configuração do provedor ─────────────────────────────────────────────────
 
 /**

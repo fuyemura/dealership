@@ -1,10 +1,38 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getUsuarioAutorizado } from "@/lib/auth/guards";
-import { PAPEIS } from "@/lib/auth/roles";
+import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult = { error: string } | undefined;
+
+// ─── Helpers internos ─────────────────────────────────────────────────────────
+
+async function getUsuarioAutorizado() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: usuarioAtual } = await supabase
+    .schema("dealership")
+    .from("usuario")
+    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!usuarioAtual?.empresa_id) redirect("/login");
+
+  const papel =
+    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
+      ?.nome_dominio ?? "";
+
+  // Usuários comuns não têm acesso a esta área
+  if (papel === "usuario") redirect("/dashboard");
+
+  return { supabase, usuarioAtual, papel };
+}
 
 // ─── Ações ────────────────────────────────────────────────────────────────────
 
@@ -30,8 +58,7 @@ export async function criarCusto(
   const validationError = validarInputs(nomeCusto, descricao);
   if (validationError) return validationError;
 
-  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
-  if (papel === PAPEIS.USUARIO) redirect("/dashboard");
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
   const { error } = await supabase
     .schema("dealership")
@@ -56,8 +83,7 @@ export async function atualizarCusto(
   const validationError = validarInputs(nomeCusto, descricao);
   if (validationError) return validationError;
 
-  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
-  if (papel === PAPEIS.USUARIO) redirect("/dashboard");
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
   const { error } = await supabase
     .schema("dealership")
@@ -65,6 +91,7 @@ export async function atualizarCusto(
     .update({
       nome_custo: nomeCusto.trim(),
       descricao: descricao?.trim() || null,
+      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id); // garante isolamento por empresa
@@ -77,9 +104,7 @@ export async function atualizarCusto(
 export async function excluirCusto(id: string): Promise<ActionResult> {
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
-  if (papel === PAPEIS.USUARIO) redirect("/dashboard");
-
-  if (papel !== PAPEIS.ADMINISTRADOR) {
+  if (papel !== "administrador") {
     return { error: "Apenas administradores podem excluir tipos de custo." };
   }
 

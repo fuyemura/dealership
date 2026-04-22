@@ -1,10 +1,11 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getAdminAutorizado } from "@/lib/auth/guards";
 
 export type ActionResult = { error: string } | { success: true };
+
 
 // ─── Ação ─────────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ export async function cancelarAssinatura(
       situacao_assinatura_id: dominioCancelada.id,
       motivo_cancelamento: motivoTrimmed,
       data_cancelamento: new Date().toISOString().split("T")[0],
+      atualizado_em: new Date().toISOString(),
     })
     .eq("id", assinaturaAtiva.id);
 
@@ -100,6 +102,7 @@ export async function trocarPlano(planoId: string): Promise<ActionResult> {
     .from("assinatura")
     .update({
       plano_id: planoId,
+      atualizado_em: new Date().toISOString(),
     })
     .eq("id", assinaturaAtual.id);
 
@@ -171,6 +174,7 @@ export async function reativarAssinatura(planoId: string): Promise<ActionResult>
       data_fim: dataFimStr,
       data_cancelamento: null,
       motivo_cancelamento: null,
+      atualizado_em: new Date().toISOString(),
     })
     .eq("id", assinatura.id);
 

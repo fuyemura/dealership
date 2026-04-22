@@ -14,12 +14,12 @@
 --   23503 → foreign_key_violation
 --   23505 → unique_violation
 --
--- Total de asserções: 20
+-- Total de asserções: 24
 -- Execução: supabase test db
 -- =============================================================================
 
 BEGIN;
-SELECT plan(20);
+SELECT plan(24);
 
 -- =============================================================================
 -- FIXTURES — dados mínimos para os testes de UNIQUE com FK obrigatória
@@ -93,6 +93,18 @@ WITH r AS (
     RETURNING id
 )
 INSERT INTO _test_fx VALUES ('custo_id', (SELECT id FROM r));
+
+-- 7. despesa_categoria (depende de empresa + usuario) — necessário para A12 e B6
+WITH r AS (
+    INSERT INTO dealership.despesa_categoria
+        (empresa_id, nome, criado_por)
+    VALUES
+        ((SELECT val FROM _test_fx WHERE key = 'emp_id'),
+         'Categoria pgTAP Fixture',
+         (SELECT val FROM _test_fx WHERE key = 'usr_id'))
+    RETURNING id
+)
+INSERT INTO _test_fx VALUES ('cat_id', (SELECT id FROM r));
 
 -- =============================================================================
 -- BLOCO A — VIOLAÇÕES DE FK (foreign_key_violation → 23503)
@@ -247,6 +259,34 @@ SELECT throws_ok(
     'FK A10: veiculo_manutencao.veiculo_id deve rejeitar veiculo inexistente'
 );
 
+-- A11. despesa_categoria.empresa_id aponta para empresa inexistente
+--      criado_por válido (fixture) — somente empresa_id é inválido
+SELECT throws_ok(
+    format(
+        $$INSERT INTO dealership.despesa_categoria
+            (empresa_id, nome, criado_por)
+          VALUES (gen_random_uuid(), 'Cat FK A11', '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
+    '23503', NULL,
+    'FK A11: despesa_categoria.empresa_id deve rejeitar empresa inexistente'
+);
+
+-- A12. empresa_despesa.categoria_id aponta para despesa_categoria inexistente
+--      empresa_id e criado_por válidos (fixtures) — somente categoria_id é inválido
+SELECT throws_ok(
+    format(
+        $$INSERT INTO dealership.empresa_despesa
+            (empresa_id, categoria_id, descricao, valor, data_despesa, criado_por)
+          VALUES ('%s'::uuid, gen_random_uuid(), 'Despesa FK A12',
+                  100.00, CURRENT_DATE, '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'emp_id'),
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
+    '23503', NULL,
+    'FK A12: empresa_despesa.categoria_id deve rejeitar despesa_categoria inexistente'
+);
+
 -- =============================================================================
 -- BLOCO B — VIOLAÇÕES DE UNIQUE (unique_violation → 23505)
 -- B1-B2: tabelas sem FK, inserção direta.
@@ -326,6 +366,19 @@ SELECT throws_ok(
     'UNIQUE B5: usuario.email_usuario (uk_usuario_email_usuario) não pode ser duplicado'
 );
 
+-- B6. despesa_categoria: (empresa_id, nome) único — usa empresa e categoria do fixture
+SELECT throws_ok(
+    format(
+        $$INSERT INTO dealership.despesa_categoria
+            (empresa_id, nome, criado_por)
+          VALUES ('%s'::uuid, 'Categoria pgTAP Fixture', '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'emp_id'),
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
+    '23505', NULL,
+    'UNIQUE B6: despesa_categoria.(empresa_id, nome) não pode ser duplicado'
+);
+
 -- =============================================================================
 -- BLOCO C — VIOLAÇÕES DE NOT NULL (not_null_violation → 23502)
 -- NOT NULL é verificado antes das FK constraints pelo PostgreSQL,
@@ -388,6 +441,21 @@ SELECT throws_ok(
               gen_random_uuid(), TRUE, gen_random_uuid(), gen_random_uuid())$$,
     '23502', NULL,
     'NOT NULL C5: veiculo.placa não pode ser NULL'
+);
+
+-- C6. empresa_despesa.descricao não pode ser NULL
+--    (FKs recebem valores válidos dos fixtures — somente descricao é NULL)
+SELECT throws_ok(
+    format(
+        $$INSERT INTO dealership.empresa_despesa
+            (empresa_id, categoria_id, descricao, valor, data_despesa, criado_por)
+          VALUES ('%s'::uuid, '%s'::uuid, NULL, 100.00, CURRENT_DATE, '%s'::uuid)$$,
+        (SELECT val FROM _test_fx WHERE key = 'emp_id'),
+        (SELECT val FROM _test_fx WHERE key = 'cat_id'),
+        (SELECT val FROM _test_fx WHERE key = 'usr_id')
+    ),
+    '23502', NULL,
+    'NOT NULL C6: empresa_despesa.descricao não pode ser NULL'
 );
 
 SELECT * FROM finish();

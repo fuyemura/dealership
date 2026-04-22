@@ -74,7 +74,10 @@ export default async function VeiculosLayout({
               { label: "Veículos", href: "/veiculos", active: true },
               { label: "Clientes", href: "/clientes", active: false },
               ...(temAcessoConfig
-                ? [{ label: "Configurações", href: "/configuracoes", active: false }]
+                ? [
+                    { label: "Financeiro",    href: "/financeiro",    active: false },
+                    { label: "Configurações", href: "/configuracoes", active: false },
+                  ]
                 : []),
             ].map((item) => (
               <Link

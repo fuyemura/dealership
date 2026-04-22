@@ -135,6 +135,7 @@ export default async function ConfiguracoesLayout({
               { label: "Dashboard",     href: "/dashboard",     active: false },
               { label: "Veículos",      href: "/veiculos",      active: false },
               { label: "Clientes",      href: "/clientes",      active: false },
+              { label: "Financeiro",    href: "/financeiro",    active: false },
               { label: "Configurações", href: "/configuracoes", active: true  },
             ].map((item) => (
               <Link

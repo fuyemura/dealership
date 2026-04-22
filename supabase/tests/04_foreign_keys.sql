@@ -1,14 +1,14 @@
 ﻿-- =============================================================================
 -- 04_foreign_keys.sql
 -- Verifica que todas as FK declaradas existem e apontam para as tabelas e
--- colunas corretas. Total: 38 FKs.
+-- colunas corretas. Total: 43 FKs.
 --
 -- Nomenclatura das constraints: fk_<tabela>_<coluna>
 -- Execução: supabase test db
 -- =============================================================================
 
 BEGIN;
-SELECT plan(39);
+SELECT plan(44);
 
 -- =============================================================================
 -- empresa (1 FK)
@@ -313,6 +313,20 @@ SELECT fk_ok(
     'fk_veiculo_manutencao_criado_por: veiculo_manutencao.criado_por → usuario.id'
 );
 
+-- fk_veiculo_manutencao_situacao_manutencao_id → dominio.id
+SELECT fk_ok(
+    'dealership', 'veiculo_manutencao',  ARRAY['situacao_manutencao_id'],
+    'dealership', 'dominio',             ARRAY['id'],
+    'fk_veiculo_manutencao_situacao_manutencao_id: veiculo_manutencao.situacao_manutencao_id → dominio.id'
+);
+
+-- fk_veiculo_manutencao_criado_por → usuario.id
+SELECT fk_ok(
+    'dealership', 'veiculo_manutencao',  ARRAY['criado_por'],
+    'dealership', 'usuario',             ARRAY['id'],
+    'fk_veiculo_manutencao_criado_por: veiculo_manutencao.criado_por → usuario.id'
+);
+
 -- =============================================================================
 -- metodo_pagamento (2 FKs)
 -- =============================================================================
@@ -329,6 +343,49 @@ SELECT fk_ok(
     'dealership', 'metodo_pagamento',  ARRAY['bandeira_id'],
     'dealership', 'dominio',           ARRAY['id'],
     'fk_metodo_pagamento_bandeira_id: metodo_pagamento.bandeira_id → dominio.id'
+);
+
+-- =============================================================================
+-- despesa_categoria (2 FKs)
+-- =============================================================================
+
+-- fk_despesa_categoria_empresa_id → empresa.id
+SELECT fk_ok(
+    'dealership', 'despesa_categoria',  ARRAY['empresa_id'],
+    'dealership', 'empresa',            ARRAY['id'],
+    'fk_despesa_categoria_empresa_id: despesa_categoria.empresa_id → empresa.id'
+);
+
+-- fk_despesa_categoria_criado_por → usuario.id
+SELECT fk_ok(
+    'dealership', 'despesa_categoria',  ARRAY['criado_por'],
+    'dealership', 'usuario',            ARRAY['id'],
+    'fk_despesa_categoria_criado_por: despesa_categoria.criado_por → usuario.id'
+);
+
+-- =============================================================================
+-- empresa_despesa (3 FKs)
+-- =============================================================================
+
+-- fk_empresa_despesa_empresa_id → empresa.id
+SELECT fk_ok(
+    'dealership', 'empresa_despesa',  ARRAY['empresa_id'],
+    'dealership', 'empresa',          ARRAY['id'],
+    'fk_empresa_despesa_empresa_id: empresa_despesa.empresa_id → empresa.id'
+);
+
+-- fk_empresa_despesa_categoria_id → despesa_categoria.id
+SELECT fk_ok(
+    'dealership', 'empresa_despesa',    ARRAY['categoria_id'],
+    'dealership', 'despesa_categoria',  ARRAY['id'],
+    'fk_empresa_despesa_categoria_id: empresa_despesa.categoria_id → despesa_categoria.id'
+);
+
+-- fk_empresa_despesa_criado_por → usuario.id
+SELECT fk_ok(
+    'dealership', 'empresa_despesa',  ARRAY['criado_por'],
+    'dealership', 'usuario',          ARRAY['id'],
+    'fk_empresa_despesa_criado_por: empresa_despesa.criado_por → usuario.id'
 );
 
 SELECT * FROM finish();

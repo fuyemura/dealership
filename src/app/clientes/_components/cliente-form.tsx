@@ -1,56 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import type { ActionResult } from "../actions";
-import { formatCpf as formatarCpf, formatTelefone as formatarTelefone } from "@/lib/utils/formatters";
+import type { ActionResult, ClientePayload } from "../actions";
+import { clienteSchema, type ClienteFormValues } from "@/lib/schemas/cliente";
+import {
+  formatCpf as formatarCpf,
+  formatTelefone as formatarTelefone,
+  formatCep as formatarCep,
+} from "@/lib/utils/formatters";
+import { consultarCep } from "@/lib/utils/cep";
 
-// ─── Schema de validação ──────────────────────────────────────────────────────
+// ─── Estados brasileiros ──────────────────────────────────────────────────────
 
-const schema = z.object({
-  nome_cliente: z
-    .string()
-    .min(1, "O nome do cliente é obrigatório.")
-    .max(255, "Máximo de 255 caracteres."),
-  cpf: z
-    .string()
-    .transform((v) => v.replace(/\D/g, ""))
-    .pipe(z.string().length(11, "CPF deve ter 11 dígitos.")),
-  telefone_cliente: z
-    .string()
-    .max(20, "Telefone inválido.")
-    .optional()
-    .transform((v) => v ?? ""),
-  email_cliente: z
-    .string()
-    .max(255, "Máximo de 255 caracteres.")
-    .email("Informe um e-mail válido.")
-    .optional()
-    .or(z.literal(""))
-    .transform((v) => v ?? ""),
-});
-
-type FormValues = z.infer<typeof schema>;
+const UF_OPTIONS = [
+  { value: "AC", label: "AC – Acre" },
+  { value: "AL", label: "AL – Alagoas" },
+  { value: "AP", label: "AP – Amapá" },
+  { value: "AM", label: "AM – Amazonas" },
+  { value: "BA", label: "BA – Bahia" },
+  { value: "CE", label: "CE – Ceará" },
+  { value: "DF", label: "DF – Distrito Federal" },
+  { value: "ES", label: "ES – Espírito Santo" },
+  { value: "GO", label: "GO – Goiás" },
+  { value: "MA", label: "MA – Maranhão" },
+  { value: "MT", label: "MT – Mato Grosso" },
+  { value: "MS", label: "MS – Mato Grosso do Sul" },
+  { value: "MG", label: "MG – Minas Gerais" },
+  { value: "PA", label: "PA – Pará" },
+  { value: "PB", label: "PB – Paraíba" },
+  { value: "PR", label: "PR – Paraná" },
+  { value: "PE", label: "PE – Pernambuco" },
+  { value: "PI", label: "PI – Piauí" },
+  { value: "RJ", label: "RJ – Rio de Janeiro" },
+  { value: "RN", label: "RN – Rio Grande do Norte" },
+  { value: "RS", label: "RS – Rio Grande do Sul" },
+  { value: "RO", label: "RO – Rondônia" },
+  { value: "RR", label: "RR – Roraima" },
+  { value: "SC", label: "SC – Santa Catarina" },
+  { value: "SP", label: "SP – São Paulo" },
+  { value: "SE", label: "SE – Sergipe" },
+  { value: "TO", label: "TO – Tocantins" },
+] as const;
 
 // ─── Tipos públicos ───────────────────────────────────────────────────────────
 
-export type SaveFnCreate = (
-  nome: string,
-  cpf: string,
-  telefone: string | null,
-  email: string | null
-) => Promise<ActionResult>;
-
-export type SaveFnEdit = (
-  nome: string,
-  cpf: string,
-  telefone: string | null,
-  email: string | null
-) => Promise<ActionResult>;
-
+export type SaveFnCreate = (payload: ClientePayload) => Promise<ActionResult>;
+export type SaveFnEdit = (payload: ClientePayload) => Promise<ActionResult>;
 export type DeleteFn = () => Promise<ActionResult>;
 
 interface ClienteFormProps {
@@ -62,7 +60,51 @@ interface ClienteFormProps {
     cpf: string;
     telefone_cliente: string | null;
     email_cliente: string | null;
+    localizacao: {
+      id: string;
+      cep: string;
+      logradouro: string;
+      numero_logradouro: number;
+      complemento_logradouro: string | null;
+      bairro: string;
+      cidade: string;
+      estado: string;
+    } | null;
   };
+}
+
+// ─── Helper: Field ────────────────────────────────────────────────────────────
+
+function Field({
+  id,
+  label,
+  required,
+  error,
+  children,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label
+        htmlFor={id}
+        className="block text-xs font-semibold uppercase tracking-wide text-brand-gray-text"
+      >
+        {label}
+        {required && <span className="text-red-500 font-normal ml-1">*</span>}
+      </label>
+      {children}
+      {error && (
+        <p id={`${id}-error`} role="alert" className="text-xs text-red-500">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -73,6 +115,7 @@ export function ClienteForm({
   initialData,
 }: ClienteFormProps) {
   const isEditing = !!initialData;
+  const loc = initialData?.localizacao ?? null;
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -80,6 +123,7 @@ export function ClienteForm({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Máscaras de exibição
   const [cpfDisplay, setCpfDisplay] = useState(
     initialData ? formatarCpf(initialData.cpf) : ""
   );
@@ -88,6 +132,22 @@ export function ClienteForm({
       ? formatarTelefone(initialData.telefone_cliente)
       : ""
   );
+  const [cepDisplay, setCepDisplay] = useState(
+    loc ? formatarCep(loc.cep) : ""
+  );
+
+  // Estados de CEP
+  const [isCepLoading, setIsCepLoading] = useState(false);
+  const [cepNotFound, setCepNotFound] = useState(false);
+  const [cepNetworkError, setCepNetworkError] = useState(false);
+  const cepAbortRef = useRef<AbortController | null>(null);
+
+  const inputClass = (hasError: boolean) =>
+    `w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
+      hasError
+        ? "border-red-300 focus:border-red-400"
+        : "border-brand-gray-mid/60 focus:border-brand-black/40"
+    }`;
 
   const {
     register,
@@ -95,8 +155,8 @@ export function ClienteForm({
     setValue,
     watch,
     formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  } = useForm<ClienteFormValues>({
+    resolver: zodResolver(clienteSchema),
     defaultValues: {
       nome_cliente: initialData?.nome_cliente ?? "",
       cpf: initialData ? formatarCpf(initialData.cpf) : "",
@@ -104,6 +164,13 @@ export function ClienteForm({
         ? formatarTelefone(initialData.telefone_cliente)
         : "",
       email_cliente: initialData?.email_cliente ?? "",
+      cep: loc ? formatarCep(loc.cep) : "",
+      logradouro: loc?.logradouro ?? "",
+      numero_logradouro: loc ? String(loc.numero_logradouro) : "",
+      complemento_logradouro: loc?.complemento_logradouro ?? "",
+      bairro: loc?.bairro ?? "",
+      cidade: loc?.cidade ?? "",
+      estado: loc?.estado ?? "",
     },
   });
 
@@ -125,31 +192,71 @@ export function ClienteForm({
     setValue("telefone_cliente", masked, { shouldValidate: false });
   };
 
+  // ── CEP ────────────────────────────────────────────────────────────────────
+
+  const buscarCep = async (digits: string) => {
+    cepAbortRef.current?.abort();
+    const controller = new AbortController();
+    cepAbortRef.current = controller;
+
+    setIsCepLoading(true);
+    setCepNotFound(false);
+    setCepNetworkError(false);
+    try {
+      const result = await consultarCep(digits, controller.signal);
+      if (!result) {
+        setCepNotFound(true);
+        return;
+      }
+      if (result.logradouro) setValue("logradouro", result.logradouro);
+      if (result.bairro)     setValue("bairro",     result.bairro);
+      if (result.cidade)     setValue("cidade",     result.cidade);
+      if (result.estado)     setValue("estado",     result.estado);
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") setCepNetworkError(true);
+    } finally {
+      setIsCepLoading(false);
+    }
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const masked = formatarCep(e.target.value);
+    setCepDisplay(masked);
+    setCepNotFound(false);
+    setCepNetworkError(false);
+    setValue("cep", masked, { shouldValidate: false });
+    const digits = masked.replace(/\D/g, "");
+    if (digits.length === 8) buscarCep(digits);
+  };
+
   // ── Submit ──────────────────────────────────────────────────────────────────
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: ClienteFormValues) => {
     setServerError(null);
     setIsSaving(true);
 
-    const telefone = values.telefone_cliente?.replace(/\D/g, "") || null;
-    const email = values.email_cliente?.trim() || null;
+    const temEndereco =
+      values.cep && values.logradouro && values.bairro && values.cidade && values.estado;
 
-    let result: ActionResult;
-    if (isEditing) {
-      result = await (saveAction as SaveFnEdit)(
-        values.nome_cliente,
-        values.cpf,
-        telefone,
-        email
-      );
-    } else {
-      result = await (saveAction as SaveFnCreate)(
-        values.nome_cliente,
-        values.cpf,
-        telefone,
-        email
-      );
-    }
+    const payload: ClientePayload = {
+      nome_cliente: values.nome_cliente,
+      cpf: values.cpf,
+      telefone_cliente: values.telefone_cliente?.replace(/\D/g, "") || null,
+      email_cliente: values.email_cliente?.trim() || null,
+      ...(temEndereco
+        ? {
+            cep: values.cep,
+            logradouro: values.logradouro,
+            numero_logradouro: parseInt(values.numero_logradouro, 10),
+            complemento_logradouro: values.complemento_logradouro || null,
+            bairro: values.bairro,
+            cidade: values.cidade,
+            estado: values.estado,
+          }
+        : {}),
+    };
+
+    const result = await saveAction(payload);
 
     if (result?.error) {
       setServerError(result.error);
@@ -189,18 +296,23 @@ export function ClienteForm({
         {isEditing ? "Editar Cliente" : "Novo Cliente"}
       </h1>
 
-      {/* Card do formulário */}
-      <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8">
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      {/* Erro do servidor */}
+      {serverError && (
+        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-5">
+          {serverError}
+        </div>
+      )}
 
-          {/* Erro do servidor */}
-          {serverError && (
-            <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {serverError}
-            </div>
-          )}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
 
-          {/* Campo: Nome completo */}
+        {/* ── Dados Pessoais ─────────────────────────────────────────────── */}
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8 space-y-5">
+          <div className="flex items-center gap-2 text-brand-black">
+            <IconUser size={18} />
+            <h2 className="font-display text-base font-semibold">Dados Pessoais</h2>
+          </div>
+
+          {/* Nome completo */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label
@@ -231,11 +343,7 @@ export function ClienteForm({
               aria-describedby={errors.nome_cliente ? "nome-error" : undefined}
               {...register("nome_cliente")}
               disabled={isSaving}
-              className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
-                errors.nome_cliente
-                  ? "border-red-300 focus:border-red-400"
-                  : "border-brand-gray-mid/60 focus:border-brand-black/40"
-              }`}
+              className={inputClass(!!errors.nome_cliente)}
             />
             {errors.nome_cliente && (
               <p id="nome-error" role="alert" className="text-xs text-red-500">
@@ -244,14 +352,8 @@ export function ClienteForm({
             )}
           </div>
 
-          {/* Campo: CPF */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="cpf"
-              className="block text-xs font-semibold uppercase tracking-wide text-brand-gray-text"
-            >
-              CPF <span className="text-red-500 font-normal">*</span>
-            </label>
+          {/* CPF */}
+          <Field id="cpf" label="CPF" required error={errors.cpf?.message}>
             <input
               id="cpf"
               type="text"
@@ -265,29 +367,13 @@ export function ClienteForm({
               {...register("cpf")}
               onChange={handleCpfChange}
               disabled={isSaving}
-              className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
-                errors.cpf
-                  ? "border-red-300 focus:border-red-400"
-                  : "border-brand-gray-mid/60 focus:border-brand-black/40"
-              }`}
+              className={inputClass(!!errors.cpf)}
             />
-            {errors.cpf && (
-              <p id="cpf-error" role="alert" className="text-xs text-red-500">
-                {errors.cpf.message}
-              </p>
-            )}
-          </div>
+          </Field>
 
           {/* Grade: Telefone + E-mail */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {/* Telefone */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="telefone_cliente"
-                className="block text-xs font-semibold uppercase tracking-wide text-brand-gray-text"
-              >
-                Telefone
-              </label>
+            <Field id="telefone_cliente" label="Telefone" error={errors.telefone_cliente?.message}>
               <input
                 id="telefone_cliente"
                 type="text"
@@ -297,93 +383,210 @@ export function ClienteForm({
                 maxLength={16}
                 value={telefoneDisplay}
                 aria-invalid={!!errors.telefone_cliente}
-                aria-describedby={
-                  errors.telefone_cliente ? "telefone-error" : undefined
-                }
+                aria-describedby={errors.telefone_cliente ? "telefone_cliente-error" : undefined}
                 {...register("telefone_cliente")}
                 onChange={handleTelefoneChange}
                 disabled={isSaving}
-                className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
-                  errors.telefone_cliente
-                    ? "border-red-300 focus:border-red-400"
-                    : "border-brand-gray-mid/60 focus:border-brand-black/40"
-                }`}
+                className={inputClass(!!errors.telefone_cliente)}
               />
-              {errors.telefone_cliente && (
-                <p
-                  id="telefone-error"
-                  role="alert"
-                  className="text-xs text-red-500"
-                >
-                  {errors.telefone_cliente.message}
-                </p>
-              )}
-            </div>
+            </Field>
 
-            {/* E-mail */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email_cliente"
-                className="block text-xs font-semibold uppercase tracking-wide text-brand-gray-text"
-              >
-                E-mail
-              </label>
+            <Field id="email_cliente" label="E-mail" error={errors.email_cliente?.message}>
               <input
                 id="email_cliente"
                 type="email"
                 autoComplete="email"
                 placeholder="cliente@exemplo.com"
                 aria-invalid={!!errors.email_cliente}
-                aria-describedby={
-                  errors.email_cliente ? "email-error" : undefined
-                }
+                aria-describedby={errors.email_cliente ? "email_cliente-error" : undefined}
                 {...register("email_cliente")}
                 disabled={isSaving}
-                className={`w-full rounded-xl border px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-black/10 ${
-                  errors.email_cliente
-                    ? "border-red-300 focus:border-red-400"
-                    : "border-brand-gray-mid/60 focus:border-brand-black/40"
-                }`}
+                className={inputClass(!!errors.email_cliente)}
               />
-              {errors.email_cliente && (
-                <p
-                  id="email-error"
-                  role="alert"
-                  className="text-xs text-red-500"
-                >
-                  {errors.email_cliente.message}
-                </p>
-              )}
+            </Field>
+          </div>
+        </section>
+
+        {/* ── Endereço ───────────────────────────────────────────────────── */}
+        <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8 space-y-4">
+          <div className="flex items-center gap-2 text-brand-black">
+            <IconMapPin size={18} />
+            <h2 className="font-display text-base font-semibold">Endereço</h2>
+          </div>
+          <p className="text-xs text-brand-gray-text/70 -mt-1">
+            Opcional. Preencha o CEP para autocompletar os campos.
+          </p>
+
+          {/* CEP */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="cep"
+              className="block text-xs font-semibold uppercase tracking-wide text-brand-gray-text"
+            >
+              CEP
+            </label>
+            <div className="flex items-center gap-4">
+              <div className="relative w-40 shrink-0">
+                <input
+                  id="cep"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  placeholder="00000-000"
+                  maxLength={9}
+                  value={cepDisplay}
+                  aria-invalid={!!errors.cep || cepNotFound || cepNetworkError}
+                  aria-describedby="cep-error"
+                  {...register("cep")}
+                  onChange={handleCepChange}
+                  disabled={isSaving}
+                  className={`${inputClass(!!errors.cep || cepNotFound)} pr-9`}
+                />
+                {isCepLoading && (
+                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray-text">
+                    <IconSpinner size={14} />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-brand-gray-text/60 leading-relaxed">
+                Digite o CEP para preencher<br />o endereço automaticamente.
+              </p>
             </div>
+            {(errors.cep || cepNotFound || cepNetworkError) && (
+              <p id="cep-error" role="alert" className="text-xs text-red-500">
+                {errors.cep?.message ??
+                  (cepNetworkError
+                    ? "Não foi possível consultar o CEP. Preencha o endereço manualmente."
+                    : "CEP não encontrado.")}
+              </p>
+            )}
           </div>
 
-          {/* Botões de ação */}
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-6 py-2.5 hover:bg-brand-black/85 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isSaving ? (
-                <>
-                  <IconSpinner size={14} />
-                  Salvando…
-                </>
-              ) : isEditing ? (
-                "Salvar alterações"
-              ) : (
-                "Cadastrar cliente"
-              )}
-            </button>
-            <Link
-              href="/clientes"
-              className="text-sm font-medium text-brand-gray-text hover:text-brand-black transition-colors px-2 py-2.5"
-            >
-              Cancelar
-            </Link>
+          {/* Logradouro | Número */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+              <Field id="logradouro" label="Logradouro" error={errors.logradouro?.message}>
+                <input
+                  id="logradouro"
+                  type="text"
+                  autoComplete="street-address"
+                  placeholder="Ex: Rua das Flores"
+                  aria-invalid={!!errors.logradouro}
+                  aria-describedby={errors.logradouro ? "logradouro-error" : undefined}
+                  {...register("logradouro")}
+                  disabled={isSaving}
+                  className={inputClass(!!errors.logradouro)}
+                />
+              </Field>
+            </div>
+            <Field id="numero_logradouro" label="Número" error={errors.numero_logradouro?.message}>
+              <input
+                id="numero_logradouro"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="Ex: 123"
+                aria-invalid={!!errors.numero_logradouro}
+                aria-describedby={errors.numero_logradouro ? "numero_logradouro-error" : undefined}
+                {...register("numero_logradouro")}
+                disabled={isSaving}
+                className={inputClass(!!errors.numero_logradouro)}
+              />
+            </Field>
           </div>
-        </form>
-      </section>
+
+          {/* Bairro | Complemento */}
+          <div className="grid grid-cols-2 gap-4">
+            <Field id="bairro" label="Bairro" error={errors.bairro?.message}>
+              <input
+                id="bairro"
+                type="text"
+                autoComplete="off"
+                placeholder="Ex: Centro"
+                aria-invalid={!!errors.bairro}
+                aria-describedby={errors.bairro ? "bairro-error" : undefined}
+                {...register("bairro")}
+                disabled={isSaving}
+                className={inputClass(!!errors.bairro)}
+              />
+            </Field>
+
+            <Field id="complemento_logradouro" label="Complemento" error={errors.complemento_logradouro?.message}>
+              <input
+                id="complemento_logradouro"
+                type="text"
+                autoComplete="address-line2"
+                placeholder="Ex: Apto 12"
+                aria-invalid={!!errors.complemento_logradouro}
+                aria-describedby={errors.complemento_logradouro ? "complemento_logradouro-error" : undefined}
+                {...register("complemento_logradouro")}
+                disabled={isSaving}
+                className={inputClass(!!errors.complemento_logradouro)}
+              />
+            </Field>
+          </div>
+
+          {/* Cidade | UF */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+              <Field id="cidade" label="Cidade" error={errors.cidade?.message}>
+                <input
+                  id="cidade"
+                  type="text"
+                  autoComplete="address-level2"
+                  placeholder="Ex: São Paulo"
+                  aria-invalid={!!errors.cidade}
+                  aria-describedby={errors.cidade ? "cidade-error" : undefined}
+                  {...register("cidade")}
+                  disabled={isSaving}
+                  className={inputClass(!!errors.cidade)}
+                />
+              </Field>
+            </div>
+            <Field id="estado" label="UF" error={errors.estado?.message}>
+              <select
+                id="estado"
+                aria-invalid={!!errors.estado}
+                aria-describedby={errors.estado ? "estado-error" : undefined}
+                {...register("estado")}
+                disabled={isSaving}
+                className={`${inputClass(!!errors.estado)} cursor-pointer`}
+              >
+                <option value="">UF</option>
+                {UF_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </section>
+
+        {/* ── Botões de ação ─────────────────────────────────────────────── */}
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-6 py-2.5 hover:bg-brand-black/85 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isSaving ? (
+              <>
+                <IconSpinner size={14} />
+                Salvando…
+              </>
+            ) : isEditing ? (
+              "Salvar alterações"
+            ) : (
+              "Cadastrar cliente"
+            )}
+          </button>
+          <Link
+            href="/clientes"
+            className="text-sm font-medium text-brand-gray-text hover:text-brand-black transition-colors px-2 py-2.5"
+          >
+            Cancelar
+          </Link>
+        </div>
+      </form>
 
       {/* Zona de perigo — somente em modo de edição */}
       {isEditing && deleteAction && (
@@ -503,3 +706,42 @@ function IconSpinner({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
+
+function IconUser({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  );
+}
+
+function IconMapPin({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+

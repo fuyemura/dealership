@@ -70,7 +70,10 @@ export default async function ClientesLayout({
               { label: "Veículos",     href: "/veiculos",     active: false },
               { label: "Clientes",     href: "/clientes",     active: true  },
               ...(temAcessoConfig
-                ? [{ label: "Configurações", href: "/configuracoes", active: false }]
+                ? [
+                    { label: "Financeiro",    href: "/financeiro",    active: false },
+                    { label: "Configurações", href: "/configuracoes", active: false },
+                  ]
                 : []),
             ].map((item) => (
               <Link

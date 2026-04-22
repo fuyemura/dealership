@@ -1,18 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { ActionResult } from "../actions";
 
 interface VeiculoZonaPerigoProps {
   excluirAction: () => Promise<ActionResult>;
+  placa: string;
 }
 
-export function VeiculoZonaPerigo({ excluirAction }: VeiculoZonaPerigoProps) {
+export function VeiculoZonaPerigo({ excluirAction, placa }: VeiculoZonaPerigoProps) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmInput, setConfirmInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const confirmacaoCorreta = confirmInput.trim().toUpperCase() === placa.toUpperCase();
+
+  const abrirConfirmacao = () => {
+    setConfirmingDelete(true);
+    setConfirmInput("");
+    setDeleteError(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
 
   const handleDelete = async () => {
+    if (!confirmacaoCorreta) return;
     setDeleteError(null);
     setIsDeleting(true);
     const result = await excluirAction();
@@ -45,21 +58,33 @@ export function VeiculoZonaPerigo({ excluirAction }: VeiculoZonaPerigoProps) {
           </div>
           <button
             type="button"
-            onClick={() => setConfirmingDelete(true)}
+            onClick={abrirConfirmacao}
             className="rounded-full border border-red-200 text-red-600 text-sm font-medium px-5 py-2.5 hover:bg-red-50 transition-colors"
           >
             Excluir
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <p className="text-sm text-brand-black">
-            Tem certeza? Esta ação é <strong>irreversível</strong>.
+            Digite a placa{" "}
+            <span className="font-mono font-semibold tracking-widest text-brand-black">{placa}</span>{" "}
+            para confirmar a exclusão:
           </p>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <input
+            ref={inputRef}
+            type="text"
+            value={confirmInput}
+            onChange={(e) => setConfirmInput(e.target.value.toUpperCase())}
+            placeholder={placa}
+            maxLength={8}
+            aria-label="Confirmar placa para exclusão"
+            className="w-full max-w-xs rounded-xl border border-brand-gray-mid/60 px-4 py-2.5 text-sm font-mono tracking-widest text-brand-black placeholder:text-brand-gray-text/40 bg-white outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition"
+          />
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setConfirmingDelete(false)}
+              onClick={() => { setConfirmingDelete(false); setConfirmInput(""); }}
               disabled={isDeleting}
               className="rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-4 py-2 hover:bg-brand-gray-soft transition-colors"
             >
@@ -68,8 +93,8 @@ export function VeiculoZonaPerigo({ excluirAction }: VeiculoZonaPerigoProps) {
             <button
               type="button"
               onClick={handleDelete}
-              disabled={isDeleting}
-              className="rounded-full bg-red-600 text-white text-sm font-medium px-4 py-2 hover:bg-red-700 transition-colors disabled:opacity-50"
+              disabled={isDeleting || !confirmacaoCorreta}
+              className="rounded-full bg-red-600 text-white text-sm font-medium px-4 py-2 hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isDeleting ? "Excluindo..." : "Confirmar Exclusão"}
             </button>

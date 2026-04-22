@@ -1,24 +1,18 @@
-/**
- * Guards de autenticação compartilhados entre Server Actions.
- *
- * Elimina a duplicação do padrão auth+empresa_id presente em múltiplos
- * arquivos actions.ts. Cada guard retorna o cliente Supabase, o usuário
- * atual (com empresa_id) e o papel normalizado (lowercase).
- *
- * — getUsuarioAutorizado : qualquer usuário autenticado com empresa ativa
- * — getAdminAutorizado   : somente papel "administrador"
- */
-
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PAPEIS } from "./roles";
 
-export interface UsuarioAtual {
-  id: string;
-  empresa_id: string;
-}
-
-export async function getUsuarioAutorizado() {
+/**
+ * Verifica autenticação e retorna o cliente Supabase, o registro `usuario`
+ * e o papel normalizado (minúsculas) do usuário logado.
+ *
+ * Redireciona para /login se não autenticado ou sem empresa vinculada.
+ *
+ * Envolto em React.cache para deduplicar a chamada dentro do mesmo render:
+ * layout + page fazem a mesma consulta e agora compartilham o resultado.
+ */
+export const getUsuarioAutorizado = cache(async function getUsuarioAutorizado() {
   const supabase = await createClient();
 
   const {
@@ -35,15 +29,22 @@ export async function getUsuarioAutorizado() {
 
   if (!usuarioAtual?.empresa_id) redirect("/login");
 
+  // Normaliza para minúsculas — o banco armazena com inicial maiúscula (ex.: "Administrador")
   const papel =
-    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
+    (usuarioAtual.papel as { nome_dominio: string } | null)
       ?.nome_dominio?.toLowerCase() ?? "";
 
-  return { supabase, usuarioAtual: usuarioAtual as UsuarioAtual, papel };
-}
+  return { supabase, usuarioAtual, papel };
+});
 
+/**
+ * Verifica autenticação e exige papel de Administrador.
+ * Redireciona para /login se não autenticado ou /dashboard se não for admin.
+ */
 export async function getAdminAutorizado() {
-  const result = await getUsuarioAutorizado();
-  if (result.papel !== PAPEIS.ADMINISTRADOR) redirect("/dashboard");
-  return result;
+  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
+
+  if (papel !== PAPEIS.ADMINISTRADOR) redirect("/dashboard");
+
+  return { supabase, usuarioAtual };
 }

@@ -7,7 +7,7 @@
 -- =============================================================================
 
 BEGIN;
-SELECT plan(15);
+SELECT plan(16);
 
 -- -----------------------------------------------------------------------------
 -- empresa
@@ -125,6 +125,16 @@ SELECT col_is_unique(
 SELECT index_is_unique(
     'dealership', 'metodo_pagamento', 'uk_metodo_pagamento_empresa_principal',
     'uk_metodo_pagamento_empresa_principal: no máximo 1 cartão principal por empresa (índice único parcial)'
+);
+
+-- -----------------------------------------------------------------------------
+-- despesa_categoria
+-- uk_despesa_categoria_empresa_id_nome: nome da categoria único por empresa
+-- (constraint composta)
+-- -----------------------------------------------------------------------------
+SELECT col_is_unique(
+    'dealership', 'despesa_categoria', ARRAY['empresa_id', 'nome'],
+    'uk_despesa_categoria_empresa_id_nome: (empresa_id, nome) deve ser único por empresa'
 );
 
 SELECT * FROM finish();

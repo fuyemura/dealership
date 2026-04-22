@@ -141,13 +141,15 @@ CREATE TABLE dealership.cliente (
     nome_cliente     VARCHAR(255) NOT NULL,
     telefone_cliente VARCHAR(20)  NULL,
     email_cliente    VARCHAR(255) NULL,
+    localizacao_id   UUID         NULL,
     criado_por       UUID         NOT NULL,
     criado_em        TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
     atualizado_em    TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_cliente_empresa_id ON dealership.cliente (empresa_id);
-CREATE INDEX idx_cliente_criado_por  ON dealership.cliente (criado_por);
+CREATE INDEX idx_cliente_empresa_id    ON dealership.cliente (empresa_id);
+CREATE INDEX idx_cliente_criado_por    ON dealership.cliente (criado_por);
+CREATE INDEX idx_cliente_localizacao_id ON dealership.cliente (localizacao_id);
 
 COMMENT ON TABLE  dealership.cliente                  IS 'Cadastro de clientes que compraram veículos.';
 COMMENT ON COLUMN dealership.cliente.id               IS 'Chave primária (PK) de identificação do cliente.';
@@ -156,6 +158,7 @@ COMMENT ON COLUMN dealership.cliente.cpf              IS 'CPF do cliente.';
 COMMENT ON COLUMN dealership.cliente.nome_cliente     IS 'Nome completo do cliente.';
 COMMENT ON COLUMN dealership.cliente.telefone_cliente IS 'Número de telefone do cliente.';
 COMMENT ON COLUMN dealership.cliente.email_cliente    IS 'Endereço de correio eletrônico do cliente.';
+COMMENT ON COLUMN dealership.cliente.localizacao_id   IS 'Chave estrangeira (FK) para o endereço do cliente. Opcional.';
 COMMENT ON COLUMN dealership.cliente.criado_por       IS 'Chave estrangeira (FK) do usuário que realizou o cadastro.';
 COMMENT ON COLUMN dealership.cliente.criado_em        IS 'Data e hora de criação do registro na tabela.';
 COMMENT ON COLUMN dealership.cliente.atualizado_em    IS 'Data e hora de atualização do registro na tabela.';
@@ -231,6 +234,7 @@ CREATE TABLE dealership.veiculo (
     situacao_veiculo_id       UUID          NOT NULL,
     data_venda                DATE          NULL,
     preco_venda               DECIMAL(10,2) NULL,
+    preco_venda_sugerido      DECIMAL(10,2) NULL,
     data_entrega              DATE          NULL,
     quantidade_dias_garantia  INTEGER       NULL,
     data_fim_garantia         DATE          NULL,
@@ -275,6 +279,7 @@ COMMENT ON COLUMN dealership.veiculo.descricao                IS 'Observações 
 COMMENT ON COLUMN dealership.veiculo.situacao_veiculo_id      IS 'Chave estrangeira (FK) para dominio — grupo: situacao_veiculo.';
 COMMENT ON COLUMN dealership.veiculo.data_venda               IS 'Data da venda do veículo.';
 COMMENT ON COLUMN dealership.veiculo.preco_venda              IS 'Preço de venda do veículo.';
+COMMENT ON COLUMN dealership.veiculo.preco_venda_sugerido     IS 'Preço de venda sugerido pelo vendedor, exibido publicamente na página do QR Code.';
 COMMENT ON COLUMN dealership.veiculo.data_entrega             IS 'Data da entrega do veículo ao comprador.';
 COMMENT ON COLUMN dealership.veiculo.quantidade_dias_garantia IS 'Quantidade de dias em que o veículo está coberto por garantia após a venda.';
 COMMENT ON COLUMN dealership.veiculo.data_fim_garantia        IS 'Data final da cobertura de garantia do veículo.';
@@ -654,7 +659,69 @@ CREATE UNIQUE INDEX uk_metodo_pagamento_empresa_principal
     WHERE metodo_principal = TRUE;
 
 
+-- -----------------------------------------------------------------------------
 
+CREATE TABLE dealership.despesa_categoria (
+    id            UUID         NOT NULL DEFAULT gen_random_uuid(),
+    empresa_id    UUID         NOT NULL,
+    nome          VARCHAR(255) NOT NULL,
+    descricao     VARCHAR(500) NULL,
+    criado_por    UUID         NOT NULL,
+    criado_em     TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    atualizado_em TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_despesa_categoria_empresa_id ON dealership.despesa_categoria (empresa_id);
+
+COMMENT ON TABLE  dealership.despesa_categoria              IS 'Catálogo de categorias de despesa operacional, scoped por empresa.';
+COMMENT ON COLUMN dealership.despesa_categoria.id           IS 'Chave primária (PK) de identificação da categoria.';
+COMMENT ON COLUMN dealership.despesa_categoria.empresa_id   IS 'Chave estrangeira (FK) de identificação da empresa.';
+COMMENT ON COLUMN dealership.despesa_categoria.nome         IS 'Nome da categoria (ex: Energia Elétrica, Aluguel, Pessoal).';
+COMMENT ON COLUMN dealership.despesa_categoria.descricao    IS 'Descrição detalhada da categoria.';
+COMMENT ON COLUMN dealership.despesa_categoria.criado_por   IS 'Chave estrangeira (FK) do usuário que criou o registro.';
+COMMENT ON COLUMN dealership.despesa_categoria.criado_em    IS 'Data e hora de criação do registro na tabela.';
+COMMENT ON COLUMN dealership.despesa_categoria.atualizado_em IS 'Data e hora de atualização do registro na tabela.';
+
+ALTER TABLE dealership.despesa_categoria ADD PRIMARY KEY (id);
+ALTER TABLE dealership.despesa_categoria ADD CONSTRAINT uk_despesa_categoria_empresa_id_nome UNIQUE (empresa_id, nome);
+
+
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE dealership.empresa_despesa (
+    id             UUID          NOT NULL DEFAULT gen_random_uuid(),
+    empresa_id     UUID          NOT NULL,
+    categoria_id   UUID          NOT NULL,
+    descricao      VARCHAR(255)  NOT NULL,
+    valor          DECIMAL(10,2) NOT NULL,
+    data_despesa   DATE          NOT NULL,
+    recorrente     BOOLEAN       NOT NULL DEFAULT FALSE,
+    observacao     VARCHAR(500)  NULL,
+    criado_por     UUID          NOT NULL,
+    criado_em      TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    atualizado_em  TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_empresa_despesa_empresa_id   ON dealership.empresa_despesa (empresa_id);
+CREATE INDEX idx_empresa_despesa_categoria_id ON dealership.empresa_despesa (categoria_id);
+CREATE INDEX idx_empresa_despesa_data_despesa ON dealership.empresa_despesa (data_despesa);
+
+COMMENT ON TABLE  dealership.empresa_despesa                IS 'Lançamentos de despesa operacional da empresa.';
+COMMENT ON COLUMN dealership.empresa_despesa.id             IS 'Chave primária (PK) de identificação da despesa.';
+COMMENT ON COLUMN dealership.empresa_despesa.empresa_id     IS 'Chave estrangeira (FK) de identificação da empresa.';
+COMMENT ON COLUMN dealership.empresa_despesa.categoria_id   IS 'Chave estrangeira (FK) para despesa_categoria.';
+COMMENT ON COLUMN dealership.empresa_despesa.descricao      IS 'Descrição do lançamento (ex: Conta de luz - Março/2026).';
+COMMENT ON COLUMN dealership.empresa_despesa.valor          IS 'Valor da despesa em reais (BRL).';
+COMMENT ON COLUMN dealership.empresa_despesa.data_despesa   IS 'Data de competência da despesa.';
+COMMENT ON COLUMN dealership.empresa_despesa.recorrente     IS 'Indica se esta despesa é recorrente (se repete mensalmente). Permite replicar para o próximo mês.';
+COMMENT ON COLUMN dealership.empresa_despesa.observacao     IS 'Observações adicionais sobre o lançamento.';
+COMMENT ON COLUMN dealership.empresa_despesa.criado_por     IS 'Chave estrangeira (FK) do usuário que criou o registro.';
+COMMENT ON COLUMN dealership.empresa_despesa.criado_em      IS 'Data e hora de criação do registro na tabela.';
+COMMENT ON COLUMN dealership.empresa_despesa.atualizado_em  IS 'Data e hora de atualização do registro na tabela.';
+
+ALTER TABLE dealership.empresa_despesa ADD PRIMARY KEY (id);
+ALTER TABLE dealership.empresa_despesa ADD CONSTRAINT chk_empresa_despesa_valor_positivo
+    CHECK (valor > 0);
 
 
 -- =============================================================================
@@ -688,6 +755,10 @@ ALTER TABLE dealership.cliente
 ALTER TABLE dealership.cliente
     ADD CONSTRAINT fk_cliente_criado_por
     FOREIGN KEY (criado_por) REFERENCES dealership.usuario (id);
+
+ALTER TABLE dealership.cliente
+    ADD CONSTRAINT fk_cliente_localizacao_id
+    FOREIGN KEY (localizacao_id) REFERENCES dealership.localizacao (id);
 
 -- veiculo
 ALTER TABLE dealership.veiculo
@@ -828,4 +899,27 @@ ALTER TABLE dealership.metodo_pagamento
 ALTER TABLE dealership.metodo_pagamento
     ADD CONSTRAINT fk_metodo_pagamento_bandeira_id
     FOREIGN KEY (bandeira_id) REFERENCES dealership.dominio (id);
- 
+
+-- despesa_categoria
+ALTER TABLE dealership.despesa_categoria
+    ADD CONSTRAINT fk_despesa_categoria_empresa_id
+    FOREIGN KEY (empresa_id) REFERENCES dealership.empresa (id);
+
+ALTER TABLE dealership.despesa_categoria
+    ADD CONSTRAINT fk_despesa_categoria_criado_por
+    FOREIGN KEY (criado_por) REFERENCES dealership.usuario (id);
+
+-- empresa_despesa
+ALTER TABLE dealership.empresa_despesa
+    ADD CONSTRAINT fk_empresa_despesa_empresa_id
+    FOREIGN KEY (empresa_id) REFERENCES dealership.empresa (id);
+
+ALTER TABLE dealership.empresa_despesa
+    ADD CONSTRAINT fk_empresa_despesa_categoria_id
+    FOREIGN KEY (categoria_id) REFERENCES dealership.despesa_categoria (id);
+
+ALTER TABLE dealership.empresa_despesa
+    ADD CONSTRAINT fk_empresa_despesa_criado_por
+    FOREIGN KEY (criado_por) REFERENCES dealership.usuario (id);
+
+

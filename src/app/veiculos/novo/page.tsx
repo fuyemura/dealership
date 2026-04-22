@@ -1,25 +1,15 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { VeiculoForm } from "../_components/veiculo-form";
 import type { Dominios } from "../_components/veiculo-form";
 import { criarVeiculo, verificarPlacaExistente } from "../actions";
 
+export const metadata: Metadata = {
+  title: "Novo Veículo — Uyemura Tech",
+};
+
 export default async function NovoVeiculoPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("empresa_id")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuario?.empresa_id) redirect("/login");
+  const { supabase } = await getUsuarioAutorizado();
 
   // Carrega marcas, modelos e demais domínios em paralelo
   const [
@@ -54,7 +44,7 @@ export default async function NovoVeiculoPage() {
     marcas: (marcas ?? []) as Dominios["marcas"],
     modelos: (modelos ?? []).map((m) => ({
       id: m.id,
-      marca_id: (m as unknown as { marca_id?: string | null }).marca_id ?? null,
+      marca_id: (m as { marca_id?: string | null }).marca_id ?? null,
       nome_dominio: m.nome_dominio,
     })),
     combustiveis: agrupar("combustivel"),
@@ -66,6 +56,7 @@ export default async function NovoVeiculoPage() {
   return (
     <VeiculoForm
       dominios={dominios}
+      clientes={[]}
       salvarAction={criarVeiculo}
       verificarPlacaAction={verificarPlacaExistente}
     />

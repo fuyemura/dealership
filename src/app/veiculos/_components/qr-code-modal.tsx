@@ -125,41 +125,45 @@ export function QrCodeModal({ qrCode, placa, onClose }: QrCodeModalProps) {
   const imprimir = () => {
     const janela = window.open("", "_blank", "width=350,height=420");
     if (!janela) return;
-    janela.document.write(`<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>QR Code — ${placa}</title>
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        font-family: sans-serif;
-        background: #fff;
-      }
-      img { width: 200px; height: 200px; border-radius: 8px; display: block; }
-      p { margin-top: 12px; font-weight: bold; font-size: 18px; letter-spacing: 0.05em; }
-      @media print {
-        body { min-height: unset; }
-      }
-    </style>
-  </head>
-  <body>
-    <img src="${qrUrl}" alt="QR Code — ${placa}" />
-    <p>${placa}</p>
-    <script>
-      window.onload = function () {
-        window.print();
-        window.close();
-      };
-    </script>
-  </body>
-</html>`);
-    janela.document.close();
+
+    // Usa criação via DOM em vez de document.write para evitar XSS por interpolação
+    const doc = janela.document;
+    doc.documentElement.lang = "pt-BR";
+
+    const meta = doc.createElement("meta");
+    meta.setAttribute("charset", "UTF-8");
+    doc.head.appendChild(meta);
+
+    const title = doc.createElement("title");
+    title.textContent = `QR Code — ${placa}`;
+    doc.head.appendChild(title);
+
+    const style = doc.createElement("style");
+    style.textContent = [
+      "* { box-sizing: border-box; margin: 0; padding: 0; }",
+      "body { display: flex; flex-direction: column; align-items: center;",
+      "       justify-content: center; min-height: 100vh;",
+      "       font-family: sans-serif; background: #fff; }",
+      "img { width: 200px; height: 200px; border-radius: 8px; display: block; }",
+      "p { margin-top: 12px; font-weight: bold; font-size: 18px; letter-spacing: 0.05em; }",
+      "@media print { body { min-height: unset; } }",
+    ].join(" ");
+    doc.head.appendChild(style);
+
+    const img = doc.createElement("img");
+    img.src = qrUrl;
+    img.alt = `QR Code — ${placa}`;
+    doc.body.appendChild(img);
+
+    const p = doc.createElement("p");
+    p.textContent = placa; // textContent nunca interpreta HTML
+    doc.body.appendChild(p);
+
+    janela.addEventListener("load", () => {
+      janela.print();
+      janela.close();
+    });
+    doc.close();
   };
 
   return createPortal(

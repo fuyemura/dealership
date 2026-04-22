@@ -33,12 +33,41 @@ export default async function EditarClientePage({
   const { data: cliente } = await supabase
     .schema("dealership")
     .from("cliente")
-    .select("id, nome_cliente, cpf, telefone_cliente, email_cliente")
+    .select(
+      `
+      id,
+      nome_cliente,
+      cpf,
+      telefone_cliente,
+      email_cliente,
+      localizacao:localizacao_id (
+        id,
+        cep,
+        logradouro,
+        numero_logradouro,
+        complemento_logradouro,
+        bairro,
+        cidade,
+        estado
+      )
+    `
+    )
     .eq("id", id)
     .eq("empresa_id", usuario.empresa_id)
     .single();
 
   if (!cliente) notFound();
+
+  const loc = cliente.localizacao as unknown as {
+    id: string;
+    cep: string;
+    logradouro: string;
+    numero_logradouro: number;
+    complemento_logradouro: string | null;
+    bairro: string;
+    cidade: string;
+    estado: string;
+  } | null;
 
   const saveAction = atualizarCliente.bind(null, id);
   const deleteAction = excluirCliente.bind(null, id);
@@ -53,6 +82,7 @@ export default async function EditarClientePage({
         cpf: cliente.cpf,
         telefone_cliente: cliente.telefone_cliente,
         email_cliente: cliente.email_cliente,
+        localizacao: loc,
       }}
     />
   );

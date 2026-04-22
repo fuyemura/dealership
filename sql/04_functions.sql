@@ -176,3 +176,149 @@ $$;
 COMMENT ON FUNCTION dealership.excluir_veiculo(UUID, UUID) IS
   'Exclui atomicamente veiculo e todos os seus registros filhos. '
   'Retorna os caminho_storage dos arquivos para exclusão no Storage pelo chamador.';
+
+
+-- =============================================================================
+-- RPC: buscar_veiculo_publico
+--
+-- Centraliza o acesso de leitura público (anon) aos dados de um veículo
+-- identificado por token de QR Code. Substitui o uso de createAdminClient()
+-- (service role key) na página /v/[token], eliminando o bypass irrestrito de RLS.
+--
+-- A função é SECURITY DEFINER (executa como owner do schema) e exposta
+-- apenas ao necessário via GRANT TO anon/authenticated. Isso garante que:
+--   1. Nenhuma chave de service role fica exposta em código de página pública.
+--   2. O acesso é restrito ao subconjunto de campos públicos do veículo.
+--   3. O contador de visualizações é incrementado atomicamente na mesma transação.
+--
+-- SET search_path = '' previne search_path injection.
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION dealership.buscar_veiculo_publico(p_token TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_qr    RECORD;
+  v_veic  RECORD;
+  v_emp   RECORD;
+  v_doms  JSONB;
+  v_arqs  JSONB;
+BEGIN
+  -- 1. Resolve o QR Code pelo token
+  SELECT id, veiculo_id, total_visualizacoes
+    INTO v_qr
+    FROM dealership.veiculo_qr_code
+   WHERE token_publica = p_token;
+
+  IF NOT FOUND THEN
+    RETURN NULL;
+  END IF;
+
+  -- 2. Incrementa o contador atomicamente
+  UPDATE dealership.veiculo_qr_code
+     SET total_visualizacoes = total_visualizacoes + 1
+   WHERE id = v_qr.id;
+
+  -- 3. Busca os dados públicos do veículo + marca + modelo
+  SELECT
+    v.placa,
+    v.cor_veiculo,
+    v.ano_fabricacao,
+    v.ano_modelo,
+    v.quilometragem,
+    v.preco_venda,
+    v.preco_venda_sugerido,
+    v.vidro_eletrico,
+    v.trava_eletrica,
+    v.quantidade_portas,
+    v.laudo_aprovado,
+    v.descricao,
+    v.situacao_veiculo_id,
+    v.combustivel_veiculo_id,
+    v.cambio_veiculo_id,
+    v.direcao_veiculo_id,
+    v.empresa_id,
+    m.nome  AS marca_nome,
+    mo.nome AS modelo_nome
+  INTO v_veic
+  FROM  dealership.veiculo v
+  LEFT JOIN dealership.veiculo_marca  m  ON m.id  = v.marca_veiculo_id
+  LEFT JOIN dealership.veiculo_modelo mo ON mo.id = v.modelo_veiculo_id
+  WHERE v.id = v_qr.veiculo_id;
+
+  IF NOT FOUND THEN
+    RETURN NULL;
+  END IF;
+
+  -- 4. Busca dados públicos da empresa
+  SELECT
+    nome_fantasia_empresa,
+    nome_legal_empresa,
+    telefone_principal,
+    email_empresa
+  INTO v_emp
+  FROM dealership.empresa
+  WHERE id = v_veic.empresa_id;
+
+  -- 5. Agrega domínios necessários para resolução de labels
+  SELECT jsonb_agg(jsonb_build_object('id', d.id, 'nome_dominio', d.nome_dominio))
+    INTO v_doms
+    FROM dealership.dominio d
+   WHERE d.grupo_dominio IN ('combustivel', 'cambio', 'tipo_direcao', 'situacao_veiculo');
+
+  -- 6. Agrega arquivos (fotos e laudo), ordenando principal + ordem
+  SELECT jsonb_agg(
+    jsonb_build_object(
+      'id',               a.id,
+      'url_arquivo',      a.url_arquivo,
+      'arquivo_principal', a.arquivo_principal,
+      'ordem_exibicao',   a.ordem_exibicao,
+      'tipo_nome',        d.nome_dominio
+    )
+    ORDER BY a.arquivo_principal DESC, a.ordem_exibicao ASC
+  )
+  INTO v_arqs
+  FROM dealership.veiculo_arquivo a
+  LEFT JOIN dealership.dominio d ON d.id = a.tipo_arquivo_id
+  WHERE a.veiculo_id = v_qr.veiculo_id;
+
+  RETURN jsonb_build_object(
+    'qr_id',                v_qr.id,
+    'total_visualizacoes',  v_qr.total_visualizacoes + 1,
+    'veiculo', jsonb_build_object(
+      'placa',                  v_veic.placa,
+      'cor_veiculo',            v_veic.cor_veiculo,
+      'ano_fabricacao',         v_veic.ano_fabricacao,
+      'ano_modelo',             v_veic.ano_modelo,
+      'quilometragem',          v_veic.quilometragem,
+      'preco_venda',            v_veic.preco_venda,
+      'preco_venda_sugerido',   v_veic.preco_venda_sugerido,
+      'vidro_eletrico',         v_veic.vidro_eletrico,
+      'trava_eletrica',         v_veic.trava_eletrica,
+      'quantidade_portas',      v_veic.quantidade_portas,
+      'laudo_aprovado',         v_veic.laudo_aprovado,
+      'descricao',              v_veic.descricao,
+      'situacao_veiculo_id',    v_veic.situacao_veiculo_id,
+      'combustivel_veiculo_id', v_veic.combustivel_veiculo_id,
+      'cambio_veiculo_id',      v_veic.cambio_veiculo_id,
+      'direcao_veiculo_id',     v_veic.direcao_veiculo_id,
+      'marca_nome',             v_veic.marca_nome,
+      'modelo_nome',            v_veic.modelo_nome
+    ),
+    'empresa', jsonb_build_object(
+      'nome_fantasia_empresa',  v_emp.nome_fantasia_empresa,
+      'nome_legal_empresa',     v_emp.nome_legal_empresa,
+      'telefone_principal',     v_emp.telefone_principal,
+      'email_empresa',          v_emp.email_empresa
+    ),
+    'dominios', COALESCE(v_doms, '[]'::jsonb),
+    'arquivos', COALESCE(v_arqs, '[]'::jsonb)
+  );
+END;
+$$;
+
+-- Concede execução para anon (página pública) e authenticated (prevenção de erro)
+GRANT EXECUTE ON FUNCTION dealership.buscar_veiculo_publico(TEXT) TO anon, authenticated;
