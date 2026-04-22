@@ -2,7 +2,7 @@
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
 import { VeiculoForm } from "../_components/veiculo-form";
-import type { Dominios, QrCodeInfo } from "../_components/veiculo-form";
+import type { Dominios, QrCodeInfo, ClienteOpcao } from "../_components/veiculo-form";
 import { VeiculoArquivos } from "../_components/veiculo-arquivos";
 import type { ArquivoVeiculo } from "../_components/veiculo-arquivos";
 import { VeiculoZonaPerigo } from "../_components/veiculo-zona-perigo";
@@ -39,9 +39,11 @@ type VeiculoEditRow = {
   data_compra: string;
   preco_compra: number;
   preco_venda: number | null;
+  preco_venda_sugerido: number | null;
   data_venda: string | null;
   data_entrega: string | null;
   quantidade_dias_garantia: number | null;
+  vendido_para: string | null;
   descricao: string | null;
 };
 
@@ -57,7 +59,7 @@ export default async function EditarVeiculoPage({
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
   const isAdmin = papel === PAPEIS.ADMINISTRADOR;
 
-  // Carrega veículo, marcas, modelos, domínios, QR code e arquivos em paralelo
+  // Carrega veículo, marcas, modelos, domínios, QR code, arquivos e clientes em paralelo
   const [
     { data: veiculo },
     { data: marcas },
@@ -65,6 +67,7 @@ export default async function EditarVeiculoPage({
     { data: dominiosVeiculo },
     { data: qrCodeData },
     { data: arquivosData },
+    { data: clientesData },
   ] = await Promise.all([
       supabase
         .schema("dealership")
@@ -76,8 +79,8 @@ export default async function EditarVeiculoPage({
            ano_fabricacao, ano_modelo, cor_veiculo,
            quantidade_portas, quilometragem,
            vidro_eletrico, trava_eletrica, laudo_aprovado,
-           data_compra, preco_compra, preco_venda,
-           data_venda, data_entrega, quantidade_dias_garantia, descricao`
+           data_compra, preco_compra, preco_venda, preco_venda_sugerido,
+           data_venda, data_entrega, quantidade_dias_garantia, vendido_para, descricao`
         )
         .eq("id", id)
         .eq("empresa_id", usuarioAtual.empresa_id)
@@ -116,6 +119,13 @@ export default async function EditarVeiculoPage({
         .eq("veiculo_id", id)
         .eq("empresa_id", usuarioAtual.empresa_id)
         .order("ordem_exibicao", { ascending: true }),
+
+      supabase
+        .schema("dealership")
+        .from("cliente")
+        .select("id, nome_cliente, cpf")
+        .eq("empresa_id", usuarioAtual.empresa_id)
+        .order("nome_cliente", { ascending: true }),
     ]);
 
   if (!veiculo) notFound();
@@ -152,6 +162,8 @@ export default async function EditarVeiculoPage({
   const excluirAction = isAdmin ? excluirVeiculo.bind(null, id) : undefined;
   const gerarQrCodeAction = gerarQrCode.bind(null, id);
 
+  const clientes: ClienteOpcao[] = (clientesData ?? []) as ClienteOpcao[];
+
   // Separa os arquivos por tipo
   type ArquivoRaw = {
     id: string;
@@ -185,6 +197,7 @@ export default async function EditarVeiculoPage({
     <>
       <VeiculoForm
         dominios={dominios}
+        clientes={clientes}
         salvarAction={salvarAction}
         gerarQrCodeAction={gerarQrCodeAction}
         initialData={{
@@ -212,20 +225,21 @@ export default async function EditarVeiculoPage({
           data_venda: v.data_venda ?? null,
           data_entrega: v.data_entrega ?? null,
           descricao: v.descricao ?? null,
+          vendido_para: v.vendido_para ?? null,
           quantidade_dias_garantia: v.quantidade_dias_garantia ?? null,
+          preco_venda_sugerido: v.preco_venda_sugerido ?? null,
         }}
         qrCodeInicial={qrCodeInicial}
       />
       <VeiculoArquivos
         fotos={fotos}
         laudo={laudo}
-        novoCadastro={novo === "1"}
         uploadFotoAction={uploadFotoAction}
         uploadLaudoAction={uploadLaudoAction}
         excluirArquivoAction={excluirArquivoAction}
         principalAction={principalAction}
       />
-      {excluirAction && <VeiculoZonaPerigo excluirAction={excluirAction} />}
+      {excluirAction && <VeiculoZonaPerigo excluirAction={excluirAction} placa={v.placa} />}
     </>
   );
 }

@@ -1,10 +1,11 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getAdminAutorizado } from "@/lib/auth/guards";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
-export type ActionResult = { error: string } | undefined;
 
 // ─── Tipos do formulário ──────────────────────────────────────────────────────
 

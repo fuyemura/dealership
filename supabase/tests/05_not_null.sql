@@ -7,12 +7,12 @@
 --   • id          → coberto em 02_primary_keys.sql
 --   • criado_em, atualizado_em, registrado_em → colunas de auditoria com DEFAULT
 --
--- Total de asserções: 112
+-- Total de asserções: 122
 -- Execução: supabase test db
 -- =============================================================================
 
 BEGIN;
-SELECT plan(112);
+SELECT plan(122);
 
 -- =============================================================================
 -- empresa (7 colunas NOT NULL)
@@ -188,6 +188,24 @@ SELECT col_not_null('dealership', 'metodo_pagamento', 'ano_expiracao',          
 SELECT col_not_null('dealership', 'metodo_pagamento', 'nome_titular',              'metodo_pagamento.nome_titular NOT NULL');
 SELECT col_not_null('dealership', 'metodo_pagamento', 'metodo_principal',          'metodo_pagamento.metodo_principal NOT NULL (DEFAULT FALSE)');
 SELECT col_not_null('dealership', 'metodo_pagamento', 'metodo_ativo',              'metodo_pagamento.metodo_ativo NOT NULL (DEFAULT TRUE)');
+
+-- =============================================================================
+-- despesa_categoria (3 colunas NOT NULL)
+-- =============================================================================
+SELECT col_not_null('dealership', 'despesa_categoria', 'empresa_id', 'despesa_categoria.empresa_id NOT NULL');
+SELECT col_not_null('dealership', 'despesa_categoria', 'nome',       'despesa_categoria.nome NOT NULL');
+SELECT col_not_null('dealership', 'despesa_categoria', 'criado_por', 'despesa_categoria.criado_por NOT NULL');
+
+-- =============================================================================
+-- empresa_despesa (7 colunas NOT NULL)
+-- =============================================================================
+SELECT col_not_null('dealership', 'empresa_despesa', 'empresa_id',   'empresa_despesa.empresa_id NOT NULL');
+SELECT col_not_null('dealership', 'empresa_despesa', 'categoria_id', 'empresa_despesa.categoria_id NOT NULL');
+SELECT col_not_null('dealership', 'empresa_despesa', 'descricao',    'empresa_despesa.descricao NOT NULL');
+SELECT col_not_null('dealership', 'empresa_despesa', 'valor',        'empresa_despesa.valor NOT NULL');
+SELECT col_not_null('dealership', 'empresa_despesa', 'data_despesa', 'empresa_despesa.data_despesa NOT NULL');
+SELECT col_not_null('dealership', 'empresa_despesa', 'recorrente',   'empresa_despesa.recorrente NOT NULL (DEFAULT FALSE)');
+SELECT col_not_null('dealership', 'empresa_despesa', 'criado_por',   'empresa_despesa.criado_por NOT NULL');
 
 SELECT * FROM finish();
 ROLLBACK;

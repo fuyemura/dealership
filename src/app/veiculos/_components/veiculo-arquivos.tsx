@@ -17,7 +17,6 @@ export interface ArquivoVeiculo {
 export interface VeiculoArquivosProps {
   fotos: ArquivoVeiculo[];
   laudo: ArquivoVeiculo | null;
-  novoCadastro?: boolean;
   uploadFotoAction: (formData: FormData) => Promise<ActionResult>;
   uploadLaudoAction: (formData: FormData) => Promise<ActionResult>;
   excluirArquivoAction: (arquivoId: string) => Promise<ActionResult>;
@@ -83,24 +82,6 @@ function IconImage({ size = 24 }: { size?: number }) {
   );
 }
 
-function IconCheck({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function IconX({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
-
 function IconDownload({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -121,35 +102,6 @@ function formatarTamanho(bytes: number): string {
 }
 
 // ─── Banner de novo cadastro ──────────────────────────────────────────────────
-
-function NovoCadastroBanner({ onDismiss }: { onDismiss: () => void }) {
-  return (
-    <div
-      role="status"
-      className="flex items-start gap-3 rounded-xl bg-status-success-bg border border-status-success-border px-4 py-3 mb-6"
-    >
-      <span className="mt-0.5 flex-shrink-0 text-status-success-text">
-        <IconCheck size={16} />
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-status-success-text">
-          Veículo cadastrado com sucesso!
-        </p>
-        <p className="text-xs text-status-success-text/80 mt-0.5">
-          Adicione as fotos e o laudo técnico a seguir para completar o cadastro.
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onDismiss}
-        aria-label="Dispensar"
-        className="flex-shrink-0 text-status-success-text/60 hover:text-status-success-text transition-colors p-0.5"
-      >
-        <IconX size={14} />
-      </button>
-    </div>
-  );
-}
 
 // ─── Zona de upload ───────────────────────────────────────────────────────────
 
@@ -208,14 +160,11 @@ function UploadZone({ accept, multiple = false, disabled, ariaLabel = "Área de 
 export function VeiculoArquivos({
   fotos,
   laudo,
-  novoCadastro = false,
   uploadFotoAction,
   uploadLaudoAction,
   excluirArquivoAction,
   principalAction,
 }: VeiculoArquivosProps) {
-  const [showBanner, setShowBanner] = useState(novoCadastro);
-
   // Estados de loading/erro
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [uploadingLaudo, setUploadingLaudo] = useState(false);
@@ -302,9 +251,6 @@ export function VeiculoArquivos({
 
   return (
     <div className="w-full max-w-5xl space-y-6 mt-6">
-      {/* Banner de novo cadastro */}
-      {showBanner && <NovoCadastroBanner onDismiss={() => setShowBanner(false)} />}
-
       {/* Erro de ação (excluir / definir principal) */}
       {erroAcao && (
         <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">

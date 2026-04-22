@@ -81,6 +81,22 @@ BEFORE UPDATE ON dealership.veiculo_manutencao
 FOR EACH ROW
 EXECUTE FUNCTION dealership.set_atualizado_em();
 
+-- ─── despesa_categoria ───────────────────────────────────────────────────────
+
+DROP TRIGGER IF EXISTS trg_set_atualizado_em_despesa_categoria ON dealership.despesa_categoria;
+CREATE TRIGGER trg_set_atualizado_em_despesa_categoria
+BEFORE UPDATE ON dealership.despesa_categoria
+FOR EACH ROW
+EXECUTE FUNCTION dealership.set_atualizado_em();
+
+-- ─── empresa_despesa ─────────────────────────────────────────────────────────
+
+DROP TRIGGER IF EXISTS trg_set_atualizado_em_empresa_despesa ON dealership.empresa_despesa;
+CREATE TRIGGER trg_set_atualizado_em_empresa_despesa
+BEFORE UPDATE ON dealership.empresa_despesa
+FOR EACH ROW
+EXECUTE FUNCTION dealership.set_atualizado_em();
+
 
 -- Função e trigger: grava o estado anterior de assinatura antes de cada UPDATE
 -- SECURITY DEFINER: necessário porque assinatura_historico não possui policy de

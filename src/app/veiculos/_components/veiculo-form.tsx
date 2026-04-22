@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { veiculoBaseSchema, buildVeiculoSchema, PLACA_RE } from "@/lib/schemas/veiculo";
 import type {
   ActionResult,
   VeiculoFormData,
@@ -36,6 +35,12 @@ export interface Dominios {
   situacoes: Dominio[];
 }
 
+export interface ClienteOpcao {
+  id: string;
+  nome_cliente: string;
+  cpf: string;
+}
+
 export interface VeiculoInicial {
   id: string;
   placa: string;
@@ -58,14 +63,17 @@ export interface VeiculoInicial {
   data_compra: string;
   preco_compra: number;
   preco_venda: number | null;
+  preco_venda_sugerido: number | null;
   data_venda: string | null;
   data_entrega: string | null;
+  quantidade_dias_garantia: number | null;
   descricao: string | null;
-  quantidade_dias_garantia: number | null | undefined;
+  vendido_para: string | null;
 }
 
 export interface VeiculoFormProps {
   dominios: Dominios;
+  clientes: ClienteOpcao[];
   salvarAction: (data: VeiculoFormData) => Promise<ActionResult>;
   gerarQrCodeAction?: () => Promise<QrCodeResult>;
   verificarPlacaAction?: (placa: string) => Promise<ActionResult>;
@@ -74,12 +82,100 @@ export interface VeiculoFormProps {
 }
 
 // ─── Schema Zod ───────────────────────────────────────────────────────────────
-// Schema importado de @/lib/schemas/veiculo — fonte única de verdade.
-// buildVeiculoSchema adiciona validação condicional de campos de venda.
 
-const baseSchema = veiculoBaseSchema;
+const PLACA_RE = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+
+const baseSchema = z.object({
+  placa: z
+    .string()
+    .transform((v) => v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())
+    .pipe(z.string().regex(PLACA_RE, "Placa inválida. Formato: ABC1234 ou ABC1D23.")),
+  renavam: z
+    .string()
+    .transform((v) => v.replace(/\D/g, ""))
+    .pipe(z.string().length(11, "RENAVAM deve ter 11 dígitos.")),
+  numero_chassi: z
+    .string()
+    .min(1, "Chassi é obrigatório.")
+    .max(20, "Máximo 20 caracteres."),
+  marca_veiculo_id: z.string().min(1, "Selecione a marca."),
+  modelo_veiculo_id: z.string().min(1, "Selecione o modelo."),
+  combustivel_veiculo_id: z.string().min(1, "Selecione o combustível."),
+  cambio_veiculo_id: z.string().min(1, "Selecione a transmissão."),
+  direcao_veiculo_id: z.string().min(1, "Selecione a direção."),
+  situacao_veiculo_id: z.string().min(1, "Selecione a situação."),
+  ano_fabricacao: z.coerce
+    .number()
+    .int()
+    .min(1900, "Ano inválido.")
+    .max(new Date().getFullYear() + 1, "Ano inválido."),
+  ano_modelo: z.coerce
+    .number()
+    .int()
+    .min(1900, "Ano inválido.")
+    .max(new Date().getFullYear() + 2, "Ano inválido."),
+  cor_veiculo: z
+    .string()
+    .min(1, "Cor é obrigatória.")
+    .max(20, "Máximo 20 caracteres."),
+  quantidade_portas: z.coerce
+    .number()
+    .int()
+    .min(1, "Mínimo 1 porta.")
+    .max(10, "Máximo 10 portas."),
+  quilometragem: z.coerce.number().int().min(0, "Quilometragem inválida."),
+  vidro_eletrico: z.boolean(),
+  trava_eletrica: z.boolean(),
+  laudo_aprovado: z.boolean(),
+  data_compra: z.string()
+    .min(1, "Data de compra é obrigatória.")
+    .refine((v) => new Date(v) <= new Date(), "Data de compra não pode ser futura."),
+  preco_compra: z.coerce.number().positive("Informe um preço de compra válido."),
+  preco_venda: z.coerce.number().min(0).optional().nullable(),
+  preco_venda_sugerido: z.coerce.number().min(0).optional().nullable(),
+  data_venda: z.string().optional().nullable(),
+  data_entrega: z.string().optional().nullable(),
+  quantidade_dias_garantia: z.coerce.number().int().min(0, "Mínimo 0 dias.").optional().nullable(),
+  descricao: z.string().max(1000, "Máximo 1000 caracteres.").optional().nullable(),
+  vendido_para: z.string().uuid("Cliente inválido.").optional().nullable(),
+});
 
 type FormValues = z.infer<typeof baseSchema>;
+
+// Adiciona validação condicional: preço e data de venda obrigatórios quando situação = Vendido
+function buildVeiculoSchema(vendidoId: string) {
+  return baseSchema.superRefine((data, ctx) => {
+    if (!vendidoId || data.situacao_veiculo_id !== vendidoId) return;
+    if (!data.preco_venda || data.preco_venda <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe o preço de venda.",
+        path: ["preco_venda"],
+      });
+    }
+    if (!data.data_venda) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a data de venda.",
+        path: ["data_venda"],
+      });
+    }
+    if (!data.vendido_para) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o cliente que adquiriu o veículo.",
+        path: ["vendido_para"],
+      });
+    }
+    if (data.data_entrega && data.data_venda && data.data_entrega < data.data_venda) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A data de entrega não pode ser anterior à data de venda.",
+        path: ["data_entrega"],
+      });
+    }
+  });
+}
 
 // ─── Ícones inline ────────────────────────────────────────────────────────────
 
@@ -128,6 +224,15 @@ function IconWrench({ size = 15 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+
+function IconX({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
@@ -184,7 +289,6 @@ function CurrencyInput({ id, value, onChange, onBlur, disabled, hasError }: Curr
     value != null && value > 0 ? formatarMoeda(value) : ""
   );
 
-  // Sincroniza display quando o valor externo muda (ex: reset do formulário).
   useEffect(() => {
     setDisplay(value != null && value > 0 ? formatarMoeda(value) : "");
   }, [value]);
@@ -221,6 +325,148 @@ function SectionHeader({ title }: { title: string }) {
   return (
     <div className="pb-3 mb-6 border-b border-brand-gray-mid/30">
       <h2 className="text-sm font-semibold text-brand-black">{title}</h2>
+    </div>
+  );
+}
+
+// ─── Helpers de formatação ────────────────────────────────────────────────────
+
+function formatCPF(cpf: string): string {
+  const d = cpf.replace(/\D/g, "");
+  if (d.length !== 11) return cpf;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+// ─── Combobox de cliente ──────────────────────────────────────────────────────
+
+interface ClienteComboboxProps {
+  clientes: ClienteOpcao[];
+  value: string | null | undefined;
+  onChange: (id: string | null) => void;
+  disabled?: boolean;
+}
+
+function ClienteCombobox({ clientes, value, onChange, disabled }: ClienteComboboxProps) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selected = clientes.find((c) => c.id === value) ?? null;
+
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase().trim();
+    if (!q) return clientes;
+    return clientes.filter(
+      (c) =>
+        c.nome_cliente.toLowerCase().includes(q) ||
+        c.cpf.replace(/\D/g, "").includes(q.replace(/\D/g, ""))
+    );
+  }, [clientes, query]);
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        if (!selected) setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [selected]);
+
+  const handleSelect = (cliente: ClienteOpcao) => {
+    onChange(cliente.id);
+    setQuery("");
+    setOpen(false);
+    inputRef.current?.blur();
+  };
+
+  const handleClear = () => {
+    onChange(null);
+    setQuery("");
+    setOpen(false);
+    inputRef.current?.focus();
+  };
+
+  const inputDisplay = selected ? selected.nome_cliente : query;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div
+        className={`flex items-center w-full rounded-xl border bg-white transition-colors focus-within:ring-2 focus-within:ring-brand-black/10 ${
+          disabled
+            ? "border-brand-gray-mid/60 bg-brand-gray-soft"
+            : "border-brand-gray-mid/60 focus-within:border-brand-black/40"
+        }`}
+      >
+        <input
+          ref={inputRef}
+          type="text"
+          autoComplete="off"
+          disabled={disabled}
+          placeholder="Pesquisar por nome ou CPF…"
+          value={inputDisplay}
+          onChange={(e) => {
+            if (selected) onChange(null);
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") { setOpen(false); inputRef.current?.blur(); }
+            if (e.key === "Enter") { e.preventDefault(); if (filtered.length === 1) handleSelect(filtered[0]); }
+          }}
+          className="flex-1 px-4 py-2.5 text-sm text-brand-black placeholder:text-brand-gray-text/40 bg-transparent outline-none disabled:cursor-not-allowed"
+        />
+        {(selected || query) && !disabled && (
+          <button
+            type="button"
+            onClick={handleClear}
+            aria-label="Limpar seleção"
+            className="pr-3 text-brand-gray-text hover:text-brand-black transition-colors"
+          >
+            <IconX size={14} />
+          </button>
+        )}
+      </div>
+
+      {open && !disabled && (
+        <div className="absolute z-20 mt-1 w-full rounded-xl bg-white border border-brand-gray-mid/30 shadow-lg overflow-hidden">
+          {clientes.length === 0 ? (
+            <div className="px-4 py-3.5 text-sm text-brand-gray-text">
+              Nenhum cliente cadastrado.{" "}
+              <Link href="/clientes/novo" className="font-medium text-brand-black hover:underline">
+                Cadastrar agora
+              </Link>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="px-4 py-3.5 text-sm text-brand-gray-text">
+              Nenhum resultado para <strong className="text-brand-black">{query}</strong>.{" "}
+              <Link href="/clientes/novo" className="font-medium text-brand-black hover:underline">
+                Cadastrar cliente
+              </Link>
+            </div>
+          ) : (
+            <ul className="max-h-52 overflow-y-auto divide-y divide-brand-gray-mid/20" role="listbox">
+              {filtered.map((c) => (
+                <li key={c.id} role="option" aria-selected={c.id === value}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(c)}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-brand-gray-soft/60 ${
+                      c.id === value ? "bg-brand-gray-soft/60" : ""
+                    }`}
+                  >
+                    <span className="font-medium text-brand-black">{c.nome_cliente}</span>
+                    <span className="ml-2 text-xs text-brand-gray-text font-mono">{formatCPF(c.cpf)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -423,6 +669,7 @@ function PlacaStep({ onNext, verificarPlacaAction }: PlacaStepProps) {
 
 export function VeiculoForm({
   dominios,
+  clientes,
   salvarAction,
   gerarQrCodeAction,
   verificarPlacaAction,
@@ -488,10 +735,12 @@ export function VeiculoForm({
       data_compra: initialData?.data_compra ?? "",
       preco_compra: initialData?.preco_compra,
       preco_venda: initialData?.preco_venda ?? undefined,
+      preco_venda_sugerido: initialData?.preco_venda_sugerido ?? undefined,
       data_venda: initialData?.data_venda ?? "",
       data_entrega: initialData?.data_entrega ?? "",
-      descricao: initialData?.descricao ?? "",
       quantidade_dias_garantia: initialData?.quantidade_dias_garantia ?? undefined,
+      descricao: initialData?.descricao ?? "",
+      vendido_para: initialData?.vendido_para ?? null,
     },
   });
 
@@ -504,18 +753,13 @@ export function VeiculoForm({
   const dataVendaValue = watch("data_venda");
   const diasGarantiaValue = watch("quantidade_dias_garantia");
 
-  const garantiaInfo = useMemo(() => {
+  const dataFimGarantiaCalculada = useMemo(() => {
     const dias = Number(diasGarantiaValue);
-    if (!dataVendaValue || !dias || isNaN(dias) || dias <= 0) return null;
-    const [ano, mes, dia] = dataVendaValue.split("-").map(Number);
-    const fim = new Date(ano, mes - 1, dia);
-    fim.setDate(fim.getDate() + dias);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const diasRestantes = Math.round((fim.getTime() - hoje.getTime()) / 86_400_000);
-    const estado: "ativa" | "expirando" | "expirada" =
-      diasRestantes < 0 ? "expirada" : diasRestantes <= 30 ? "expirando" : "ativa";
-    return { dataFimFormatada: fim.toLocaleDateString("pt-BR"), diasRestantes, estado };
+    if (!dataVendaValue || !dias || dias <= 0 || isNaN(dias)) return null;
+    const base = new Date(dataVendaValue + "T00:00:00");
+    if (isNaN(base.getTime())) return null;
+    base.setDate(base.getDate() + dias);
+    return base.toISOString().split("T")[0];
   }, [dataVendaValue, diasGarantiaValue]);
 
   const modelosFiltrados =
@@ -597,12 +841,13 @@ export function VeiculoForm({
       data_compra: values.data_compra,
       preco_compra: values.preco_compra,
       preco_venda: values.preco_venda ?? null,
+      preco_venda_sugerido: values.preco_venda_sugerido ?? null,
       data_venda: values.data_venda || null,
       data_entrega: values.data_entrega || null,
+      quantidade_dias_garantia: values.quantidade_dias_garantia ?? null,
+      data_fim_garantia: dataFimGarantiaCalculada ?? null,
       descricao: values.descricao?.trim() || null,
-      quantidade_dias_garantia: Number.isFinite(values.quantidade_dias_garantia)
-        ? (values.quantidade_dias_garantia as number)
-        : undefined,
+      vendido_para: isVendido ? (values.vendido_para ?? null) : null,
     };
 
     const result = await salvarAction(data);
@@ -709,7 +954,7 @@ export function VeiculoForm({
       )}
       {isEditing && !valorFipe && <div className="mb-8" />}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <form id="veiculo-form" onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
         {/* ── Erro global ──────────────────────────────────────────────────── */}
         {serverError && (
           <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -1091,6 +1336,31 @@ export function VeiculoForm({
               <FieldError msg={errors.preco_compra?.message} />
             </div>
 
+            {/* Preço de Venda Sugerido */}
+            <div className="space-y-1.5">
+              <label htmlFor="preco_venda_sugerido" className={labelCls}>
+                Preço Sugerido (R$)
+              </label>
+              <Controller
+                control={control}
+                name="preco_venda_sugerido"
+                render={({ field }) => (
+                  <CurrencyInput
+                    id="preco_venda_sugerido"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    disabled={isSaving}
+                    hasError={!!errors.preco_venda_sugerido}
+                  />
+                )}
+              />
+              <p className="text-xs text-brand-gray-text/60">
+                Exibido na página pública do QR Code.
+              </p>
+              <FieldError msg={errors.preco_venda_sugerido?.message} />
+            </div>
+
             {/* Preço de Venda — apenas quando situação = Vendido */}
             {isEditing && isVendido && (
               <div className="space-y-1.5">
@@ -1124,15 +1394,7 @@ export function VeiculoForm({
                 <input
                   id="data_venda"
                   type="date"
-                  {...register("data_venda", {
-                    onChange(e) {
-                      const novaData: string = e.target.value;
-                      const dataEntregaAtual = watch("data_entrega") ?? "";
-                      if (!dataEntregaAtual || dataEntregaAtual < novaData) {
-                        setValue("data_entrega", novaData, { shouldValidate: true });
-                      }
-                    },
-                  })}
+                  {...register("data_venda")}
                   disabled={isSaving}
                   className={inputCls(!!errors.data_venda)}
                 />
@@ -1149,12 +1411,10 @@ export function VeiculoForm({
                 <input
                   id="data_entrega"
                   type="date"
-                  min={dataVendaValue || undefined}
                   {...register("data_entrega")}
                   disabled={isSaving}
                   className={inputCls(!!errors.data_entrega)}
                 />
-                <FieldError msg={errors.data_entrega?.message} />
               </div>
             )}
 
@@ -1162,17 +1422,14 @@ export function VeiculoForm({
             {isEditing && isVendido && (
               <div className="space-y-1.5">
                 <label htmlFor="quantidade_dias_garantia" className={labelCls}>
-                  Dias de Garantia
+                  Garantia (dias)
                 </label>
                 <input
                   id="quantidade_dias_garantia"
                   type="number"
                   min={0}
-                  max={3650}
-                  placeholder="90"
-                  {...register("quantidade_dias_garantia", {
-                    setValueAs: (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
-                  })}
+                  placeholder="0"
+                  {...register("quantidade_dias_garantia")}
                   disabled={isSaving}
                   className={inputCls(!!errors.quantidade_dias_garantia)}
                 />
@@ -1180,44 +1437,57 @@ export function VeiculoForm({
               </div>
             )}
 
-            {/* Data Fim da Garantia — calculada, somente leitura */}
+            {/* Data Fim de Garantia — calculada automaticamente, apenas quando situação = Vendido */}
             {isEditing && isVendido && (
               <div className="space-y-1.5">
-                <label className={labelCls}>Data Fim da Garantia</label>
-                <div
-                  className={`${inputCls(false)} bg-brand-gray-soft text-brand-gray-text cursor-default select-none`}
-                >
-                  {garantiaInfo?.dataFimFormatada ?? "—"}
-                </div>
-                <p className="text-xs text-brand-gray-text/70">Calculado automaticamente.</p>
+                <label htmlFor="data_fim_garantia" className={labelCls}>
+                  Data Fim de Garantia
+                </label>
+                <input
+                  id="data_fim_garantia"
+                  type="date"
+                  readOnly
+                  tabIndex={-1}
+                  value={dataFimGarantiaCalculada ?? ""}
+                  className={`${inputCls(false)} bg-brand-gray-soft text-brand-gray-text cursor-default`}
+                />
+                {!dataFimGarantiaCalculada && (
+                  <p className="text-xs text-brand-gray-text/60">
+                    Preenchida automaticamente com base na data de venda e nos dias de garantia.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Cliente — apenas quando situação = Vendido */}
+            {isEditing && isVendido && (
+              <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+                <label className={labelCls}>
+                  Cliente <span className="text-red-500 font-normal">*</span>
+                </label>
+                <Controller
+                  control={control}
+                  name="vendido_para"
+                  render={({ field }) => (
+                    <ClienteCombobox
+                      clientes={clientes}
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isSaving}
+                    />
+                  )}
+                />
+                <p className="text-xs text-brand-gray-text/70">
+                  Vincule o cliente que adquiriu este veículo. Caso não encontre,{" "}
+                  <Link href="/clientes/novo" className="text-brand-black font-medium hover:underline">
+                    cadastre um novo cliente
+                  </Link>
+                  .
+                </p>
+                <FieldError msg={errors.vendido_para?.message} />
               </div>
             )}
           </div>
-
-          {/* Banner de status da garantia */}
-          {isEditing && isVendido && garantiaInfo && (
-            <div
-              className={`mt-5 rounded-xl border px-4 py-3 text-sm font-medium ${
-                garantiaInfo.estado === "expirada"
-                  ? "bg-red-50 border-red-200 text-red-700"
-                  : garantiaInfo.estado === "expirando"
-                  ? "bg-status-warning-bg border-status-warning-border text-status-warning-text"
-                  : "bg-status-success-bg border-status-success-border text-status-success-text"
-              }`}
-            >
-              {garantiaInfo.estado === "expirada"
-                ? `Garantia expirada há ${Math.abs(garantiaInfo.diasRestantes)} dia${
-                    Math.abs(garantiaInfo.diasRestantes) !== 1 ? "s" : ""
-                  } — venceu em ${garantiaInfo.dataFimFormatada}`
-                : garantiaInfo.estado === "expirando"
-                ? garantiaInfo.diasRestantes === 0
-                  ? `Garantia expira hoje (${garantiaInfo.dataFimFormatada})`
-                  : `Garantia expira em ${garantiaInfo.diasRestantes} dia${
-                      garantiaInfo.diasRestantes !== 1 ? "s" : ""
-                    } — ${garantiaInfo.dataFimFormatada}`
-                : `Garantia ativa — vence em ${garantiaInfo.diasRestantes} dias (${garantiaInfo.dataFimFormatada})`}
-            </div>
-          )}
         </section>
 
         {/* ── Seção 4: Observações ──────────────────────────────────────────── */}
@@ -1252,23 +1522,34 @@ export function VeiculoForm({
           </div>
         </section>
 
-        {/* ── Barra de ações ───────────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-3 print:hidden">
-          <Link
-            href="/veiculos"
-            className="rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-5 py-2.5 hover:bg-brand-gray-soft transition-colors"
-          >
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-full bg-brand-black text-brand-white text-sm font-medium px-6 py-2.5 hover:bg-brand-black/85 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? "Salvando..." : "Salvar"}
-          </button>
-        </div>
+        {/* ── Espaçamento para compensar a barra fixa no rodapé ────────── */}
+        <div className="pb-6 print:hidden" />
       </form>
+
+      {/* ── Barra de ações fixa no rodapé ────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-brand-gray-mid/40 shadow-[0_-2px_16px_rgba(0,0,0,0.06)] print:hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-brand-gray-text hidden sm:block">
+            {isSaving ? "Salvando alterações..." : "Lembre-se de salvar após editar os dados."}
+          </p>
+          <div className="flex items-center gap-3 ml-auto">
+            <Link
+              href="/veiculos"
+              className="rounded-full border border-brand-gray-mid text-brand-black text-sm font-medium px-5 py-2.5 hover:bg-brand-gray-soft transition-colors"
+            >
+              Cancelar
+            </Link>
+            <button
+              form="veiculo-form"
+              type="submit"
+              disabled={isSaving}
+              className="rounded-full bg-brand-black text-brand-white text-sm font-medium px-6 py-2.5 hover:bg-brand-black/85 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* ── Modal QR Code ─────────────────────────────────────────────────── */}
       {showQr && qrCode && (

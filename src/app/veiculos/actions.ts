@@ -1,17 +1,54 @@
-﻿"use server";
+"use server";
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { createClient } from "@/lib/supabase/server";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
-import type { VeiculoFormData } from "@/lib/schemas/veiculo";
+import { PLACA_REGEX } from "@/lib/utils/placa";
+import { validarUuid } from "@/lib/utils/validators";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
-export type ActionResult = { error: string } | undefined;
-export type { VeiculoFormData } from "@/lib/schemas/veiculo";
+// ─── Constantes de upload ────────────────────────────────────────────────────────
 
-// Tipo utilitário local para o cliente Supabase retornado pelo guard
-type SupabaseClient = Awaited<ReturnType<typeof import("@/lib/supabase/server").createClient>>;
+const BUCKET = "veiculos";
+const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
+const TIPO_LAUDO = ["application/pdf"];
+const MAX_SIZE_FOTO = 5 * 1024 * 1024;
+const MAX_SIZE_LAUDO = 10 * 1024 * 1024;
+
+export interface VeiculoFormData {
+  placa: string;
+  renavam: string;
+  numero_chassi: string;
+  marca_veiculo_id: string;
+  modelo_veiculo_id: string;
+  combustivel_veiculo_id: string;
+  cambio_veiculo_id: string;
+  direcao_veiculo_id: string;
+  situacao_veiculo_id: string;
+  ano_fabricacao: number;
+  ano_modelo: number;
+  cor_veiculo: string;
+  quantidade_portas: number;
+  quilometragem: number;
+  vidro_eletrico: boolean;
+  trava_eletrica: boolean;
+  laudo_aprovado: boolean;
+  data_compra: string;
+  preco_compra: number;
+  preco_venda: number | null;
+  preco_venda_sugerido: number | null;
+  data_venda: string | null;
+  data_entrega: string | null;
+  quantidade_dias_garantia: number | null;
+  data_fim_garantia: string | null;
+  descricao: string | null;
+  vendido_para: string | null;
+}
+
 
 // ─── Validação server-side ────────────────────────────────────────────────────
 // Verifica se uma placa já existe no estoque da empresa
@@ -36,8 +73,6 @@ export async function verificarPlacaExistente(
     };
   }
 }
-const PLACA_REGEX = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
-
 function validarDados(data: VeiculoFormData): ActionResult {
   const placa = data.placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   if (!PLACA_REGEX.test(placa))
@@ -89,19 +124,13 @@ function validarDados(data: VeiculoFormData): ActionResult {
 
   if (data.descricao && data.descricao.length > 1000)
     return { error: "Descrição: máximo de 1000 caracteres." };
-
-  if (data.quantidade_dias_garantia != null) {
-    const dias = data.quantidade_dias_garantia;
-    if (!Number.isFinite(dias) || !Number.isInteger(dias) || dias < 0 || dias > 3650)
-      return { error: "Dias de garantia deve ser um inteiro entre 0 e 3650." };
-  }
 }
 
 // ─── Criar veículo ────────────────────────────────────────────────────────────
 
 // Helper: busca o ID de "Vendido" e valida campos obrigatórios condicionalmente
 async function validarCamposVenda(
-  supabase: SupabaseClient,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   data: VeiculoFormData
 ): Promise<ActionResult> {
   const { data: situacaoVendido } = await supabase
@@ -118,17 +147,6 @@ async function validarCamposVenda(
     return { error: "Informe o preço de venda." };
   if (!data.data_venda)
     return { error: "Informe a data de venda." };
-}
-
-function calcularDataFimGarantia(
-  dataVenda: string | null,
-  dias: number | null
-): string | null {
-  if (!dataVenda || !dias || dias <= 0) return null;
-  const [ano, mes, dia] = dataVenda.split("-").map(Number);
-  const d = new Date(ano, mes - 1, dia);
-  d.setDate(d.getDate() + dias);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult> {
@@ -169,11 +187,11 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
       data_compra: data.data_compra,
       preco_compra: data.preco_compra,
       preco_venda: data.preco_venda ?? null,
+      preco_venda_sugerido: data.preco_venda_sugerido ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
-      quantidade_dias_garantia: data.quantidade_dias_garantia ?? null,
-      data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia ?? null),
       descricao: data.descricao?.trim() || null,
+      vendido_para: data.vendido_para ?? null,
       criado_por: usuarioAtual.id,
       atualizado_por: usuarioAtual.id,
     })
@@ -182,16 +200,16 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
 
   if (error) {
     if (error.code === "23505") {
-      if (error.details.includes("placa"))
+      if (error.message.includes("placa"))
         return { error: "Já existe um veículo com esta placa cadastrado." };
-      if (error.details.includes("chassi"))
+      if (error.message.includes("chassi"))
         return { error: "Já existe um veículo com este número de chassi." };
     }
     return { error: "Erro ao cadastrar o veículo. Tente novamente." };
   }
 
   revalidatePath("/veiculos");
-  redirect(`/veiculos/${novoVeiculo.id}?novo=1`);
+  redirect(`/veiculos/${novoVeiculo!.id}/fotos`);
 }
 
 // ─── Atualizar veículo ────────────────────────────────────────────────────────
@@ -236,29 +254,29 @@ export async function atualizarVeiculo(
       data_compra: data.data_compra,
       preco_compra: data.preco_compra,
       preco_venda: data.preco_venda ?? null,
+      preco_venda_sugerido: data.preco_venda_sugerido ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
-      // Só atualiza garantia quando o campo foi explicitamente enviado;
-      // undefined faz o Supabase ignorar a coluna, preservando o valor existente.
-      ...(data.quantidade_dias_garantia !== undefined && {
-        quantidade_dias_garantia: data.quantidade_dias_garantia,
-        data_fim_garantia: calcularDataFimGarantia(data.data_venda ?? null, data.quantidade_dias_garantia),
-      }),
       descricao: data.descricao?.trim() || null,
+      vendido_para: data.vendido_para ?? null,
       atualizado_por: usuarioAtual.id,
+      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
-    .eq("empresa_id", usuarioAtual.empresa_id);
+    .eq("empresa_id", usuarioAtual.empresa_id)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     if (error.code === "23505") {
-      if (error.details.includes("placa"))
+      if (error.message.includes("placa"))
         return { error: "Já existe um veículo com esta placa cadastrado." };
-      if (error.details.includes("chassi"))
+      if (error.message.includes("chassi"))
         return { error: "Já existe um veículo com este número de chassi." };
     }
     return { error: "Erro ao atualizar o veículo. Tente novamente." };
   }
+  if (!error && !data) return { error: "Veículo não encontrado." };
 
   revalidatePath("/veiculos");
   revalidatePath(`/veiculos/${id}`);
@@ -268,15 +286,18 @@ export async function atualizarVeiculo(
 // ─── Excluir veículo ──────────────────────────────────────────────────────────
 
 export async function excluirVeiculo(id: string): Promise<ActionResult> {
+  if (!validarUuid(id)) return { error: "ID inválido." };
+
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
   if (papel !== PAPEIS.ADMINISTRADOR) {
     return { error: "Apenas administradores podem excluir veículos." };
   }
 
-  // Exclui atomicamente todos os registros DB via RPC e retorna caminhos de Storage.
-  // A exclusão do Storage ocorre após a transação DB para garantir consistência:
-  // se o Storage falhar, o DB já está limpo (arquivos ficam órfãos, não o contrário).
+  // A RPC excluir_veiculo valida ownership, exclui atomicamente todos os registros
+  // filhos (veiculo_arquivo, veiculo_manutencao, veiculo_qr_code) e o próprio
+  // veículo dentro de uma única transação, retornando os caminho_storage para
+  // que o chamador remova os arquivos do Storage AFTER commit.
   const { data: caminhos, error: rpcError } = await supabase
     .schema("dealership")
     .rpc("excluir_veiculo", {
@@ -285,24 +306,19 @@ export async function excluirVeiculo(id: string): Promise<ActionResult> {
     });
 
   if (rpcError) {
-    if (rpcError.message.includes("veiculo_nao_encontrado")) {
-      return { error: "Veículo não encontrado." };
-    }
+    if (rpcError.code === "P0001") return { error: "Veículo não encontrado." };
     console.error("[excluirVeiculo] RPC error:", rpcError.message);
     return { error: "Erro ao excluir o veículo. Tente novamente." };
   }
 
   // Remove arquivos do Storage (best-effort: DB já está limpo)
-  if (caminhos && (caminhos as string[]).length > 0) {
+  if (caminhos && caminhos.length > 0) {
     const adminClient = createAdminClient();
     const { error: storageError } = await adminClient.storage
       .from(BUCKET)
-      .remove(caminhos as string[]);
+      .remove(caminhos);
     if (storageError) {
-      console.warn(
-        "[excluirVeiculo] Falha ao remover arquivos do Storage (DB já limpo):",
-        storageError.message
-      );
+      console.warn("[excluirVeiculo] Arquivos órfãos no Storage:", storageError.message);
     }
   }
 
@@ -349,7 +365,13 @@ export async function gerarQrCode(veiculoId: string): Promise<QrCodeResult> {
   // Gera novo token e URL pública
   const token = crypto.randomUUID();
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://app.uyemuratech.com.br";
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.NODE_ENV === "production" ? undefined : "http://localhost:3000");
+
+  if (!appUrl) {
+    return { error: "NEXT_PUBLIC_APP_URL não configurado." };
+  }
+
   const urlPublica = `${appUrl}/v/${token}`;
 
   const { error } = await supabase
@@ -371,12 +393,6 @@ export async function gerarQrCode(veiculoId: string): Promise<QrCodeResult> {
 }
 
 // ─── Upload de arquivo (foto ou laudo) ───────────────────────────────────────
-
-const BUCKET = "veiculos";
-const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
-const TIPO_LAUDO = ["application/pdf"]; // array para facilitar adição futura de formatos
-const MAX_SIZE_FOTO = 5 * 1024 * 1024;  // 5 MB
-const MAX_SIZE_LAUDO = 10 * 1024 * 1024; // 10 MB
 
 export async function uploadArquivoVeiculo(
   veiculoId: string,
@@ -524,10 +540,20 @@ export async function excluirArquivoVeiculo(
   if (!arquivo) return { error: "Arquivo não encontrado." };
 
   const adminClient = createAdminClient();
-  const { error: storageRemoveError } = await adminClient.storage.from(BUCKET).remove([arquivo.caminho_storage]);
+  const { error: storageRemoveError } = await adminClient.storage
+    .from(BUCKET)
+    .remove([arquivo.caminho_storage]);
+
   if (storageRemoveError) {
-    // Arquivo já pode não existir no bucket; prosseguimos removendo o registro
-    console.warn(`[excluirArquivoVeiculo] Falha ao remover do Storage: ${arquivo.caminho_storage}`, storageRemoveError.message);
+    // Arquivo "not found" no Storage é aceitável (já removido manualmente).
+    // Qualquer outro erro sinaliza falha real: aborta para não criar registro sem arquivo.
+    if (!storageRemoveError.message.toLowerCase().includes("not found")) {
+      console.error(
+        `[excluirArquivoVeiculo] Falha ao remover do Storage: ${arquivo.caminho_storage}`,
+        storageRemoveError.message
+      );
+      return { error: "Erro ao excluir o arquivo. Tente novamente." };
+    }
   }
 
   const { error: deleteError } = await supabase
@@ -585,21 +611,23 @@ export async function definirFotoPrincipal(
 
   if (!arquivo) return { error: "Arquivo não encontrado." };
 
-  // Remove o principal de todas as fotos deste veículo
+  // Inverte a ordem das operações para evitar janela sem nenhum principal:
+  // 1. Promove o novo principal (pode haver duas=true brevemente — aceitável)
+  // 2. Revoga os demais excluindo o recém-promovido
+  await supabase
+    .schema("dealership")
+    .from("veiculo_arquivo")
+    .update({ arquivo_principal: true })
+    .eq("id", arquivoId);
+
   await supabase
     .schema("dealership")
     .from("veiculo_arquivo")
     .update({ arquivo_principal: false })
     .eq("veiculo_id", veiculoId)
     .eq("empresa_id", usuarioAtual.empresa_id)
-    .eq("tipo_arquivo_id", arquivo.tipo_arquivo_id);
-
-  // Define esta foto como principal
-  await supabase
-    .schema("dealership")
-    .from("veiculo_arquivo")
-    .update({ arquivo_principal: true })
-    .eq("id", arquivoId);
+    .eq("tipo_arquivo_id", arquivo.tipo_arquivo_id)
+    .neq("id", arquivoId);
 
   revalidatePath(`/veiculos/${veiculoId}`);
   revalidatePath("/veiculos");

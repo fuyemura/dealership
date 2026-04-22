@@ -1,8 +1,6 @@
 /**
- * Papéis de usuário do sistema.
- *
- * Centraliza os valores para evitar magic strings espalhados pelo código.
- * Use sempre estas constantes nas comparações de papel — nunca strings literais.
+ * Papéis de usuário existentes no domínio `papel_usuario`.
+ * Valores são normalizados para minúsculas (o banco armazena com inicial maiúscula).
  */
 export const PAPEIS = {
   ADMINISTRADOR: "administrador",

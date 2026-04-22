@@ -1,87 +1,7 @@
 ﻿import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
+import { IconPlus, IconArrowRight, IconSearch, IconUsers } from "@/components/ui/icons";
 import { formatCpf, formatTelefone, formatData } from "@/lib/utils/formatters";
-
-// ─── Ícones ───────────────────────────────────────────────────────────────────
-
-function IconPlus({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function IconArrowRight({ size = 14 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
-  );
-}
-
-function IconSearch({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function IconUsers({ size = 20 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
 
 // ─── Page (Server Component) ──────────────────────────────────────────────────
 
@@ -90,23 +10,9 @@ export default async function ClientesPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  const supabase = await createClient();
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("empresa_id")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuario?.empresa_id) redirect("/login");
-
-  const empresaId = usuario.empresa_id;
+  const empresaId = usuarioAtual.empresa_id;
 
   // ── Busca ────────────────────────────────────────────────────────────────────
   const { q: busca = "" } = await searchParams;
@@ -117,7 +23,8 @@ export default async function ClientesPage({
     .from("cliente")
     .select("id, nome_cliente, cpf, telefone_cliente, email_cliente, criado_em")
     .eq("empresa_id", empresaId)
-    .order("nome_cliente", { ascending: true });
+    .order("nome_cliente", { ascending: true })
+    .limit(200);
 
   if (termoBusca) {
     // Busca por nome ou CPF: interpreta como CPF se tiver ao menos 6 dígitos

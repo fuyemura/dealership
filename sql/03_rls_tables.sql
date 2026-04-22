@@ -231,6 +231,20 @@ ON dealership.veiculo_manutencao FOR ALL
 USING (empresa_id = dealership.get_empresa_id_do_usuario())
 WITH CHECK (empresa_id = dealership.get_empresa_id_do_usuario());
 
+-- despesa_categoria
+ALTER TABLE dealership.despesa_categoria ENABLE ROW LEVEL SECURITY;
+CREATE POLICY despesa_categoria_empresa_isolada
+ON dealership.despesa_categoria FOR ALL
+USING (empresa_id = dealership.get_empresa_id_do_usuario())
+WITH CHECK (empresa_id = dealership.get_empresa_id_do_usuario());
+
+-- empresa_despesa
+ALTER TABLE dealership.empresa_despesa ENABLE ROW LEVEL SECURITY;
+CREATE POLICY empresa_despesa_empresa_isolada
+ON dealership.empresa_despesa FOR ALL
+USING (empresa_id = dealership.get_empresa_id_do_usuario())
+WITH CHECK (empresa_id = dealership.get_empresa_id_do_usuario());
+
 -- metodo_pagamento (INSERT/DELETE apenas via service role — tokenização pelo gateway)
 ALTER TABLE dealership.metodo_pagamento ENABLE ROW LEVEL SECURITY;
 CREATE POLICY metodo_pagamento_empresa_isolada_select

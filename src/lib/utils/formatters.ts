@@ -34,11 +34,14 @@ export function formatCep(raw: string): string {
 }
 
 export function formatData(dateStr: string): string {
-  // Aceita "YYYY-MM-DD" e ISO timestamps "YYYY-MM-DDTHH:mm:ss...".
-  // new Date("YYYY-MM-DD") interpreta como UTC midnight, gerando off-by-one
-  // em fusos negativos (Brasil). Constrói a data local explícita.
-  const [ano, mes, dia] = dateStr.split("T")[0].split("-").map(Number);
-  return new Date(ano, mes - 1, dia).toLocaleDateString("pt-BR", {
+  if (!dateStr) return "—";
+  // Se for timestamp ISO (contém "T"), extrai apenas a parte da data para
+  // evitar conversão de fuso horário que deslocaria o dia.
+  const datePart = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+  const [year, month, day] = datePart.split("-").map(Number);
+  if (!year || !month || !day) return "—";
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",

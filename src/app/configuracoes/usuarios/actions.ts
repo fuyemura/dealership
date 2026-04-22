@@ -1,15 +1,12 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAdminAutorizado } from "@/lib/auth/guards";
-import { validarCpf, sanitizarCpf } from "@/lib/utils/validators";
-
-export type ActionResult = { error: string } | undefined;
-
-// ─── Validação server-side ────────────────────────────────────────────────────
-
+import { validarCpf, sanitizarCpf, validarUuid } from "@/lib/utils/validators";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
 // ─── Convidar novo usuário ────────────────────────────────────────────────────
 
@@ -34,11 +31,6 @@ export async function convidarUsuario(
   const { supabase, usuarioAtual } = await getAdminAutorizado();
   const adminClient = createAdminClient();
   const cpfSanitizado = sanitizarCpf(cpf);
-
-  if (!process.env.NEXT_PUBLIC_APP_URL) {
-    console.error("[convidarUsuario] NEXT_PUBLIC_APP_URL não configurada");
-    return { error: "Configuração do servidor incompleta. Contate o suporte." };
-  }
 
   // Verificar duplicidade de CPF na empresa
   const { data: cpfExistente } = await supabase
@@ -90,7 +82,6 @@ export async function convidarUsuario(
     return { error: "Erro ao cadastrar o usuário. Tente novamente." };
   }
 
-  revalidatePath("/configuracoes/usuarios");
   redirect("/configuracoes/usuarios");
 }
 
@@ -134,6 +125,7 @@ export async function atualizarUsuario(
       nome_usuario: nomeUsuario.trim(),
       cpf: cpfSanitizado,
       papel_usuario_id: papelUsuarioId,
+      atualizado_em: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("empresa_id", usuarioAtual.empresa_id); // isolamento por empresa
@@ -147,6 +139,8 @@ export async function atualizarUsuario(
 // ─── Excluir usuário ──────────────────────────────────────────────────────────
 
 export async function excluirUsuario(id: string): Promise<ActionResult> {
+  if (!validarUuid(id)) return { error: "ID inválido." };
+
   const { supabase, usuarioAtual } = await getAdminAutorizado();
 
   // Impede auto-exclusão
