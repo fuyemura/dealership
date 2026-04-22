@@ -4,13 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAdminAutorizado } from "@/lib/auth/guards";
-import { validarCpf, sanitizarCpf } from "@/lib/utils/validators";
-
-export type ActionResult = { error: string } | undefined;
-
-
-// ─── Validação server-side ────────────────────────────────────────────────────
-
+import { validarCpf, sanitizarCpf, validarUuid } from "@/lib/utils/validators";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
 // ─── Convidar novo usuário ────────────────────────────────────────────────────
 
@@ -143,6 +139,8 @@ export async function atualizarUsuario(
 // ─── Excluir usuário ──────────────────────────────────────────────────────────
 
 export async function excluirUsuario(id: string): Promise<ActionResult> {
+  if (!validarUuid(id)) return { error: "ID inválido." };
+
   const { supabase, usuarioAtual } = await getAdminAutorizado();
 
   // Impede auto-exclusão

@@ -1,12 +1,13 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
+import { validarUuid } from "@/lib/utils/validators";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
-export type ActionResult = { error: string } | undefined;
-
-// ─── Tipos públicos ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tipos pÃºblicos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface DespesaFormData {
   categoria_id: string;
@@ -17,21 +18,21 @@ export interface DespesaFormData {
   observacao: string | null;
 }
 
-// ─── Validação ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ ValidaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function validarInputs(data: DespesaFormData): ActionResult {
   if (!data.categoria_id) return { error: "Selecione a categoria." };
-  if (!data.descricao.trim()) return { error: "A descrição é obrigatória." };
+  if (!data.descricao.trim()) return { error: "A descriÃ§Ã£o Ã© obrigatÃ³ria." };
   if (data.descricao.trim().length > 255)
-    return { error: "Descrição: máximo de 255 caracteres." };
+    return { error: "DescriÃ§Ã£o: mÃ¡ximo de 255 caracteres." };
   if (!data.valor || data.valor <= 0)
     return { error: "Informe um valor maior que zero." };
-  if (!data.data_despesa) return { error: "A data da despesa é obrigatória." };
+  if (!data.data_despesa) return { error: "A data da despesa Ã© obrigatÃ³ria." };
   if (data.observacao && data.observacao.trim().length > 500)
-    return { error: "Observação: máximo de 500 caracteres." };
+    return { error: "ObservaÃ§Ã£o: mÃ¡ximo de 500 caracteres." };
 }
 
-// ─── Ações ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ AÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function criarDespesa(
   data: DespesaFormData
@@ -42,7 +43,7 @@ export async function criarDespesa(
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
   if (papel === PAPEIS.USUARIO) redirect("/dashboard");
 
-  // Garante que a categoria pertence à empresa
+  // Garante que a categoria pertence Ã  empresa
   const { data: cat } = await supabase
     .schema("dealership")
     .from("despesa_categoria")
@@ -51,7 +52,7 @@ export async function criarDespesa(
     .eq("empresa_id", usuarioAtual.empresa_id)
     .single();
 
-  if (!cat) return { error: "Categoria inválida." };
+  if (!cat) return { error: "Categoria invÃ¡lida." };
 
   const { error } = await supabase
     .schema("dealership")
@@ -82,7 +83,7 @@ export async function atualizarDespesa(
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
   if (papel === PAPEIS.USUARIO) redirect("/dashboard");
 
-  // Garante que a categoria pertence à empresa
+  // Garante que a categoria pertence Ã  empresa
   const { data: cat } = await supabase
     .schema("dealership")
     .from("despesa_categoria")
@@ -91,7 +92,7 @@ export async function atualizarDespesa(
     .eq("empresa_id", usuarioAtual.empresa_id)
     .single();
 
-  if (!cat) return { error: "Categoria inválida." };
+  if (!cat) return { error: "Categoria invÃ¡lida." };
 
   const { error } = await supabase
     .schema("dealership")
@@ -113,6 +114,8 @@ export async function atualizarDespesa(
 }
 
 export async function excluirDespesa(id: string): Promise<ActionResult> {
+  if (!validarUuid(id)) return { error: "ID invÃ¡lido." };
+
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
   if (papel === PAPEIS.USUARIO) redirect("/dashboard");
 
@@ -145,14 +148,14 @@ export async function replicarDespesa(id: string): Promise<ActionResult> {
     .eq("empresa_id", usuarioAtual.empresa_id)
     .single();
 
-  if (!original) return { error: "Despesa não encontrada." };
+  if (!original) return { error: "Despesa nÃ£o encontrada." };
   if (!original.recorrente) return { error: "Apenas despesas recorrentes podem ser replicadas." };
 
-  // Data de competência = 1º dia do mês corrente
+  // Data de competÃªncia = 1Âº dia do mÃªs corrente
   const hoje = new Date();
   const primeiroDiaMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-01`;
 
-  // Verifica se já existe uma cópia para este mês (mesma descrição + categoria + empresa + mês)
+  // Verifica se jÃ¡ existe uma cÃ³pia para este mÃªs (mesma descriÃ§Ã£o + categoria + empresa + mÃªs)
   const anoMes = primeiroDiaMes.slice(0, 7); // YYYY-MM
   const { data: existente } = await supabase
     .schema("dealership")
@@ -166,7 +169,7 @@ export async function replicarDespesa(id: string): Promise<ActionResult> {
     .maybeSingle();
 
   if (existente) {
-    return { error: "Esta despesa já foi replicada para o mês atual." };
+    return { error: "Esta despesa jÃ¡ foi replicada para o mÃªs atual." };
   }
 
   const { error } = await supabase

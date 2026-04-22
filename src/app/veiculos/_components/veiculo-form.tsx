@@ -167,6 +167,13 @@ function buildVeiculoSchema(vendidoId: string) {
         path: ["vendido_para"],
       });
     }
+    if (data.data_entrega && data.data_venda && data.data_entrega < data.data_venda) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A data de entrega não pode ser anterior à data de venda.",
+        path: ["data_entrega"],
+      });
+    }
   });
 }
 

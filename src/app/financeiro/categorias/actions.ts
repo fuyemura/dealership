@@ -1,23 +1,24 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
+import { validarUuid } from "@/lib/utils/validators";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
-export type ActionResult = { error: string } | undefined;
-
-// ─── Validação ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ ValidaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function validarInputs(nome: string, descricao: string | null): ActionResult {
   const nomeTrimmed = nome.trim();
-  if (!nomeTrimmed) return { error: "O nome da categoria é obrigatório." };
+  if (!nomeTrimmed) return { error: "O nome da categoria Ã© obrigatÃ³rio." };
   if (nomeTrimmed.length > 255)
-    return { error: "Nome da categoria: máximo de 255 caracteres." };
+    return { error: "Nome da categoria: mÃ¡ximo de 255 caracteres." };
   if (descricao !== null && descricao.trim().length > 500)
-    return { error: "Descrição: máximo de 500 caracteres." };
+    return { error: "DescriÃ§Ã£o: mÃ¡ximo de 500 caracteres." };
 }
 
-// ─── Ações ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ AÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function criarCategoria(
   nome: string,
@@ -41,7 +42,7 @@ export async function criarCategoria(
 
   if (error) {
     if (error.code === "23505") {
-      return { error: "Já existe uma categoria com este nome." };
+      return { error: "JÃ¡ existe uma categoria com este nome." };
     }
     return { error: "Erro ao salvar. Tente novamente." };
   }
@@ -72,7 +73,7 @@ export async function atualizarCategoria(
 
   if (error) {
     if (error.code === "23505") {
-      return { error: "Já existe uma categoria com este nome." };
+      return { error: "JÃ¡ existe uma categoria com este nome." };
     }
     return { error: "Erro ao salvar. Tente novamente." };
   }
@@ -81,6 +82,8 @@ export async function atualizarCategoria(
 }
 
 export async function excluirCategoria(id: string): Promise<ActionResult> {
+  if (!validarUuid(id)) return { error: "ID invÃ¡lido." };
+
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
   if (papel === PAPEIS.USUARIO) redirect("/dashboard");
@@ -100,7 +103,7 @@ export async function excluirCategoria(id: string): Promise<ActionResult> {
     if (error.code === "23503") {
       return {
         error:
-          "Esta categoria está sendo utilizada em despesas e não pode ser excluída.",
+          "Esta categoria estÃ¡ sendo utilizada em despesas e nÃ£o pode ser excluÃ­da.",
       };
     }
     return { error: "Erro ao excluir. Tente novamente." };

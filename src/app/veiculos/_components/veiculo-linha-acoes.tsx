@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import type { QrCodeResult } from "../actions";
 import { QrCodeModal, type QrCodeInfo } from "./qr-code-modal";
@@ -63,7 +63,6 @@ export function VeiculoLinhaAcoes({
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const erroTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const abrirQr = async () => {
     if (qrCode) {
@@ -80,9 +79,6 @@ export function VeiculoLinhaAcoes({
 
     if ("error" in result) {
       setErro(result.error);
-      // Dispensar automaticamente o erro após 5 s
-      if (erroTimerRef.current) clearTimeout(erroTimerRef.current);
-      erroTimerRef.current = setTimeout(() => setErro(null), 5000);
       return;
     }
 

@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getAdminAutorizado } from "@/lib/auth/guards";
-
-export type ActionResult = { error: string } | undefined;
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
 
 // ─── Tipos do formulário ──────────────────────────────────────────────────────

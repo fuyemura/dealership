@@ -2,20 +2,8 @@ import type { NextConfig } from "next";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Content Security Policy
-// Next.js App Router com RSC requer 'unsafe-inline' e 'unsafe-eval' para scripts.
-// frame-ancestors substitui X-Frame-Options (mais moderno e preciso).
-const cspDirectives = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://wdapi2.com.br https://viacep.com.br",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join("; ");
+// Content-Security-Policy é definido dinamicamente no middleware (middleware.ts)
+// com nonce por requisição em produção. Não definir aqui para evitar conflito.
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -29,9 +17,8 @@ const nextConfig: NextConfig = {
           { key: "X-DNS-Prefetch-Control", value: "on" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           ...(isProduction
-            ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]
+            ? [{ key: "Strict-Transport-Security", value: "max-age=31536000" }]
             : []),
-          { key: "Content-Security-Policy", value: cspDirectives },
         ],
       },
     ];

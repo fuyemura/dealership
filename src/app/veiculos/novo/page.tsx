@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { VeiculoForm } from "../_components/veiculo-form";
 import type { Dominios } from "../_components/veiculo-form";
 import { criarVeiculo, verificarPlacaExistente } from "../actions";
-
-export const metadata: Metadata = {
-  title: "Novo Veículo — Uyemura Tech",
-};
 
 export default async function NovoVeiculoPage() {
   const { supabase } = await getUsuarioAutorizado();

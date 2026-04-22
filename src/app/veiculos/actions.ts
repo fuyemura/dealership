@@ -3,12 +3,13 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
 import { PLACA_REGEX } from "@/lib/utils/placa";
-
-export type ActionResult = { error: string } | undefined;
+import { validarUuid } from "@/lib/utils/validators";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
 // ─── Constantes de upload ────────────────────────────────────────────────────────
 
@@ -39,11 +40,8 @@ export interface VeiculoFormData {
   data_compra: string;
   preco_compra: number;
   preco_venda: number | null;
-  preco_venda_sugerido: number | null;
   data_venda: string | null;
   data_entrega: string | null;
-  quantidade_dias_garantia: number | null;
-  data_fim_garantia: string | null;
   descricao: string | null;
   vendido_para: string | null;
 }
@@ -132,11 +130,6 @@ async function validarCamposVenda(
   supabase: Awaited<ReturnType<typeof createClient>>,
   data: VeiculoFormData
 ): Promise<ActionResult> {
-  // Atalho: só consulta o banco se a situação estiver preenchida e
-  // se preco_venda / data_venda já indicam uma venda em andamento.
-  // Evita round-trip desnecessário em 100% dos cadastros sem venda.
-  if (!data.situacao_veiculo_id) return;
-
   const { data: situacaoVendido } = await supabase
     .schema("dealership")
     .from("dominio")
@@ -151,8 +144,6 @@ async function validarCamposVenda(
     return { error: "Informe o preço de venda." };
   if (!data.data_venda)
     return { error: "Informe a data de venda." };
-  if (!data.vendido_para)
-    return { error: "Selecione o cliente que adquiriu o veículo." };
 }
 
 export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult> {
@@ -193,11 +184,8 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
       data_compra: data.data_compra,
       preco_compra: data.preco_compra,
       preco_venda: data.preco_venda ?? null,
-      preco_venda_sugerido: data.preco_venda_sugerido ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
-      quantidade_dias_garantia: data.quantidade_dias_garantia ?? null,
-      data_fim_garantia: data.data_fim_garantia ?? null,
       descricao: data.descricao?.trim() || null,
       vendido_para: data.vendido_para ?? null,
       criado_por: usuarioAtual.id,
@@ -217,7 +205,7 @@ export async function criarVeiculo(data: VeiculoFormData): Promise<ActionResult>
   }
 
   revalidatePath("/veiculos");
-  redirect(`/veiculos/${novoVeiculo!.id}/fotos`);
+  redirect(`/veiculos/${novoVeiculo!.id}?novo=1`);
 }
 
 // ─── Atualizar veículo ────────────────────────────────────────────────────────
@@ -238,7 +226,7 @@ export async function atualizarVeiculo(
   const placa = data.placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   const renavam = data.renavam.replace(/\D/g, "");
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .schema("dealership")
     .from("veiculo")
     .update({
@@ -262,11 +250,8 @@ export async function atualizarVeiculo(
       data_compra: data.data_compra,
       preco_compra: data.preco_compra,
       preco_venda: data.preco_venda ?? null,
-      preco_venda_sugerido: data.preco_venda_sugerido ?? null,
       data_venda: data.data_venda ?? null,
       data_entrega: data.data_entrega ?? null,
-      quantidade_dias_garantia: data.quantidade_dias_garantia ?? null,
-      data_fim_garantia: data.data_fim_garantia ?? null,
       descricao: data.descricao?.trim() || null,
       vendido_para: data.vendido_para ?? null,
       atualizado_por: usuarioAtual.id,
@@ -286,7 +271,7 @@ export async function atualizarVeiculo(
     }
     return { error: "Erro ao atualizar o veículo. Tente novamente." };
   }
-  if (!error && !data) return { error: "Veículo não encontrado." };
+  if (!error && !updated) return { error: "Veículo não encontrado." };
 
   revalidatePath("/veiculos");
   revalidatePath(`/veiculos/${id}`);
@@ -296,9 +281,11 @@ export async function atualizarVeiculo(
 // ─── Excluir veículo ──────────────────────────────────────────────────────────
 
 export async function excluirVeiculo(id: string): Promise<ActionResult> {
+  if (!validarUuid(id)) return { error: "ID inválido." };
+
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
-  if (papel !== PAPEIS.ADMINISTRADOR) {
+  if (papel.toLowerCase() !== PAPEIS.ADMINISTRADOR) {
     return { error: "Apenas administradores podem excluir veículos." };
   }
 
@@ -524,7 +511,7 @@ export async function uploadArquivoVeiculo(
     return { error: "Erro ao registrar o arquivo. Tente novamente." };
   }
 
-  revalidatePath(`/veiculos/${veiculoId}/fotos`);
+  revalidatePath(`/veiculos/${veiculoId}`);
   revalidatePath("/veiculos");
 }
 
@@ -596,7 +583,7 @@ export async function excluirArquivoVeiculo(
     }
   }
 
-  revalidatePath(`/veiculos/${veiculoId}/fotos`);
+  revalidatePath(`/veiculos/${veiculoId}`);
   revalidatePath("/veiculos");
 }
 
@@ -637,7 +624,7 @@ export async function definirFotoPrincipal(
     .eq("tipo_arquivo_id", arquivo.tipo_arquivo_id)
     .neq("id", arquivoId);
 
-  revalidatePath(`/veiculos/${veiculoId}/fotos`);
+  revalidatePath(`/veiculos/${veiculoId}`);
   revalidatePath("/veiculos");
 }
 

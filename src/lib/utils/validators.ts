@@ -26,3 +26,14 @@ export function validarCpf(cpf: string): boolean {
 export function sanitizarCpf(cpf: string): string {
   return cpf.replace(/\D/g, "");
 }
+
+/**
+ * Valida se uma string é um UUID v4 no formato padrão.
+ * Use antes de enviar IDs ao banco para prevenir injection e falhas silenciosas.
+ */
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function validarUuid(id: string): boolean {
+  return UUID_REGEX.test(id);
+}

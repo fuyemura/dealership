@@ -1,5 +1,4 @@
-﻿import { notFound } from "next/navigation";
-import type { Metadata } from "next";
+﻿import { notFound, redirect } from "next/navigation";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
 import { VeiculoForm } from "../_components/veiculo-form";
@@ -40,7 +39,6 @@ type VeiculoEditRow = {
   data_compra: string;
   preco_compra: number;
   preco_venda: number | null;
-  preco_venda_sugerido: number | null;
   data_venda: string | null;
   data_entrega: string | null;
   quantidade_dias_garantia: number | null;
@@ -48,33 +46,14 @@ type VeiculoEditRow = {
   descricao: string | null;
 };
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
-  const { id } = await params;
-  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
-  const { data } = await supabase
-    .schema("dealership")
-    .from("veiculo")
-    .select("placa")
-    .eq("id", id)
-    .eq("empresa_id", usuarioAtual.empresa_id)
-    .single();
-  return {
-    title: data?.placa
-      ? `Veículo ${data.placa} — Uyemura Tech`
-      : "Editar Veículo — Uyemura Tech",
-  };
-}
-
 export default async function EditarVeiculoPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ novo?: string }>;
 }) {
-  const { id } = await params;
+  const [{ id }, { novo }] = await Promise.all([params, searchParams]);
 
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
   const isAdmin = papel === PAPEIS.ADMINISTRADOR;
@@ -100,7 +79,7 @@ export default async function EditarVeiculoPage({
            quantidade_portas, quilometragem,
            vidro_eletrico, trava_eletrica, laudo_aprovado,
            data_compra, preco_compra, preco_venda,
-           data_venda, data_entrega, quantidade_dias_garantia, preco_venda_sugerido, vendido_para, descricao`
+           data_venda, data_entrega, quantidade_dias_garantia, vendido_para, descricao`
         )
         .eq("id", id)
         .eq("empresa_id", usuarioAtual.empresa_id)
@@ -214,7 +193,7 @@ export default async function EditarVeiculoPage({
   const principalAction = definirFotoPrincipal.bind(null, id);
 
   return (
-    <div className="pb-24">
+    <>
       <VeiculoForm
         dominios={dominios}
         clientes={clientes}
@@ -242,10 +221,8 @@ export default async function EditarVeiculoPage({
           data_compra: v.data_compra,
           preco_compra: v.preco_compra,
           preco_venda: v.preco_venda ?? null,
-          preco_venda_sugerido: v.preco_venda_sugerido ?? null,
           data_venda: v.data_venda ?? null,
           data_entrega: v.data_entrega ?? null,
-          quantidade_dias_garantia: v.quantidade_dias_garantia ?? null,
           descricao: v.descricao ?? null,
           vendido_para: v.vendido_para ?? null,
         }}
@@ -254,12 +231,13 @@ export default async function EditarVeiculoPage({
       <VeiculoArquivos
         fotos={fotos}
         laudo={laudo}
+        novoCadastro={novo === "1"}
         uploadFotoAction={uploadFotoAction}
         uploadLaudoAction={uploadLaudoAction}
         excluirArquivoAction={excluirArquivoAction}
         principalAction={principalAction}
       />
-      {excluirAction && <VeiculoZonaPerigo excluirAction={excluirAction} placa={v.placa} />}
-    </div>
+      {excluirAction && <VeiculoZonaPerigo excluirAction={excluirAction} />}
+    </>
   );
 }

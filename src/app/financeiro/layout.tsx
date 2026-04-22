@@ -1,80 +1,22 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import SignOutButton from "@/components/sign-out-button";
+﻿import Link from "next/link";
+import AppHeader from "@/components/layout/app-header";
 import FinanceiroSidebar from "./financeiro-sidebar";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
 
 export const dynamic = "force-dynamic";
-
-function LogoMark() {
-  return (
-    <div className="grid grid-cols-2 gap-[3px] w-[18px] h-[18px] flex-shrink-0">
-      <div className="rounded-[2px] bg-brand-black" />
-      <div className="rounded-[2px] bg-brand-black/40" />
-      <div className="rounded-[2px] bg-brand-black/40" />
-      <div className="rounded-[2px] bg-brand-black" />
-    </div>
-  );
-}
 
 export default async function FinanceiroLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("nome_usuario, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuario?.empresa_id) redirect("/login");
-
-  const displayName =
-    usuario.nome_usuario || user.email?.split("@")[0] || "Usuário";
-  const firstName = displayName.split(" ")[0];
-  const initials = displayName
-    .split(" ")
-    .slice(0, 2)
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase();
-
-  const papel = usuario.papel as unknown as { nome_dominio: string } | null;
-  const papelNome = papel?.nome_dominio?.toLowerCase() ?? "";
-  const temAcesso = papelNome === "administrador" || papelNome === "gerente";
+  const { papel } = await getUsuarioAutorizado();
+  const temAcesso = papel === "administrador" || papel === "gerente";
 
   if (!temAcesso) {
     return (
       <div className="min-h-screen overflow-x-clip flex flex-col bg-brand-gray-soft">
-        <header className="bg-white border-b border-brand-gray-mid/40 h-14 sm:h-16 sticky top-0 z-30">
-          <div className="page-container h-full flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <LogoMark />
-              <span className="font-display font-semibold text-base sm:text-lg tracking-tight text-brand-black">
-                Uyemura Tech
-              </span>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-brand-gray-mid flex items-center justify-center text-xs font-semibold text-brand-black select-none">
-                  {initials}
-                </div>
-                <span className="text-sm font-medium text-brand-black">{firstName}</span>
-              </div>
-              <SignOutButton />
-            </div>
-          </div>
-        </header>
-
+        <AppHeader activeSection="financeiro" />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="bg-white rounded-2xl border border-brand-gray-mid/30 p-8 sm:p-12 max-w-md w-full text-center">
             <div className="w-14 h-14 rounded-2xl bg-brand-gray-soft flex items-center justify-center mx-auto mb-6">
@@ -115,65 +57,17 @@ export default async function FinanceiroLayout({
 
   return (
     <div className="min-h-screen overflow-x-clip flex flex-col bg-brand-gray-soft">
-      {/* Header */}
-      <header className="bg-white border-b border-brand-gray-mid/40 h-14 sm:h-16 sticky top-0 z-30">
-        <div className="page-container h-full flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <LogoMark />
-            <span className="font-display font-semibold text-base sm:text-lg tracking-tight text-brand-black">
-              Uyemura Tech
-            </span>
-          </Link>
+      <AppHeader activeSection="financeiro" />
 
-          <nav className="hidden md:flex items-center gap-6" aria-label="Navegação principal">
-            {[
-              { label: "Dashboard",     href: "/dashboard"     },
-              { label: "Veículos",      href: "/veiculos"      },
-              { label: "Clientes",      href: "/clientes"      },
-              { label: "Financeiro",    href: "/financeiro"    },
-              { label: "Configurações", href: "/configuracoes" },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium transition-colors ${
-                  item.href === "/financeiro"
-                    ? "text-brand-black"
-                    : "text-brand-gray-text hover:text-brand-black"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-brand-gray-mid flex items-center justify-center text-xs font-semibold text-brand-black select-none">
-                {initials}
-              </div>
-              <span className="text-sm font-medium text-brand-black">{firstName}</span>
-            </div>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
-
-      {/* Body: sidebar + content */}
       <div className="flex flex-1 overflow-x-hidden">
-        {/* Desktop sidebar */}
         <aside className="hidden md:flex flex-col w-52 lg:w-60 shrink-0 border-r border-brand-gray-mid/40 bg-white">
           <FinanceiroSidebar />
         </aside>
 
-        {/* Content column */}
         <div className="flex-1 min-w-0 flex flex-col">
-          {/* Mobile tabs */}
           <div className="md:hidden border-b border-brand-gray-mid/40 bg-white overflow-x-auto">
             <FinanceiroSidebar mobile />
           </div>
-
-          {/* Page content */}
           <main className="flex-1 min-w-0 px-6 lg:px-8 py-8 sm:py-12">
             {children}
           </main>

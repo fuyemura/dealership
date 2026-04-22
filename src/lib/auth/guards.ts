@@ -9,8 +9,8 @@ import { PAPEIS } from "./roles";
  *
  * Redireciona para /login se não autenticado ou sem empresa vinculada.
  *
- * Envolto em React.cache para deduplicar a chamada dentro do mesmo render:
- * layout + page fazem a mesma consulta e agora compartilham o resultado.
+ * Envolto em `cache()` para deduplicar a query de usuário dentro do mesmo
+ * ciclo de renderização (layouts + pages no mesmo request).
  */
 export const getUsuarioAutorizado = cache(async function getUsuarioAutorizado() {
   const supabase = await createClient();
@@ -23,7 +23,7 @@ export const getUsuarioAutorizado = cache(async function getUsuarioAutorizado() 
   const { data: usuarioAtual } = await supabase
     .schema("dealership")
     .from("usuario")
-    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
+    .select("id, nome_usuario, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
     .eq("auth_id", user.id)
     .single();
 
