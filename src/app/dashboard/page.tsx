@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import SignOutButton from "@/components/sign-out-button";
+import AppHeader from "@/components/layout/app-header";
+import { IconPlus, IconArrowRight, IconCar, IconCheck, IconHandshake } from "@/components/ui/icons";
+
+export const dynamic = "force-dynamic";
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type StatusBadgeColor = "green" | "yellow" | "gray";
@@ -14,46 +17,16 @@ const statusConfig: Record<string, { label: string; color: StatusBadgeColor }> =
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function tempoRelativo(dateStr: string): string {
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  const diffH = Math.floor(diffMs / 3_600_000);
-  const diffD = Math.floor(diffMs / 86_400_000);
-  if (diffH < 1) return "agora mesmo";
-  if (diffH < 24) return `há ${diffH}h`;
-  if (diffD === 1) return "há 1 dia";
-  return `há ${diffD} dias`;
+function tempoEmEstoque(dataCompra: string): string {
+  const [ano, mes, dia] = dataCompra.split("-").map(Number);
+  const compra = new Date(ano, mes - 1, dia);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dias = Math.round((hoje.getTime() - compra.getTime()) / 86_400_000);
+  return dias === 0 ? "Hoje" : dias === 1 ? "1 dia" : `${dias} dias`;
 }
 
-function determinaAcao(vendidoEm: string | null, criadoEm: string, atualizadoEm: string): string {
-  if (vendidoEm) return "Vendido";
-  const diff = new Date(atualizadoEm).getTime() - new Date(criadoEm).getTime();
-  return diff < 60_000 ? "Cadastrado" : "Atualizado";
-}
-
-// ─── Logo ────────────────────────────────────────────────────────────────────
-function LogoMark() {
-  return (
-    <div className="grid grid-cols-2 gap-[3px] w-[18px] h-[18px] flex-shrink-0">
-      <div className="rounded-[2px] bg-brand-black" />
-      <div className="rounded-[2px] bg-brand-black/40" />
-      <div className="rounded-[2px] bg-brand-black/40" />
-      <div className="rounded-[2px] bg-brand-black" />
-    </div>
-  );
-}
-
-// ─── Ícones ──────────────────────────────────────────────────────────────────
-function IconCar({ size = 20 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l3-4h8l3 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
-      <circle cx="7.5" cy="17.5" r="2.5" />
-      <circle cx="16.5" cy="17.5" r="2.5" />
-    </svg>
-  );
-}
-
+// ─── Ícones locais ─────────────────────────────────────────────────────────
 function IconQr({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -76,43 +49,6 @@ function IconEye({ size = 20 }: { size?: number }) {
   );
 }
 
-function IconCheck({ size = 20 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-
-function IconHandshake({ size = 20 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z" />
-    </svg>
-  );
-}
-
-function IconPlus({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function IconArrowRight({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
-  );
-}
 
 // ─── Badge de status ─────────────────────────────────────────────────────────
 function StatusBadge({ label, color }: { label: string; color: StatusBadgeColor }) {
@@ -168,25 +104,11 @@ function MetricCard({
 
 // ─── Page (Server Component) ──────────────────────────────────────────────────
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuario } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("nome_usuario, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  const displayName =
-    usuario?.nome_usuario ||
-    user.email?.split("@")[0] ||
-    "Usuário";
-
+  const empresaId = usuarioAtual.empresa_id;
+  const displayName = usuarioAtual.nome_usuario || "Usuário";
   const firstName = displayName.split(" ")[0];
-
   const initials = displayName
     .split(" ")
     .slice(0, 2)
@@ -194,17 +116,7 @@ export default async function DashboardPage() {
     .join("")
     .toUpperCase();
 
-  // ── Isolamento por empresa ───────────────────────────────────
-  // empresa_id vem exclusivamente do registro do usuário autenticado no banco,
-  // nunca de parâmetros externos — garante que dados de outras empresas
-  // jamais sejam acessados.
-  const empresaId = usuario?.empresa_id ?? null;
-  if (!empresaId) redirect("/login");
-
-  const papel = usuario?.papel as unknown as { nome_dominio: string } | null;
-  const isAdmin = papel?.nome_dominio === "administrador";
-
-  const { data: veiculos } = await supabase
+    const { data: veiculos } = await supabase
       .schema("dealership")
       .from("veiculo")
       .select(`
@@ -214,9 +126,11 @@ export default async function DashboardPage() {
           criado_em,
           atualizado_em,
           data_venda,
-          marca:dominio!marca_veiculo_id(nome_dominio),
-          modelo:dominio!modelo_veiculo_id(nome_dominio),
-          situacao:dominio!situacao_veiculo_id(nome_dominio)
+          data_compra,
+          marca:veiculo_marca!marca_veiculo_id(nome_dominio:nome),
+          modelo:veiculo_modelo!modelo_veiculo_id(nome_dominio:nome),
+          situacao:dominio!situacao_veiculo_id(nome_dominio),
+          qr_code:veiculo_qr_code(total_visualizacoes)
         `)
         .eq("empresa_id", empresaId)
         .order("atualizado_em", { ascending: false });
@@ -241,19 +155,12 @@ export default async function DashboardPage() {
       new Date(v.data_venda as string) >= inicioMes
   ).length;
 
-  const vehicleIds = lista.map((v) => v.id);
-  let qrGerados = 0;
-  let qrVisualizacoes = 0;
-  if (vehicleIds.length > 0) {
-    const { data: qrCodes } = await supabase
-      .schema("dealership")
-      .from("qr_code")
-      .select("total_visualizacoes")
-      .in("veiculo_id", vehicleIds);
-    qrGerados = qrCodes?.length ?? 0;
-    qrVisualizacoes =
-      qrCodes?.reduce((acc, q) => acc + (q.total_visualizacoes ?? 0), 0) ?? 0;
-  }
+  // QR Code stats derivados do JOIN — sem query adicional
+  const qrGerados = lista.filter((v) => (v.qr_code as unknown as unknown[] | null)?.length).length;
+  const qrVisualizacoes = lista.reduce((acc, v) => {
+    const qr = (v.qr_code as unknown as { total_visualizacoes: number }[] | null)?.[0];
+    return acc + (qr?.total_visualizacoes ?? 0);
+  }, 0);
 
   // UNIQUE (empresa_id) garante exatamente 1 registro por empresa
   const { data: assinaturaData } = await supabase
@@ -274,47 +181,14 @@ export default async function DashboardPage() {
   const situacaoAssinatura =
     (assinaturaData?.situacao as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "—";
 
-  const atividadeRecente = lista.slice(0, 5);
+  const maisTempoEmEstoque = [...lista]
+    .sort((a, b) => new Date(a.data_compra as string).getTime() - new Date(b.data_compra as string).getTime())
+    .slice(0, 5);
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-gray-soft">
 
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-brand-gray-mid/40 h-14 sm:h-16 sticky top-0 z-30">
-        <div className="page-container h-full flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <LogoMark />
-            <span className="font-display font-semibold text-base sm:text-lg tracking-tight text-brand-black">
-              Uyemura Tech
-            </span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6">
-            {[
-              { label: "Dashboard",     href: "/dashboard",     active: true  },
-              { label: "Veículos",      href: "/veiculos",      active: false },
-              ...(isAdmin ? [{ label: "Configurações", href: "/configuracoes", active: false }] : []),
-            ].map((item) => (
-              <Link key={item.href} href={item.href}
-                className={`nav-link text-sm font-medium transition-colors ${
-                  item.active ? "text-brand-black" : "text-brand-gray-text hover:text-brand-black"
-                }`}>
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-brand-gray-mid flex items-center justify-center text-xs font-semibold text-brand-black select-none">
-                {initials}
-              </div>
-              <span className="text-sm font-medium text-brand-black">{firstName}</span>
-            </div>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
+      <AppHeader activeSection="dashboard" />
 
       {/* ── Conteúdo ────────────────────────────────────────────────────────── */}
       <main className="flex-1 page-container py-8 sm:py-12 space-y-8">
@@ -363,7 +237,7 @@ export default async function DashboardPage() {
               label="Vendidos"
               value={vendidos}
               sub="este mês"
-              icon={<IconCar />}
+              icon={<IconHandshake />}
             />
           </div>
         </section>
@@ -481,7 +355,7 @@ export default async function DashboardPage() {
         {/* ── 4. Atividade Recente ─────────────────────────────────────────── */}
         <section className="bg-white rounded-2xl border border-brand-gray-mid/30 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gray-mid/20">
-            <h2 className="section-label mb-0">Atividade Recente</h2>
+            <h2 className="section-label mb-0">Maior Tempo em Estoque</h2>
             <Link
               href="/veiculos"
               className="inline-flex items-center gap-1 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity"
@@ -495,7 +369,7 @@ export default async function DashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-gray-mid/20">
-                  {["Placa", "Veículo", "Ano", "Ação", "Status", ""].map((col) => (
+                  {["Placa", "Veículo", "Ano", "Tempo em Estoque", "Situação", ""].map((col) => (
                     <th key={col}
                       className="px-6 py-3 text-left text-xs font-semibold text-brand-gray-text uppercase tracking-wide whitespace-nowrap">
                       {col}
@@ -504,20 +378,19 @@ export default async function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-gray-mid/20">
-                {atividadeRecente.length === 0 && (
+                {maisTempoEmEstoque.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-sm text-brand-gray-text">
                       Nenhum veículo cadastrado ainda.
                     </td>
                   </tr>
                 )}
-                {atividadeRecente.map((v) => {
+                {maisTempoEmEstoque.map((v) => {
                   const situacaoNome = (v.situacao as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
                   const marcaNome = (v.marca as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
                   const modeloNome = (v.modelo as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
                   const s = statusConfig[situacaoNome] ?? { label: situacaoNome, color: "gray" as StatusBadgeColor };
-                  const acao = determinaAcao(v.data_venda as string | null, v.criado_em as string, v.atualizado_em as string);
-                  const tempo = tempoRelativo(v.atualizado_em as string);
+                  const diasEstoque = tempoEmEstoque(v.data_compra as string);
                   return (
                     <tr key={v.placa} className="hover:bg-brand-gray-soft/50 transition-colors">
                       <td className="px-6 py-3.5 font-mono text-xs font-semibold text-brand-black tracking-wider">
@@ -528,15 +401,16 @@ export default async function DashboardPage() {
                       </td>
                       <td className="px-6 py-3.5 text-brand-gray-text">{v.ano_modelo}</td>
                       <td className="px-6 py-3.5 whitespace-nowrap">
-                        <span className="text-xs text-brand-gray-text">{acao}</span>
-                        <span className="text-xs text-brand-gray-text/60 ml-1.5">{tempo}</span>
+                        <span className="text-xs tabular-nums text-brand-gray-text">
+                          {diasEstoque}
+                        </span>
                       </td>
                       <td className="px-6 py-3.5">
                         <StatusBadge label={s.label} color={s.color} />
                       </td>
                       <td className="px-6 py-3.5 text-right">
                         <Link
-                          href={`/veiculos/${v.placa}`}
+                          href={`/veiculos/${v.id}`}
                           className="inline-flex items-center gap-1 text-xs font-medium text-brand-black hover:opacity-70 transition-opacity whitespace-nowrap"
                         >
                           Consultar <IconArrowRight />
@@ -551,18 +425,17 @@ export default async function DashboardPage() {
 
           {/* Lista — mobile */}
           <div className="sm:hidden divide-y divide-brand-gray-mid/20">
-            {atividadeRecente.length === 0 && (
+            {maisTempoEmEstoque.length === 0 && (
               <p className="px-5 py-8 text-center text-sm text-brand-gray-text">
                 Nenhum veículo cadastrado ainda.
               </p>
             )}
-            {atividadeRecente.map((v) => {
+            {maisTempoEmEstoque.map((v) => {
               const situacaoNome = (v.situacao as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
               const marcaNome = (v.marca as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
               const modeloNome = (v.modelo as unknown as { nome_dominio: string } | null)?.nome_dominio ?? "";
               const s = statusConfig[situacaoNome] ?? { label: situacaoNome, color: "gray" as StatusBadgeColor };
-              const acao = determinaAcao(v.data_venda as string | null, v.criado_em as string, v.atualizado_em as string);
-              const tempo = tempoRelativo(v.atualizado_em as string);
+              const diasEstoque = tempoEmEstoque(v.data_compra as string);
               return (
                 <div key={v.placa} className="px-5 py-4 flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-0.5 min-w-0">
@@ -573,7 +446,7 @@ export default async function DashboardPage() {
                       {marcaNome} {modeloNome}
                     </span>
                     <span className="text-xs text-brand-gray-text">
-                      {acao} · {tempo}
+                      {diasEstoque} em estoque
                     </span>
                   </div>
                   <StatusBadge label={s.label} color={s.color} />

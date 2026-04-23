@@ -2,29 +2,60 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Middleware de autenticação.
+ * Middleware de autenticação + Content-Security-Policy.
  *
  * Fluxo:
- * 1. Atualiza o cookie de sessão do Supabase (refresh token silencioso).
- * 2. Se a rota é protegida e não há sessão → redireciona para /login.
- * 3. Se já está logado e tenta acessar /login → redireciona para /dashboard.
+ * 1. Gera nonce por requisição (produção) e monta CSP dinâmico.
+ * 2. Atualiza o cookie de sessão do Supabase (refresh token silencioso).
+ * 3. Se a rota é protegida e não há sessão → redireciona para /login.
+ * 4. Se já está logado e tenta acessar /login → redireciona para /dashboard.
  */
 
-// Centralizado aqui para evitar duplicação no bloco de env vars ausentes
-const protectedPrefixes = ["/dashboard", "/veiculos", "/perfil", "/configuracoes"];
+const protectedPrefixes = ["/dashboard", "/veiculos", "/perfil", "/configuracoes", "/clientes", "/financeiro"];
+
+const isProd = process.env.NODE_ENV === "production";
+
+// ─── CSP ──────────────────────────────────────────────────────────────────────
+// Produção: nonce por requisição — elimina unsafe-inline e unsafe-eval.
+// Dev: unsafe-inline + unsafe-eval mantidos para compatibilidade com HMR/source maps.
+
+function buildCsp(nonce: string): string {
+  const scriptSrc = nonce
+    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+
+  return [
+    "default-src 'self'",
+    scriptSrc,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://wdapi2.com.br https://viacep.com.br",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Sem as env vars o createClient() lançaria erro em qualquer rota.
-    // Falha de forma consistente com 500 para deixar a misconfiguração visível.
     console.error("Supabase env vars ausentes: NEXT_PUBLIC_SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_ANON_KEY");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  // Nonce por requisição em produção; vazio em dev
+  const nonce = isProd ? Buffer.from(crypto.randomUUID()).toString("base64") : "";
+  const csp = buildCsp(nonce);
+
+  // Propaga o nonce ao Next.js para que ele adicione nonce nos <script> inline gerados
+  const requestHeaders = new Headers(request.headers);
+  if (nonce) requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     supabaseUrl,
@@ -38,7 +69,8 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          supabaseResponse = NextResponse.next({ request });
+          // Preserva requestHeaders (com nonce) na recriação da resposta
+          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -66,26 +98,26 @@ export async function middleware(request: NextRequest) {
     loginUrl.pathname = "/login";
     // Preserva destino para redirecionar após login
     loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    redirectResponse.headers.set("Content-Security-Policy", csp);
+    return redirectResponse;
   }
 
   // Já logado tentando acessar /login → dashboard
   if (pathname === "/login" && user) {
     const accountUrl = request.nextUrl.clone();
     accountUrl.pathname = "/dashboard";
-    return NextResponse.redirect(accountUrl);
+    const redirectResponse = NextResponse.redirect(accountUrl);
+    redirectResponse.headers.set("Content-Security-Policy", csp);
+    return redirectResponse;
   }
 
+  supabaseResponse.headers.set("Content-Security-Policy", csp);
   return supabaseResponse;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Executa o middleware em todas as rotas EXCETO:
-     * - arquivos estáticos (_next/static, _next/image, favicon, etc.)
-     * - arquivos com extensão conhecida (svg, png, jpg…)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

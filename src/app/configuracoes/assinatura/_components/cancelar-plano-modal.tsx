@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cancelarAssinatura } from "../actions";
 
@@ -44,7 +44,7 @@ function getRetencao(motivoId: MotivoId, nomePlano: string): RetencaoConfig {
       return {
         titulo: "Sabemos que a rotina é corrida",
         mensagem:
-          "Entre em contato com nosso suporte — podemos encontrar uma solução que se encaixe melhor na operação da sua concessionária.",
+          "Entre em contato com nosso suporte — podemos encontrar uma solução que se encaixe melhor na operação da sua revenda de veículos.",
       };
     case "funcionalidades":
       return {
@@ -61,7 +61,7 @@ function getRetencao(motivoId: MotivoId, nomePlano: string): RetencaoConfig {
     default:
       return {
         titulo: "Sentiremos sua falta",
-        mensagem: `O plano ${nomePlano} inclui todos os recursos que sua concessionária precisa para operar com eficiência. Tem certeza que deseja cancelar?`,
+        mensagem: `O plano ${nomePlano} inclui todos os recursos que sua revenda de veículos precisa para operar com eficiência. Tem certeza que deseja cancelar?`,
       };
   }
 }
@@ -81,6 +81,12 @@ export function CancelarPlanoModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // ── Fechar modal ─────────────────────────────────────────────────────────────
+  const handleClose = useCallback(() => {
+    if (isPending) return;
+    setOpen(false);
+  }, [isPending]);
+
   // ── Fechar no Escape ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
@@ -89,8 +95,7 @@ export function CancelarPlanoModal({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPending]);
+  }, [open, isPending, handleClose]);
 
   // ── Travar scroll do body ───────────────────────────────────────────────────
   useEffect(() => {
@@ -112,11 +117,6 @@ export function CancelarPlanoModal({
     setMotivoOutro("");
     setError(null);
     setOpen(true);
-  }
-
-  function handleClose() {
-    if (isPending) return;
-    setOpen(false);
   }
 
   function handleProsseguirParaRetencao() {

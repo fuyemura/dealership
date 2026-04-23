@@ -104,7 +104,7 @@ export function CustoForm({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-2xl">
+    <div className="w-full max-w-2xl">
       {/* Breadcrumb */}
       <Link
         href="/configuracoes/custos"
@@ -318,8 +318,9 @@ function IconChevronLeft({ size = 16 }: { size?: number }) {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
-      <path d="M15 18l-6-6 6-6" />
+      <path d="m15 18-6-6 6-6" />
     </svg>
   );
 }
@@ -335,9 +336,13 @@ function IconTrash({ size = 14 }: { size?: number }) {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
       <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
     </svg>
   );
 }
@@ -350,11 +355,13 @@ function IconSpinner({ size = 16 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2.5}
+      strokeWidth={2}
       strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
       className="animate-spin"
     >
-      <path d="M12 2a10 10 0 1 0 10 10" />
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
   );
 }

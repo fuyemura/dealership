@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 import { PricingGrid } from "./_pricing-grid";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -63,8 +63,8 @@ function mapearFeatures(plano: PlanoDB): string[] {
 }
 
 // ─── Busca com cache ISR (1h) ─────────────────────────────────────────────────
-// createAdminClient() usa a service role (server-only) e bypassa o RLS,
-// evitando que a landing page dependa de sessão de usuário ou cookies.
+// createClient() usa a anon key com RLS — a tabela `plano` tem policy de leitura
+// pública (SELECT para anon), portanto não é necessário service role aqui.
 // unstable_cache armazena o resultado no Data Cache do Next.js,
 // revalidando automaticamente a cada hora sem bloquear requests.
 // Em ambientes sem as env vars (ex: CI, preview sem secrets), retorna fallback estático.
@@ -114,16 +114,16 @@ const PLANOS_FALLBACK: PricingPlanDisplay[] = [
 const getPlanos = unstable_cache(
   async (): Promise<PricingPlanDisplay[]> => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!url || !serviceKey) {
+    if (!url || !anonKey) {
       return PLANOS_FALLBACK;
     }
 
     try {
-      const supabase = createAdminClient();
+      const supabase = createClient(url, anonKey);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .schema("dealership")
       .from("plano")
       .select(
@@ -133,6 +133,8 @@ const getPlanos = unstable_cache(
       )
       .eq("plano_ativo", true)
       .order("preco_mensal", { ascending: true });
+
+    if (error) return PLANOS_FALLBACK;
 
     const planos = (data ?? []) as PlanoDB[];
 

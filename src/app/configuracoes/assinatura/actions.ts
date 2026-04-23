@@ -1,39 +1,10 @@
-"use server";
+﻿"use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminAutorizado } from "@/lib/auth/guards";
 
 export type ActionResult = { error: string } | { success: true };
 
-// ─── Helper interno ───────────────────────────────────────────────────────────
-
-async function getAdminAutorizado() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuarioAtual } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuarioAtual?.empresa_id) redirect("/login");
-
-  const papel =
-    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
-
-  // Somente administradores podem gerenciar a assinatura
-  if (papel !== "administrador") redirect("/dashboard");
-
-  return { supabase, usuarioAtual };
-}
 
 // ─── Ação ─────────────────────────────────────────────────────────────────────
 

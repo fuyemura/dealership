@@ -26,7 +26,7 @@ export default async function EditarUsuarioPage({ params }: Props) {
 
   const papel =
     (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
+      ?.nome_dominio?.toLowerCase() ?? "";
 
   // Somente administradores gerenciam usuários
   if (papel !== "administrador") redirect("/dashboard");

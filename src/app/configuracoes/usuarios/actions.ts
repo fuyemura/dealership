@@ -1,50 +1,12 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-export type ActionResult = { error: string } | undefined;
-
-// ─── Helpers internos ─────────────────────────────────────────────────────────
-
-async function getAdminAutorizado() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: usuarioAtual } = await supabase
-    .schema("dealership")
-    .from("usuario")
-    .select("id, empresa_id, papel:dominio!papel_usuario_id(nome_dominio)")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!usuarioAtual?.empresa_id) redirect("/login");
-
-  const papel =
-    (usuarioAtual.papel as unknown as { nome_dominio: string } | null)
-      ?.nome_dominio ?? "";
-
-  // Somente administradores gerenciam usuários
-  if (papel !== "administrador") redirect("/dashboard");
-
-  return { supabase, usuarioAtual };
-}
-
-// ─── Validação server-side ────────────────────────────────────────────────────
-
-function validarCpf(cpf: string): boolean {
-  const digits = cpf.replace(/\D/g, "");
-  return digits.length === 11;
-}
-
-function sanitizarCpf(cpf: string): string {
-  return cpf.replace(/\D/g, "");
-}
+import { getAdminAutorizado } from "@/lib/auth/guards";
+import { validarCpf, sanitizarCpf, validarUuid } from "@/lib/utils/validators";
+import type { ActionResult } from "@/lib/types/actions";
+export type { ActionResult };
 
 // ─── Convidar novo usuário ────────────────────────────────────────────────────
 
@@ -170,12 +132,15 @@ export async function atualizarUsuario(
 
   if (error) return { error: "Erro ao salvar. Tente novamente." };
 
+  revalidatePath("/configuracoes/usuarios");
   redirect("/configuracoes/usuarios");
 }
 
 // ─── Excluir usuário ──────────────────────────────────────────────────────────
 
 export async function excluirUsuario(id: string): Promise<ActionResult> {
+  if (!validarUuid(id)) return { error: "ID inválido." };
+
   const { supabase, usuarioAtual } = await getAdminAutorizado();
 
   // Impede auto-exclusão
