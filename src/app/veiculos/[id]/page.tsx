@@ -1,4 +1,4 @@
-﻿import { notFound, redirect } from "next/navigation";
+﻿import { notFound } from "next/navigation";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
 import { PAPEIS } from "@/lib/auth/roles";
 import { VeiculoForm } from "../_components/veiculo-form";
@@ -54,7 +54,7 @@ export default async function EditarVeiculoPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ novo?: string }>;
 }) {
-  const [{ id }, { novo }] = await Promise.all([params, searchParams]);
+  const [{ id }] = await Promise.all([params, searchParams]);
 
   const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
   const isAdmin = papel === PAPEIS.ADMINISTRADOR;

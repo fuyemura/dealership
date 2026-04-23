@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getUsuarioAutorizado } from "@/lib/auth/guards";
-import SignOutButton from "@/components/sign-out-button";
 import AppHeader from "@/components/layout/app-header";
 import { IconPlus, IconArrowRight, IconCar, IconCheck, IconHandshake } from "@/components/ui/icons";
 
@@ -104,17 +103,10 @@ function MetricCard({
 
 // ─── Page (Server Component) ──────────────────────────────────────────────────
 export default async function DashboardPage() {
-  const { supabase, usuarioAtual, papel } = await getUsuarioAutorizado();
+  const { supabase, usuarioAtual } = await getUsuarioAutorizado();
 
   const empresaId = usuarioAtual.empresa_id;
   const displayName = usuarioAtual.nome_usuario || "Usuário";
-  const firstName = displayName.split(" ")[0];
-  const initials = displayName
-    .split(" ")
-    .slice(0, 2)
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase();
 
     const { data: veiculos } = await supabase
       .schema("dealership")

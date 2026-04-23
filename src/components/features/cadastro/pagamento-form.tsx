@@ -110,7 +110,7 @@ export function PagamentoForm() {
 
         {/* Terms */}
         <p className="text-xs text-brand-gray-text leading-relaxed">
-          Ao clicar em "Pagar Agora" você concorda com nossos{" "}
+          {"Ao clicar em \"Pagar Agora\" você concorda com nossos"}{" "}
           <a href="/termos-de-servico" className="underline underline-offset-2 hover:text-brand-black transition-colors">
             Termos de Serviço
           </a>{" "}
