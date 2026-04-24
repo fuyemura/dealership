@@ -1,22 +1,8 @@
-import { unstable_cache } from "next/cache";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
 import { PricingGrid } from "./_pricing-grid";
+import { getPlanosAtivos, type PlanoDB } from "@/lib/plans/get-planos";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
-
-type PlanoDB = {
-  id: string;
-  nome_plano: string;
-  descricao_plano: string | null;
-  preco_mensal: number;
-  limite_veiculos: number;
-  limite_usuarios: number;
-  limite_fotos_veiculo: number;
-  tem_qr_code: boolean;
-  tem_relatorios: boolean;
-  tem_suporte_prioritario: boolean;
-};
 
 export type PricingPlanDisplay = {
   id: string;
@@ -62,101 +48,20 @@ function mapearFeatures(plano: PlanoDB): string[] {
   return features;
 }
 
-// ─── Busca com cache ISR (1h) ─────────────────────────────────────────────────
-// createClient() usa a anon key com RLS — a tabela `plano` tem policy de leitura
-// pública (SELECT para anon), portanto não é necessário service role aqui.
-// unstable_cache armazena o resultado no Data Cache do Next.js,
-// revalidando automaticamente a cada hora sem bloquear requests.
-// Em ambientes sem as env vars (ex: CI, preview sem secrets), retorna fallback estático.
+export async function getPlanos(): Promise<PricingPlanDisplay[]> {
+  const planos = await getPlanosAtivos();
+  const popularIdx = Math.floor(planos.length / 2);
 
-const PLANOS_FALLBACK: PricingPlanDisplay[] = [
-  {
-    id: "basico",
-    name: "Básico",
-    price: "R$ 49,99",
-    description: "Para revendas que estão começando a digitalizar o estoque.",
-    features: ["Até 30 veículos", "Até 2 usuários", "Geração de QR Codes"],
-    popular: false,
+  return planos.map((p, i) => ({
+    id: p.id,
+    name: p.nome_plano,
+    price: formatarPreco(p.preco_mensal),
+    description: p.descricao_plano ?? "",
+    features: mapearFeatures(p),
+    popular: planos.length > 1 && i === popularIdx,
     cta: "Começar grátis",
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    price: "R$ 99,99",
-    description: "Para revendas em crescimento que precisam de mais recursos.",
-    features: [
-      "Até 100 veículos",
-      "Até 5 usuários",
-      "QR Codes personalizados",
-      "Relatórios e analytics",
-      "Suporte prioritário",
-    ],
-    popular: true,
-    cta: "Começar grátis",
-  },
-  {
-    id: "empresarial",
-    name: "Empresarial",
-    price: "R$ 199,99",
-    description: "Para grandes operações sem limite de escala.",
-    features: [
-      "Veículos ilimitados",
-      "Usuários ilimitados",
-      "QR Codes premium",
-      "Relatórios e analytics",
-      "Suporte dedicado",
-    ],
-    popular: false,
-    cta: "Começar grátis",
-  },
-];
-
-const getPlanos = unstable_cache(
-  async (): Promise<PricingPlanDisplay[]> => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!url || !anonKey) {
-      return PLANOS_FALLBACK;
-    }
-
-    try {
-      const supabase = createClient(url, anonKey);
-
-    const { data, error } = await supabase
-      .schema("dealership")
-      .from("plano")
-      .select(
-        `id, nome_plano, descricao_plano, preco_mensal,
-         limite_veiculos, limite_usuarios, limite_fotos_veiculo,
-         tem_qr_code, tem_relatorios, tem_suporte_prioritario`
-      )
-      .eq("plano_ativo", true)
-      .order("preco_mensal", { ascending: true });
-
-    if (error) return PLANOS_FALLBACK;
-
-    const planos = (data ?? []) as PlanoDB[];
-
-    // Marca o plano do meio como "Mais Popular" (ex: Premium em 3 planos)
-    const popularIdx = Math.floor(planos.length / 2);
-
-    return planos.map((p, i) => ({
-      id: p.id,
-      name: p.nome_plano,
-      price: formatarPreco(p.preco_mensal),
-      description: p.descricao_plano ?? "",
-      features: mapearFeatures(p),
-      popular: planos.length > 1 && i === popularIdx,
-      cta: "Começar grátis",
-    }));
-    } catch {
-      return PLANOS_FALLBACK;
-    }
-  },
-  ["pricing-plans"],
-  { revalidate: 3600, tags: ["pricing-plans"] }
-);
+  }));
+}
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 

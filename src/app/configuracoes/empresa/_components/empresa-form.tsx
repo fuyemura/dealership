@@ -4,7 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { formatTelefone as formatarTelefone, formatCnpj as formatarCnpj, formatCep as formatarCep } from "@/lib/utils/formatters";
+import {
+  formatTelefone as formatarTelefone,
+  formatCnpj as formatarCnpj,
+  formatCep as formatarCep,
+  formatCpf as formatarCpf,
+} from "@/lib/utils/formatters";
+import { sanitizarCpf, validarCpf } from "@/lib/utils/validators";
 import { consultarCep } from "@/lib/utils/cep";
 import type { ActionResult, EmpresaPayload } from "../actions";
 
@@ -154,9 +160,14 @@ export interface EmpresaInitialData {
 }
 
 interface EmpresaFormProps {
-  saveAction: SaveFn;
+  saveAction?: SaveFn;
   initialData: EmpresaInitialData;
   savedOk?: boolean;
+  mode?: "settings" | "signup";
+  onSubmitSignup?: (payload: {
+    empresa: EmpresaPayload & { cnpj: string };
+    admin: { nome: string; email: string; senha: string; cpf: string };
+  }) => Promise<void> | void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -202,9 +213,25 @@ function Field({
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export function EmpresaForm({ saveAction, initialData, savedOk = false }: EmpresaFormProps) {
+export function EmpresaForm({
+  saveAction,
+  initialData,
+  savedOk = false,
+  mode = "settings",
+  onSubmitSignup,
+}: EmpresaFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const isSignup = mode === "signup";
+  const [cnpjDisplay, setCnpjDisplay] = useState(
+    initialData.cnpj ? formatarCnpj(initialData.cnpj) : ""
+  );
+  const [adminNome, setAdminNome] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminCpf, setAdminCpf] = useState("");
+  const [adminSenha, setAdminSenha] = useState("");
+  const [adminConfirmarSenha, setAdminConfirmarSenha] = useState("");
+  const [adminError, setAdminError] = useState<string | null>(null);
 
   // Telefones com máscara (estado local para exibição)
   const [tel1, setTel1] = useState(
@@ -334,6 +361,13 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
     setTel2(initialData.telefone_secundario ? formatarTelefone(initialData.telefone_secundario) : "");
     setTelRep(initialData.telefone_representante ? formatarTelefone(initialData.telefone_representante) : "");
     setCepDisplay(initialData.cep ? formatarCep(initialData.cep) : "");
+    setCnpjDisplay(initialData.cnpj ? formatarCnpj(initialData.cnpj) : "");
+    setAdminNome("");
+    setAdminEmail("");
+    setAdminCpf("");
+    setAdminSenha("");
+    setAdminConfirmarSenha("");
+    setAdminError(null);
     setCepNotFound(false);
     setCepNetworkError(false);
   };
@@ -356,9 +390,11 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
 
   const onSubmit = async (values: FormInput) => {
     setServerError(null);
+    setAdminError(null);
     setIsSaving(true);
 
-    const payload: EmpresaPayload = {
+    const payload: EmpresaPayload & { cnpj: string } = {
+      cnpj: cnpjDisplay,
       nome_legal_empresa: values.nome_legal_empresa,
       nome_fantasia_empresa: values.nome_fantasia_empresa || null,
       inscricao_municipal: values.inscricao_municipal,
@@ -378,7 +414,50 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       estado: values.estado,
     };
 
-    const result = await saveAction(payload);
+    if (isSignup) {
+      if (!adminNome.trim() || !adminEmail.trim() || !adminCpf.trim() || !adminSenha.trim()) {
+        setAdminError("Preencha os dados do usuário administrador.");
+        setIsSaving(false);
+        return;
+      }
+      const cpfDigits = sanitizarCpf(adminCpf);
+      if (!validarCpf(adminCpf)) {
+        setAdminError("CPF do administrador inválido.");
+        setIsSaving(false);
+        return;
+      }
+      if (adminSenha.length < 8) {
+        setAdminError("A senha do administrador deve ter no mínimo 8 caracteres.");
+        setIsSaving(false);
+        return;
+      }
+      if (adminSenha !== adminConfirmarSenha) {
+        setAdminError("A confirmação de senha do administrador não confere.");
+        setIsSaving(false);
+        return;
+      }
+
+      await onSubmitSignup?.({
+        empresa: payload,
+        admin: {
+          nome: adminNome.trim(),
+          email: adminEmail.trim().toLowerCase(),
+          senha: adminSenha,
+          cpf: cpfDigits,
+        },
+      });
+      setIsSaving(false);
+      return;
+    }
+
+    if (!saveAction) {
+      setServerError("Ação de salvamento não configurada.");
+      setIsSaving(false);
+      return;
+    }
+
+    const { cnpj: _cnpj, ...settingsPayload } = payload;
+    const result = await saveAction(settingsPayload);
 
     if (result?.error) {
       setServerError(result.error);
@@ -441,12 +520,27 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
 
             {/* CNPJ (imutável) | Nome Fantasia */}
             <div className="grid grid-cols-2 gap-4">
-              <Field id="cnpj" label="CNPJ" hint="Imutável após o cadastro.">
-                <div className={`${readonlyClass} flex items-center gap-1.5`}>
-                  <IconLock size={12} />
-                  <span>{formatarCnpj(initialData.cnpj)}</span>
-                </div>
-              </Field>
+              {isSignup ? (
+                <Field id="cnpj" label="CNPJ" required>
+                  <input
+                    id="cnpj"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={18}
+                    placeholder="00.000.000/0000-00"
+                    value={cnpjDisplay}
+                    onChange={(e) => setCnpjDisplay(formatarCnpj(e.target.value))}
+                    className={inputClass(false)}
+                  />
+                </Field>
+              ) : (
+                <Field id="cnpj" label="CNPJ" hint="Imutável após o cadastro.">
+                  <div className={`${readonlyClass} flex items-center gap-1.5`}>
+                    <IconLock size={12} />
+                    <span>{formatarCnpj(initialData.cnpj)}</span>
+                  </div>
+                </Field>
+              )}
 
               <Field
                 id="nome_fantasia_empresa"
@@ -676,6 +770,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
               </Field>
             </div>
           </section>
+
         </div>
 
         {/* ── Coluna direita ───────────────────────────────────────────── */}
@@ -816,6 +911,89 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
               />
             </Field>
           </section>
+
+          {isSignup && (
+            <section className="bg-white rounded-2xl border border-brand-gray-mid/30 p-6 sm:p-8 space-y-5">
+              <div className="flex items-center gap-2 text-brand-black">
+                <IconUser />
+                <h2 className="font-display text-base font-semibold text-brand-black">
+                  Usuário Administrador
+                </h2>
+              </div>
+              <p className="text-sm text-brand-gray-text">
+                Este usuário terá acesso total inicial para configurar a operação.
+              </p>
+
+              {adminError && (
+                <p role="alert" className="text-xs text-red-500">
+                  {adminError}
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field id="admin_nome" label="Nome Completo" required>
+                  <input
+                    id="admin_nome"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Ex: Maria Oliveira"
+                    value={adminNome}
+                    onChange={(e) => setAdminNome(e.target.value)}
+                    className={inputClass(false)}
+                  />
+                </Field>
+
+                <Field id="admin_email" label="E-mail de acesso" required>
+                  <input
+                    id="admin_email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="admin@empresa.com"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    className={inputClass(false)}
+                  />
+                </Field>
+
+                <Field id="admin_cpf" label="CPF do administrador" required>
+                  <input
+                    id="admin_cpf"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="000.000.000-00"
+                    value={adminCpf}
+                    onChange={(e) => setAdminCpf(formatarCpf(e.target.value))}
+                    className={inputClass(false)}
+                  />
+                </Field>
+
+                <Field id="admin_senha" label="Senha" required>
+                  <input
+                    id="admin_senha"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Mín. 8 caracteres"
+                    value={adminSenha}
+                    onChange={(e) => setAdminSenha(e.target.value)}
+                    className={inputClass(false)}
+                  />
+                </Field>
+
+                <Field id="admin_confirmar_senha" label="Confirmar senha" required>
+                  <input
+                    id="admin_confirmar_senha"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Repita a senha"
+                    value={adminConfirmarSenha}
+                    onChange={(e) => setAdminConfirmarSenha(e.target.value)}
+                    className={inputClass(false)}
+                  />
+                </Field>
+              </div>
+            </section>
+          )}
         </div>
       </div>
       </fieldset>
@@ -823,7 +1001,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
       {/* ── Barra de ações ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 mt-5 bg-white rounded-2xl border border-brand-gray-mid/30 p-4">
         <p className="text-xs text-brand-gray-text">
-          {isDirty
+          {isDirty || isSignup
             ? "Você tem alterações não salvas."
             : "Todos os dados estão atualizados."}
         </p>
@@ -831,14 +1009,14 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
           <button
             type="button"
             onClick={handleReset}
-            disabled={!isDirty || isSaving}
+            disabled={(!isDirty && !isSignup) || isSaving}
             className="text-sm font-medium text-brand-gray-text hover:text-brand-black disabled:opacity-40 disabled:cursor-not-allowed transition-colors px-3 py-2"
           >
             Descartar
           </button>
           <button
             type="submit"
-            disabled={isSaving || !isDirty}
+            disabled={isSaving || (!isDirty && !isSignup)}
             className="inline-flex items-center gap-2 rounded-full bg-brand-black text-brand-white text-sm font-medium px-6 py-2.5 hover:bg-brand-black/85 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSaving ? (
@@ -847,7 +1025,7 @@ export function EmpresaForm({ saveAction, initialData, savedOk = false }: Empres
                 Salvando…
               </>
             ) : (
-              "Salvar alterações"
+              isSignup ? "Revisar contratação" : "Salvar alterações"
             )}
           </button>
         </div>

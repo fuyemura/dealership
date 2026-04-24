@@ -3,12 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { detectarBandeiraCartao } from "@/lib/utils/cartao";
+import type { FinalizarCadastroBody } from "@/lib/cadastro/finalizar-cadastro-schema";
 
 export function PagamentoForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
+  const [cardholder, setCardholder] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [errors, setErrors] = useState<{
+    cardholder?: string;
+    cardNumber?: string;
+    expiry?: string;
+    cvv?: string;
+  }>({});
 
   function formatCardNumber(value: string) {
     return value
@@ -25,12 +35,84 @@ export function PagamentoForm() {
       .replace(/^(\d{2})(\d)/, "$1/$2");
   }
 
+  function validateField(
+    field: "cardholder" | "cardNumber" | "expiry" | "cvv",
+    value: string
+  ) {
+    if (field === "cardholder") {
+      if (value.trim().length < 3) return "Informe o nome completo do titular.";
+      return "";
+    }
+
+    if (field === "cardNumber") {
+      const digits = value.replace(/\D/g, "");
+      if (digits.length < 13 || digits.length > 16) {
+        return "Número de cartão inválido.";
+      }
+      return "";
+    }
+
+    if (field === "expiry") {
+      if (!/^\d{2}\/\d{2}$/.test(value)) return "Use o formato MM/AA.";
+      const [monthStr, yearStr] = value.split("/");
+      const month = Number(monthStr);
+      if (month < 1 || month > 12) return "Mês de validade inválido.";
+
+      const now = new Date();
+      const currentYear = now.getFullYear() % 100;
+      const currentMonth = now.getMonth() + 1;
+      const year = Number(yearStr);
+      if (year < currentYear || (year === currentYear && month < currentMonth)) {
+        return "Cartão com validade expirada.";
+      }
+      return "";
+    }
+
+    const cvvDigits = value.replace(/\D/g, "");
+    if (cvvDigits.length < 3 || cvvDigits.length > 4) return "CVV inválido.";
+    return "";
+  }
+
+  function setFieldError(field: "cardholder" | "cardNumber" | "expiry" | "cvv", value: string) {
+    const nextError = validateField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: nextError || undefined }));
+    return !nextError;
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const isCardholderValid = setFieldError("cardholder", cardholder);
+    const isCardNumberValid = setFieldError("cardNumber", cardNumber);
+    const isExpiryValid = setFieldError("expiry", expiry);
+    const isCvvValid = setFieldError("cvv", cvv);
+
+    if (!isCardholderValid || !isCardNumberValid || !isExpiryValid || !isCvvValid) {
+      return;
+    }
+
     setIsLoading(true);
-    // TODO: wire up to payment processor
+    const digits = cardNumber.replace(/\D/g, "");
+    const [mm, yy] = expiry.split("/");
+    const mesExpiracao = Number(mm);
+    const yShort = Number(yy);
+    const anoExpiracao = 2000 + yShort;
+    const bandeiraNome = detectarBandeiraCartao(digits) as FinalizarCadastroBody["metodo_pagamento"]["bandeira_nome"];
+    const gatewayPaymentMethodId = `signup_local_${crypto.randomUUID()}`;
+
+    sessionStorage.setItem(
+      "signup:payment",
+      JSON.stringify({
+        cardholder: cardholder.trim(),
+        cardLast4: digits.slice(-4),
+        expiry,
+        bandeiraNome,
+        mesExpiracao,
+        anoExpiracao,
+        gatewayPaymentMethodId,
+      })
+    );
     await new Promise((r) => setTimeout(r, 800));
-    router.push("/minha-conta");
+    router.push("/cadastro/empresa");
   }
 
   return (
@@ -54,8 +136,20 @@ export function PagamentoForm() {
             name="titular"
             required
             placeholder="João Silva"
-            className="h-11 w-full rounded-lg border border-brand-gray-mid bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors"
+            value={cardholder}
+            onChange={(e) => setCardholder(e.target.value)}
+            onBlur={(e) => setFieldError("cardholder", e.target.value)}
+            aria-invalid={!!errors.cardholder}
+            aria-describedby={errors.cardholder ? "titular-error" : undefined}
+            className={`h-11 w-full rounded-lg border bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors ${
+              errors.cardholder ? "border-red-400" : "border-brand-gray-mid"
+            }`}
           />
+          {errors.cardholder && (
+            <p id="titular-error" className="text-xs text-red-500" role="alert">
+              {errors.cardholder}
+            </p>
+          )}
         </div>
 
         {/* Card number */}
@@ -71,8 +165,18 @@ export function PagamentoForm() {
             placeholder="1234 5678 9012 3456"
             value={cardNumber}
             onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-            className="h-11 w-full rounded-lg border border-brand-gray-mid bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors font-mono tracking-widest"
+            onBlur={(e) => setFieldError("cardNumber", e.target.value)}
+            aria-invalid={!!errors.cardNumber}
+            aria-describedby={errors.cardNumber ? "numero_cartao-error" : undefined}
+            className={`h-11 w-full rounded-lg border bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors font-mono tracking-widest ${
+              errors.cardNumber ? "border-red-400" : "border-brand-gray-mid"
+            }`}
           />
+          {errors.cardNumber && (
+            <p id="numero_cartao-error" className="text-xs text-red-500" role="alert">
+              {errors.cardNumber}
+            </p>
+          )}
         </div>
 
         {/* Expiry + CVV */}
@@ -89,8 +193,18 @@ export function PagamentoForm() {
               placeholder="MM/AA"
               value={expiry}
               onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-              className="h-11 w-full rounded-lg border border-brand-gray-mid bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors"
+              onBlur={(e) => setFieldError("expiry", e.target.value)}
+              aria-invalid={!!errors.expiry}
+              aria-describedby={errors.expiry ? "validade-error" : undefined}
+              className={`h-11 w-full rounded-lg border bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors ${
+                errors.expiry ? "border-red-400" : "border-brand-gray-mid"
+              }`}
             />
+            {errors.expiry && (
+              <p id="validade-error" className="text-xs text-red-500" role="alert">
+                {errors.expiry}
+              </p>
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="cvv" className="text-xs font-medium text-brand-gray-text uppercase tracking-wide">
@@ -103,14 +217,26 @@ export function PagamentoForm() {
               inputMode="numeric"
               maxLength={4}
               placeholder="123"
-              className="h-11 w-full rounded-lg border border-brand-gray-mid bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors"
+              value={cvv}
+              onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onBlur={(e) => setFieldError("cvv", e.target.value)}
+              aria-invalid={!!errors.cvv}
+              aria-describedby={errors.cvv ? "cvv-error" : undefined}
+              className={`h-11 w-full rounded-lg border bg-brand-gray-soft px-3 text-sm text-brand-black placeholder:text-brand-gray-mid focus:outline-none focus:ring-2 focus:ring-brand-black/20 focus:border-brand-black transition-colors ${
+                errors.cvv ? "border-red-400" : "border-brand-gray-mid"
+              }`}
             />
+            {errors.cvv && (
+              <p id="cvv-error" className="text-xs text-red-500" role="alert">
+                {errors.cvv}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Terms */}
         <p className="text-xs text-brand-gray-text leading-relaxed">
-          {"Ao clicar em \"Pagar Agora\" você concorda com nossos"}{" "}
+          {"Ao clicar em \"Continuar\" você concorda com nossos"}{" "}
           <a href="/termos-de-servico" className="underline underline-offset-2 hover:text-brand-black transition-colors">
             Termos de Serviço
           </a>{" "}
@@ -126,7 +252,7 @@ export function PagamentoForm() {
           disabled={isLoading}
           className="w-full h-12 rounded-full text-base font-semibold hover:scale-[1.01] transition-transform disabled:opacity-60 disabled:scale-100"
         >
-          {isLoading ? "Processando…" : "Pagar Agora"}
+          {isLoading ? "Processando…" : "Continuar"}
         </Button>
       </form>
     </div>

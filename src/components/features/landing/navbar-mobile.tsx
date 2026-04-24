@@ -46,7 +46,7 @@ export function NavbarMobile({ links }: NavbarMobileProps) {
               variant="ghost"
               className="w-full justify-center"
             >
-              <Link href="/entrar" onClick={() => setOpen(false)}>
+              <Link href="/login" onClick={() => setOpen(false)}>
                 Entrar
               </Link>
             </Button>

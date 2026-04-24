@@ -1,12 +1,12 @@
-import { PagamentoForm } from "@/components/features/cadastro/pagamento-form";
+import { ResumoCadastro } from "@/components/features/cadastro/resumo-cadastro";
 import { CadastroStepper } from "@/components/features/cadastro/cadastro-stepper";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Pagamento — Uyemura Tech",
+  title: "Revisar Assinatura — Uyemura Tech",
 };
 
-export default function CadastroPagamentoPage() {
+export default function CadastroResumoPage() {
   return (
     <div className="min-h-screen bg-brand-gray-soft">
       <header className="fixed top-0 left-0 right-0 z-50 bg-brand-white border-b border-brand-gray-mid/40">
@@ -29,7 +29,7 @@ export default function CadastroPagamentoPage() {
           </Link>
 
           <Link
-            href="/cadastro"
+            href="/cadastro/empresa"
             className="text-sm text-brand-gray-text hover:text-brand-black transition-colors"
           >
             ← Voltar
@@ -37,18 +37,18 @@ export default function CadastroPagamentoPage() {
         </div>
       </header>
 
-      <main className="pt-24 pb-16 flex items-start justify-center">
-        <div className="page-container max-w-lg w-full">
+      <main className="pt-24 pb-16">
+        <div className="page-container max-w-5xl">
           <div className="mb-8">
             <span className="section-label">Cadastro</span>
-            <h1 className="section-title">Detalhes do Pagamento</h1>
+            <h1 className="section-title">Revisar Dados da Assinatura</h1>
             <p className="mt-2 text-brand-gray-text text-sm sm:text-base">
-              Suas informações estão seguras e criptografadas.
+              Confira as escolhas antes de concluir a criação da conta.
             </p>
           </div>
 
-          <CadastroStepper currentStep={2} />
-          <PagamentoForm />
+          <CadastroStepper currentStep={4} />
+          <ResumoCadastro />
         </div>
       </main>
     </div>

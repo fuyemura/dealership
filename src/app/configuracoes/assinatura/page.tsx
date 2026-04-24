@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getPlanosAtivos } from "@/lib/plans/get-planos";
 import { CancelarPlanoModal } from "./_components/cancelar-plano-modal";
 import { TrocarPlanoModal } from "./_components/trocar-plano-modal";
 import { ReativarPlanoModal } from "./_components/reativar-plano-modal";
@@ -194,7 +195,7 @@ export default async function AssinaturaPage() {
   if (!usuario?.empresa_id) redirect("/login");
 
   // Busca assinatura da empresa + lista de planos ativos em paralelo
-  const [{ data: assinaturaRaw }, { data: planosRaw }] = await Promise.all([
+  const [{ data: assinaturaRaw }, planos] = await Promise.all([
     supabase
       .schema("dealership")
       .from("assinatura")
@@ -211,16 +212,7 @@ export default async function AssinaturaPage() {
       .order("criado_em", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
-      .schema("dealership")
-      .from("plano")
-      .select(
-        `id, nome_plano, descricao_plano, preco_mensal,
-         limite_veiculos, limite_usuarios, limite_fotos_veiculo,
-         tem_qr_code, tem_relatorios, tem_suporte_prioritario`
-      )
-      .eq("plano_ativo", true)
-      .order("preco_mensal", { ascending: true }),
+    getPlanosAtivos(),
   ]);
 
   const raw = assinaturaRaw as AssinaturaRaw | null;
@@ -232,8 +224,6 @@ export default async function AssinaturaPage() {
           plano: raw.plano,
         }
       : null;
-
-  const planos: Plano[] = (planosRaw ?? []) as Plano[];
 
   const isCancelada =
     assinatura?.situacao === "cancelada" || assinatura?.situacao === "expirada";

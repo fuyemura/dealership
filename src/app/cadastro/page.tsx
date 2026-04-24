@@ -1,12 +1,59 @@
-import { RegistroEmpresarialForm } from "@/components/features/cadastro/registro-empresarial-form";
+import { PlanoSelecao } from "@/components/features/cadastro/plano-selecao";
+import { CadastroStepper } from "@/components/features/cadastro/cadastro-stepper";
+import type { SignupPlan } from "@/components/features/cadastro/plano-selecao";
+import { getPlanosAtivos, type PlanoDB } from "@/lib/plans/get-planos";
 import Link from "next/link";
 
 export const metadata = {
   title: "Criar conta — Uyemura Tech",
-  description: "Crie sua conta empresarial na Uyemura Tech.",
+  description: "Escolha seu plano e inicie sua assinatura na Uyemura Tech.",
 };
 
-export default function CadastroPage() {
+function formatarPreco(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function mapearFeatures(plano: PlanoDB): string[] {
+  const features: string[] = [];
+  if (plano.limite_veiculos === -1) {
+    features.push("Veículos ilimitados");
+  } else {
+    features.push(`Até ${plano.limite_veiculos} veículos`);
+  }
+  if (plano.limite_usuarios === -1) {
+    features.push("Usuários ilimitados");
+  } else {
+    features.push(`Até ${plano.limite_usuarios} usuários`);
+  }
+  if (plano.limite_fotos_veiculo === -1) {
+    features.push("Fotos ilimitadas por veículo");
+  } else {
+    features.push(`Até ${plano.limite_fotos_veiculo} fotos por veículo`);
+  }
+  if (plano.tem_qr_code) features.push("Geração de QR Codes");
+  if (plano.tem_relatorios) features.push("Relatórios e analytics");
+  if (plano.tem_suporte_prioritario) features.push("Suporte prioritário");
+  return features;
+}
+
+async function getSignupPlans(): Promise<SignupPlan[]> {
+  const planos = await getPlanosAtivos();
+  const popularIdx = Math.floor(planos.length / 2);
+
+  return planos.map((plano, idx) => ({
+    id: plano.id,
+    name: plano.nome_plano,
+    description: plano.descricao_plano ?? "",
+    price: formatarPreco(plano.preco_mensal),
+    period: "/mês",
+    popular: planos.length > 1 && idx === popularIdx,
+    features: mapearFeatures(plano),
+  }));
+}
+
+export default async function CadastroPage() {
+  const plans = await getSignupPlans();
+
   return (
     <div className="min-h-screen bg-brand-gray-soft">
       {/* Header */}
@@ -32,7 +79,7 @@ export default function CadastroPage() {
           <p className="text-sm text-brand-gray-text">
             Já tem uma conta?{" "}
             <Link
-              href="/entrar"
+              href="/login"
               className="text-brand-black font-medium underline underline-offset-4 hover:text-brand-black/70 transition-colors"
             >
               Entrar
@@ -47,13 +94,14 @@ export default function CadastroPage() {
           {/* Page title */}
           <div className="mb-8">
             <span className="section-label">Cadastro</span>
-            <h1 className="section-title">Registro Empresarial</h1>
+            <h1 className="section-title">Escolha seu Plano</h1>
             <p className="mt-2 text-brand-gray-text text-sm sm:text-base">
-              Preencha os dados da sua empresa para começar.
+              Primeiro passo: selecione o plano ideal para o seu negócio.
             </p>
           </div>
 
-          <RegistroEmpresarialForm />
+          <CadastroStepper currentStep={1} />
+          <PlanoSelecao plans={plans} />
         </div>
       </main>
     </div>

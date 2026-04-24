@@ -1,12 +1,12 @@
-import { PagamentoForm } from "@/components/features/cadastro/pagamento-form";
+import { CadastroEmpresaStepForm } from "@/components/features/cadastro/cadastro-empresa-step-form";
 import { CadastroStepper } from "@/components/features/cadastro/cadastro-stepper";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Pagamento — Uyemura Tech",
+  title: "Dados da Empresa — Uyemura Tech",
 };
 
-export default function CadastroPagamentoPage() {
+export default function CadastroEmpresaPage() {
   return (
     <div className="min-h-screen bg-brand-gray-soft">
       <header className="fixed top-0 left-0 right-0 z-50 bg-brand-white border-b border-brand-gray-mid/40">
@@ -29,7 +29,7 @@ export default function CadastroPagamentoPage() {
           </Link>
 
           <Link
-            href="/cadastro"
+            href="/cadastro/pagamento"
             className="text-sm text-brand-gray-text hover:text-brand-black transition-colors"
           >
             ← Voltar
@@ -37,18 +37,18 @@ export default function CadastroPagamentoPage() {
         </div>
       </header>
 
-      <main className="pt-24 pb-16 flex items-start justify-center">
-        <div className="page-container max-w-lg w-full">
+      <main className="pt-24 pb-16">
+        <div className="page-container max-w-5xl">
           <div className="mb-8">
             <span className="section-label">Cadastro</span>
-            <h1 className="section-title">Detalhes do Pagamento</h1>
+            <h1 className="section-title">Empresa e Usuário Administrador</h1>
             <p className="mt-2 text-brand-gray-text text-sm sm:text-base">
-              Suas informações estão seguras e criptografadas.
+              Complete os dados para criar o ambiente inicial da sua conta.
             </p>
           </div>
 
-          <CadastroStepper currentStep={2} />
-          <PagamentoForm />
+          <CadastroStepper currentStep={3} />
+          <CadastroEmpresaStepForm />
         </div>
       </main>
     </div>

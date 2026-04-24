@@ -1,0 +1,13 @@
+---
+description: Enforce consistent UI/UX best practices across the product
+alwaysApply: true
+---
+
+# UI/UX Standards
+
+- Keep visual consistency with existing design tokens, spacing scale, typography, and component patterns already used in the project.
+- Prefer clear, step-by-step user flows for critical journeys (signup, payment, onboarding), with predictable back/next actions.
+- Surface validation feedback close to inputs, with accessible labels, helper text, and error states (`aria-invalid`, `aria-describedby`).
+- Preserve responsive behavior and touch-friendly controls for mobile and desktop.
+- Use concise, user-centered microcopy in Brazilian Portuguese, avoiding technical wording for end users.
+- Prioritize accessibility and clarity: keyboard-friendly interactions, readable contrast, and meaningful loading/empty states.
